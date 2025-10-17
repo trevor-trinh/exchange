@@ -1,5 +1,5 @@
-use axum::response::Json;
 use crate::models::ApiResponse;
+use axum::response::Json;
 
 #[utoipa::path(
     get,
@@ -16,4 +16,4 @@ pub async fn health_check() -> Json<ApiResponse> {
             .unwrap()
             .as_secs(),
     })
-} 
+}

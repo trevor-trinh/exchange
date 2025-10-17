@@ -3,11 +3,11 @@ use tower_http::cors::CorsLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-pub mod models;
 pub mod api;
+pub mod models;
 
-use models::ApiResponse;
 use api::rest;
+use models::ApiResponse;
 
 #[derive(OpenApi)]
 #[openapi(

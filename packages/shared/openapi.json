@@ -11,9 +11,7 @@
   "paths": {
     "/api/health": {
       "get": {
-        "tags": [
-          "rest::health"
-        ],
+        "tags": ["rest::health"],
         "operationId": "health_check",
         "responses": {
           "200": {
@@ -34,10 +32,7 @@
     "schemas": {
       "ApiResponse": {
         "type": "object",
-        "required": [
-          "message",
-          "timestamp"
-        ],
+        "required": ["message", "timestamp"],
         "properties": {
           "message": {
             "type": "string"
