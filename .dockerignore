@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yaml
+.dockerignore
+
+# CI/CD
+.github
+.devcontainer
+
+# Rust
+**/target
+**/*.rs.bk
+Cargo.lock
+
+# Node
+**/node_modules
+**/.next
+**/out
+**/.vercel
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Misc
+.DS_Store
+*.log

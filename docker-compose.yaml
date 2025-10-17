@@ -1,8 +1,111 @@
-# backend
+version: "3.8"
 
-# bots
+services:
+  # PostgreSQL
+  postgres:
+    image: timescale/timescaledb-ha:pg17
+    container_name: exchange-postgres
+    environment:
+      POSTGRES_DB: exchange
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - exchange-network
 
-# postgres
-# clickhouse
+  # ClickHouse
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: exchange-clickhouse
+    environment:
+      CLICKHOUSE_DB: exchange
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: password
+    ports:
+      - "8123:8123" # HTTP
+      - "9000:9000" # Native
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - exchange-network
 
-# frontend
+  # Backend
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: exchange-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/exchange
+      CLICKHOUSE_URL: http://clickhouse:8123
+      RUST_LOG: info,backend=debug
+      HOST: 0.0.0.0
+      PORT: 8888
+    ports:
+      - "8888:8888"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    networks:
+      - exchange-network
+    restart: unless-stopped
+
+  # Bots (disabled until implemented)
+  # bots:
+  #   build:
+  #     context: ./apps/bots
+  #     dockerfile: Dockerfile
+  #   container_name: exchange-bots
+  #   environment:
+  #     API_URL: http://backend:8888
+  #     USER_ID: bot_market_maker_1
+  #     MARKET_ID: ETH-USDC
+  #     SPREAD_BPS: 10
+  #     ORDER_SIZE: "1.0"
+  #     MAX_ORDERS_PER_SIDE: 5
+  #     UPDATE_INTERVAL_MS: 1000
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - exchange-network
+  #   restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    container_name: exchange-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8888
+      NEXT_PUBLIC_WS_URL: ws://localhost:8888/ws
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - exchange-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  clickhouse_data:
+
+networks:
+  exchange-network:
+    driver: bridge
