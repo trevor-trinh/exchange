@@ -12,7 +12,8 @@ frontend
 
 backend
 
-- [ ] clickhouse
+- [ ] postgres
+- [ ] clickhouse (?)
 
 infra
 
@@ -20,3 +21,10 @@ infra
 - [ ] devcontainers
 - [ ] vercel
 - [ ] local dockercompose
+
+missing
+
+- perps
+- metrics / alerting
+- latency
+- backups
