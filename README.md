@@ -9,6 +9,7 @@ db -> me -> api -> web / bot
 frontend
 
 - [ ] websockets
+- [ ] embedded wallet
 
 backend
 
@@ -25,6 +26,9 @@ infra
 missing
 
 - perps
+- pnl
+- deposits / withdrawals
+
 - metrics / alerting
 - latency
 - backups

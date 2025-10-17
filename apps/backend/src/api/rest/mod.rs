@@ -1,7 +1,22 @@
-use axum::{Router, routing::get};
+use axum::{routing::get, Router};
 
 pub mod health;
 
 pub fn create_routes() -> Router {
     Router::new().route("/api/health", get(health::health_check))
 }
+
+// request -> handler -> db -> response
+// /info
+// - token info
+// - market info
+
+// /user
+// - orders
+// - balances
+// - trades
+
+// /trade - signature required
+// request -> handler -> me -> response
+// - order
+// - cancel
