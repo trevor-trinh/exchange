@@ -11,7 +11,7 @@ async fn main() {
 
     // Get configuration from environment
     let host = std::env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-    let port = std::env::var("PORT").unwrap_or_else(|_| "8888".to_string());
+    let port = "8888".to_string();
     let addr = format!("{}:{}", host, port);
 
     let app = create_app().await;
