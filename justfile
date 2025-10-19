@@ -5,14 +5,14 @@ build:
   cd apps/frontend && bun install
   cd apps/backend && cargo build
 
-run-db:
-  docker compose up postgres clickhouse
+db:
+  docker compose up -d postgres clickhouse
 
-run-frontend:
+backend:
+  cd apps/backend && cargo run --release
+
+frontend:
   cd apps/frontend && bun run dev
-
-run-backend:
-  cd apps/backend && cargo run
 
 compose:
   docker compose up --build
