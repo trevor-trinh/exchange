@@ -15,22 +15,13 @@ compose:
 db-run:
   docker compose up -d postgres clickhouse
 
+db-setup:
+  cd apps/backend && cargo run --bin setup-db
+
 db-reset:
-  just postgres-reset
-  just clickhouse-reset
-
-postgres-reset:
-  # assumes database exists from docker compose
-  psql postgresql://postgres:password@localhost:5432/exchange -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-  just postgres-migrate
-
-clickhouse-reset:
-  # assumes database exists from docker compose
-  clickhouse client --user default --password password --query "DROP TABLE IF EXISTS exchange.candles"
-  clickhouse client --user default --password password --database exchange --queries-file apps/backend/src/db/clickhouse/schema.sql
-
-postgres-migrate:
-  cd apps/backend/src/db/postgres && sqlx migrate run --database-url postgresql://postgres:password@localhost:5432/exchange
+  psql postgresql://postgres:password@localhost:5432/exchange -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true
+  clickhouse client --user default --password password --query "DROP TABLE IF EXISTS exchange.candles" 2>/dev/null || true
+  just db-setup
 
 # ================================
 

@@ -13,6 +13,10 @@ path = "src/main.rs"
 name = "generate-openapi"
 path = "scripts/generate_openapi.rs"
 
+[[bin]]
+name = "setup-db"
+path = "src/db/setup.rs"
+
 [dependencies]
 axum = "0.8"
 clickhouse = { version = "0.14", features = ["rustls-tls"] }

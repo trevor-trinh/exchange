@@ -57,7 +57,9 @@ missing production
 - decide to add wallet to make it crypto
 - make one-click deploy on railway
 - play with pgcli and usql. get nice syntax highlighting and basics of sql
-- create simple schema and run migrations
+- create simple postgres schema and run migrations
+- start clickhouse integration
+- make setup-db script and cleanup justfile
 
 ### frontend dev
 

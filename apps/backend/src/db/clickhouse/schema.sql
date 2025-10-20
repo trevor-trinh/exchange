@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS candles (
+CREATE TABLE IF NOT EXISTS exchange.candles (
     market_id TEXT NOT NULL,
     timestamp TIMESTAMP NOT NULL,
     open BIGINT NOT NULL,
