@@ -26,6 +26,13 @@ RUN cargo install just
 # Create directories for volume mounts
 RUN mkdir -p /var/lib/docker /usr/local/cargo/registry /usr/local/rustup
 
+
+# clickhouse cli
+# pgcli
+# node
+# bun
+
+
 # Set the working directory inside the container.
 WORKDIR /app
 

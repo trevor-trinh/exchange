@@ -20,3 +20,6 @@ pub fn create_routes() -> Router {
 // request -> handler -> me -> response
 // - order
 // - cancel
+
+// /drip - signature required
+// - drip amount of tokens

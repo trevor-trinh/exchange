@@ -27,6 +27,7 @@ devx
 
 - [ ] github actions
 - [ ] devcontainers
+- [ ] video walkthrough
 
 missing features
 
