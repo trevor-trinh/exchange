@@ -70,10 +70,10 @@ CREATE INDEX IF NOT EXISTS idx_orders_market_status ON orders(market_id, status)
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);
 
 -- Trades table indexes
-CREATE INDEX IF NOT EXISTS idx_trades_market_created_at ON trades(market_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_trades_market_timestamp ON trades(market_id, timestamp);
 CREATE INDEX IF NOT EXISTS idx_trades_buyer_address ON trades(buyer_address);
 CREATE INDEX IF NOT EXISTS idx_trades_seller_address ON trades(seller_address);
-CREATE INDEX IF NOT EXISTS idx_trades_created_at ON trades(created_at);
+CREATE INDEX IF NOT EXISTS idx_trades_timestamp ON trades(timestamp);
 
 -- Balances table indexes
 CREATE INDEX IF NOT EXISTS idx_balances_user_address ON balances(user_address);
