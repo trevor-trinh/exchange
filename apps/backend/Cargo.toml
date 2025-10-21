@@ -20,6 +20,7 @@ path = "src/db/setup.rs"
 [dependencies]
 anyhow = "1.0"
 axum = "0.8"
+chrono = { version = "0.4", features = ["serde"] }
 clickhouse = { version = "0.14", features = ["rustls-tls"] }
 dotenvy = "0.15"
 env_logger = "0.11"
@@ -32,3 +33,4 @@ tower = "0.5"
 tower-http = { version = "0.6", features = ["cors"] }
 utoipa = { version = "5.0", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "9.0", features = ["axum"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
