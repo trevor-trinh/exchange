@@ -17,23 +17,23 @@ CREATE TABLE IF NOT EXISTS markets (
     id TEXT GENERATED ALWAYS AS (base_ticker || '/' || quote_ticker) STORED PRIMARY KEY,
     base_ticker TEXT NOT NULL REFERENCES tokens(ticker),
     quote_ticker TEXT NOT NULL REFERENCES tokens(ticker),
-    tick_size NUMERIC NOT NULL CHECK (tick_size > 0), -- in quote token decimals
-    lot_size NUMERIC NOT NULL CHECK (lot_size > 0), -- in base token decimals
-    min_size BIGINT NOT NULL CHECK (min_size > 0), -- in base token decimals
+    tick_size NUMERIC(39, 0) NOT NULL CHECK (tick_size > 0), -- in quote token atoms (u128)
+    lot_size NUMERIC(39, 0) NOT NULL CHECK (lot_size > 0), -- in base token atoms (u128)
+    min_size NUMERIC(39, 0) NOT NULL CHECK (min_size > 0), -- in base token atoms (u128)
     maker_fee_bps INT NOT NULL CHECK (maker_fee_bps >= 0 AND maker_fee_bps <= 10000), -- basis points (0-100%)
-    taker_fee_bps INT NOT NULL CHECK (taker_fee_bps >= 0 AND taker_fee_bps <= 10000), -- basis points (0-100%)
+    taker_fee_bps INT NOT NULL CHECK (taker_fee_bps >= 0 AND taker_fee_bps <= 10000) -- basis points (0-100%)
 );
 
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_address TEXT NOT NULL REFERENCES users(address),
     market_id TEXT NOT NULL REFERENCES markets(id),
-    price NUMERIC NOT NULL CHECK (price > 0), -- in quote token decimals
-    size NUMERIC NOT NULL CHECK (size > 0), -- in base token decimals
+    price NUMERIC(39, 0) NOT NULL CHECK (price > 0), -- in quote token atoms (u128)
+    size NUMERIC(39, 0) NOT NULL CHECK (size > 0), -- in base token atoms (u128)
     side side NOT NULL,
     type order_type NOT NULL,
     status order_status NOT NULL,
-    filled_size NUMERIC NOT NULL DEFAULT 0 CHECK (filled_size >= 0 AND filled_size <= size), -- in base token decimals
+    filled_size NUMERIC(39, 0) NOT NULL DEFAULT 0 CHECK (filled_size >= 0 AND filled_size <= size), -- in base token atoms (u128)
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
@@ -45,8 +45,8 @@ CREATE TABLE IF NOT EXISTS trades (
     seller_address TEXT NOT NULL REFERENCES users(address),
     buyer_order_id UUID NOT NULL REFERENCES orders(id),
     seller_order_id UUID NOT NULL REFERENCES orders(id),
-    price NUMERIC NOT NULL CHECK (price > 0), -- in quote token decimals
-    size NUMERIC NOT NULL CHECK (size > 0), -- in base token decimals
+    price NUMERIC(39, 0) NOT NULL CHECK (price > 0), -- in quote token atoms (u128)
+    size NUMERIC(39, 0) NOT NULL CHECK (size > 0), -- in base token atoms (u128)
     timestamp TIMESTAMP NOT NULL,
     CHECK (buyer_address != seller_address) -- self trading prevention
 );
@@ -54,8 +54,8 @@ CREATE TABLE IF NOT EXISTS trades (
 CREATE TABLE IF NOT EXISTS balances (
     user_address TEXT NOT NULL REFERENCES users(address),
     token_ticker TEXT NOT NULL REFERENCES tokens(ticker),
-    amount NUMERIC NOT NULL DEFAULT 0 CHECK (amount >= 0),
-    open_interest NUMERIC NOT NULL,
+    amount NUMERIC(39, 0) NOT NULL DEFAULT 0 CHECK (amount >= 0),
+    open_interest NUMERIC(39, 0) NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     PRIMARY KEY (user_address, token_ticker)
 );
