@@ -38,8 +38,9 @@ missing features
 missing production
 
 - helllaaa latency
+- write ahead log lmao
 - metrics / alerting
-- backups
+- backups / disaster recovery
 
 ### process
 
@@ -60,6 +61,10 @@ missing production
 - create simple postgres schema and run migrations
 - start clickhouse integration
 - make setup-db script and cleanup justfile
+- use models for type management
+- understand db <> domain <> api From and Into conversions
+- use u128 integers and keep everything in atoms
+-
 
 ### frontend dev
 
