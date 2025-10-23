@@ -1,5 +1,7 @@
 use bigdecimal::BigDecimal;
 use chrono::{DateTime, Utc};
+use clickhouse::Row;
+use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
@@ -70,13 +72,13 @@ pub struct BalanceRow {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, FromRow)]
+#[derive(Debug, Clone, Row, Serialize, Deserialize)]
 pub struct CandleRow {
     pub market_id: String,
     pub timestamp: DateTime<Utc>,
-    pub open: BigDecimal,
-    pub high: BigDecimal,
-    pub low: BigDecimal,
-    pub close: BigDecimal,
-    pub volume: BigDecimal,
+    pub open: u128,
+    pub high: u128,
+    pub low: u128,
+    pub close: u128,
+    pub volume: u128,
 }

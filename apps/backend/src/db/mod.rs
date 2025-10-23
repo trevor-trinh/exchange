@@ -4,7 +4,7 @@ pub mod pg;
 
 // Entity modules
 // pub mod balances;
-// pub mod candles;
+pub mod candles;
 pub mod markets;
 // pub mod orders;
 // pub mod tokens;

@@ -71,6 +71,7 @@ missing production
 - opt for simpler impl rather than repository pattern
 - use sqlx prepare
 - decide on bigdecimal or u128. make conversion from db and domain
+- clickhouse candles table a bit different than postgres
 
 ### frontend dev
 
