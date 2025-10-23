@@ -1,15 +1,15 @@
 // process
 // price time priority
 
-pub struct MatchingEngine {
-    db: Db,
-    orderbooks: HashMap<String, Orderbook>,
-    matcher: Matcher,
-    executor: Executor,
+// pub struct MatchingEngine {
+//     db: Db,
+//     orderbooks: HashMap<String, Orderbook>,
+//     matcher: Matcher,
+//     executor: Executor,
 
-    send_tx
-    recv_rx
-}
+//     send_tx
+//     recv_rx
+// }
 
 // engine request response types
 
