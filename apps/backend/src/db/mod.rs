@@ -16,6 +16,7 @@ pub use clickhouse::Client;
 pub use sqlx::postgres::PgPool;
 
 /// Main database handle with connections to both databases
+#[derive(Clone)]
 pub struct Db {
     pub postgres: PgPool,
     pub clickhouse: Client,

@@ -4,12 +4,7 @@ use crate::models::{db::TokenRow, domain::Token};
 
 impl Db {
     /// Create a new token
-    pub async fn create_token(
-        &self,
-        ticker: String,
-        decimals: u8,
-        name: String,
-    ) -> Result<Token> {
+    pub async fn create_token(&self, ticker: String, decimals: u8, name: String) -> Result<Token> {
         let row = sqlx::query_as!(
             TokenRow,
             "INSERT INTO tokens (ticker, decimals, name) VALUES ($1, $2, $3)

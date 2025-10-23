@@ -48,6 +48,8 @@ missing production
 
 culmination of my frontend skills and new backend learning. made this as clean as possible while keeping scope tight.
 
+decide on structure, schema, and write e2e tests fast so iterate fast. stub out models just enough of the different ones to test.
+
 - want to build exchange
 - reference previous code
 - talk to claude a lot
@@ -77,6 +79,8 @@ culmination of my frontend skills and new backend learning. made this as clean a
 - add testcontainers for e2e testing, containers need to pass from utils to stay alive
 - fix candles for half open interval. fix market creation with missing tokens.
 - add error handling, thiserror and anyhow. learning about Result/Error/unwrap_or_else. use from macro.
+- add db/app state to axum.
+- add e2e api tests.
 
 ### frontend dev
 

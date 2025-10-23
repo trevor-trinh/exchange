@@ -12,7 +12,7 @@
     "/api/health": {
       "get": {
         "tags": [
-          "rest::health"
+          "health"
         ],
         "operationId": "health_check",
         "responses": {

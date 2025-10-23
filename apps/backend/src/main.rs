@@ -1,5 +1,5 @@
 use anyhow::Context;
-use backend::create_app;
+use backend::api::rest;
 use backend::db::Db;
 
 #[tokio::main]
@@ -30,10 +30,13 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("Failed to query database - ensure migrations have been run")?;
 
-    log::info!("Database connection verified - {} users in database", user_count.0);
+    log::info!(
+        "Database connection verified - {} users in database",
+        user_count.0
+    );
 
-    // Create and start the application
-    let app = create_app().await;
+    // Create and start the application with database state
+    let app = rest::create_app(db);
 
     let listener = tokio::net::TcpListener::bind(&addr)
         .await
@@ -43,9 +46,7 @@ async fn main() -> anyhow::Result<()> {
     println!("OpenAPI JSON available at http://{}/api/openapi.json", addr);
     println!("Swagger UI available at http://{}/api/docs", addr);
 
-    axum::serve(listener, app)
-        .await
-        .context("Server error")?;
+    axum::serve(listener, app).await.context("Server error")?;
 
     Ok(())
 }

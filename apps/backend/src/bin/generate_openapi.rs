@@ -1,7 +1,7 @@
 use std::fs;
 use utoipa::OpenApi;
 
-use backend::ApiDoc;
+use backend::api::rest::ApiDoc;
 
 fn main() {
     println!("Generating OpenAPI specification...");
