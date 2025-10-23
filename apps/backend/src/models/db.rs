@@ -75,7 +75,7 @@ pub struct BalanceRow {
 #[derive(Debug, Clone, Row, Serialize, Deserialize)]
 pub struct CandleRow {
     pub market_id: String,
-    pub timestamp: u32,  // ClickHouse DateTime is stored as Unix timestamp (u32)
+    pub timestamp: u32, // ClickHouse DateTime is stored as Unix timestamp (u32)
     pub open: u128,
     pub high: u128,
     pub low: u128,

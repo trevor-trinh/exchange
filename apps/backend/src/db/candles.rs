@@ -2,9 +2,6 @@ use crate::db::Db;
 use crate::models::{db::CandleRow, domain::Candle};
 use chrono::{DateTime, Utc};
 
-// - insert_candle(client: &Client, candle: Candle) -> Result<(), clickhouse::error::Error>
-// - get_candles(client: &Client, market_id: &str, start: DateTime<Utc>, end: DateTime<Utc>) -> Result<Vec<Candle>, clickhouse::error::Error>
-
 // TODO: this is probably going to need to insert a trade not a candle
 impl Db {
     /// Insert a new candle
@@ -40,7 +37,7 @@ impl Db {
     ) -> Result<Vec<Candle>, clickhouse::error::Error> {
         let candles = self
             .clickhouse
-            .query("SELECT market_id, timestamp, open, high, low, close, volume FROM candles WHERE market_id = ? AND timestamp >= ? AND timestamp <= ?")
+            .query("SELECT market_id, timestamp, open, high, low, close, volume FROM candles WHERE market_id = ? AND timestamp >= ? AND timestamp < ? ORDER BY timestamp ASC")
             .bind(market_id)
             .bind(start.timestamp() as u32)
             .bind(end.timestamp() as u32)
@@ -52,7 +49,7 @@ impl Db {
             .map(|row| Candle {
                 market_id: row.market_id,
                 timestamp: DateTime::from_timestamp(row.timestamp as i64, 0)
-                    .unwrap_or_else(|| DateTime::UNIX_EPOCH),
+                    .unwrap_or(DateTime::UNIX_EPOCH),
                 open: row.open,
                 high: row.high,
                 low: row.low,

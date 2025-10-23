@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use std::str::FromStr;
 
 mod utils;
-use utils::{create_test_candle, create_test_market, create_test_user, TestDb};
+use utils::TestDb;
 
 #[tokio::test]
 async fn test_user_crud_operations() {
@@ -12,7 +12,8 @@ async fn test_user_crud_operations() {
 
     // Test creating a user
     let user_address = "0x1234567890abcdef";
-    let user = create_test_user(&test_db.db, user_address)
+    let user = test_db
+        .create_test_user(user_address)
         .await
         .expect("Failed to create user");
 
@@ -36,7 +37,8 @@ async fn test_user_crud_operations() {
 
     // Test creating another user
     let user2_address = "0xabcdef1234567890";
-    let _user2 = create_test_user(&test_db.db, user2_address)
+    let _user2 = test_db
+        .create_test_user(user2_address)
         .await
         .expect("Failed to create second user");
 
@@ -51,7 +53,8 @@ async fn test_market_operations() {
         .expect("Failed to setup test database");
 
     // Test creating a market
-    let market = create_test_market(&test_db.db, "BTC", "USD")
+    let market = test_db
+        .create_test_market("BTC", "USD")
         .await
         .expect("Failed to create market");
 
@@ -82,7 +85,8 @@ async fn test_candle_operations() {
         .expect("Failed to setup test database");
 
     // First create a market to associate candles with
-    let market = create_test_market(&test_db.db, "ETH", "USD")
+    let market = test_db
+        .create_test_market("ETH", "USD")
         .await
         .expect("Failed to create market");
 
@@ -92,32 +96,20 @@ async fn test_candle_operations() {
     let timestamp3 = DateTime::from_str("2023-01-01T02:00:00Z").unwrap();
 
     // Insert test candles (open, high, low, close, volume)
-    create_test_candle(
-        &test_db.db,
-        &market.id,
-        timestamp1,
-        (100, 110, 95, 105, 1000),
-    )
-    .await
-    .expect("Failed to create candle 1");
+    test_db
+        .create_test_candle(&market.id, timestamp1, (100, 110, 95, 105, 1000))
+        .await
+        .expect("Failed to create candle 1");
 
-    create_test_candle(
-        &test_db.db,
-        &market.id,
-        timestamp2,
-        (105, 120, 100, 115, 1500),
-    )
-    .await
-    .expect("Failed to create candle 2");
+    test_db
+        .create_test_candle(&market.id, timestamp2, (105, 120, 100, 115, 1500))
+        .await
+        .expect("Failed to create candle 2");
 
-    create_test_candle(
-        &test_db.db,
-        &market.id,
-        timestamp3,
-        (115, 125, 110, 120, 2000),
-    )
-    .await
-    .expect("Failed to create candle 3");
+    test_db
+        .create_test_candle(&market.id, timestamp3, (115, 125, 110, 120, 2000))
+        .await
+        .expect("Failed to create candle 3");
 
     // Test getting candles
     let start_time = DateTime::from_str("2023-01-01T00:00:00Z").unwrap();
@@ -130,6 +122,8 @@ async fn test_candle_operations() {
         .expect("Failed to get candles");
 
     assert_eq!(candles.len(), 3);
+
+    println!("candles: {:?}", candles);
 
     // Verify first candle
     assert_eq!(candles[0].market_id, market.id);
@@ -161,34 +155,28 @@ async fn test_multiple_markets_and_candles() {
         .expect("Failed to setup test database");
 
     // Create multiple markets
-    let btc_market = create_test_market(&test_db.db, "BTC", "USD")
+    let btc_market = test_db
+        .create_test_market("BTC", "USD")
         .await
         .expect("Failed to create BTC market");
 
-    let eth_market = create_test_market(&test_db.db, "ETH", "USD")
+    let eth_market = test_db
+        .create_test_market("ETH", "USD")
         .await
         .expect("Failed to create ETH market");
 
     let timestamp = DateTime::from_str("2023-01-01T00:00:00Z").unwrap();
 
     // Insert candles for both markets
-    create_test_candle(
-        &test_db.db,
-        &btc_market.id,
-        timestamp,
-        (50000, 51000, 49000, 50500, 100),
-    )
-    .await
-    .expect("Failed to create BTC candle");
+    test_db
+        .create_test_candle(&btc_market.id, timestamp, (50000, 51000, 49000, 50500, 100))
+        .await
+        .expect("Failed to create BTC candle");
 
-    create_test_candle(
-        &test_db.db,
-        &eth_market.id,
-        timestamp,
-        (3000, 3100, 2900, 3050, 500),
-    )
-    .await
-    .expect("Failed to create ETH candle");
+    test_db
+        .create_test_candle(&eth_market.id, timestamp, (3000, 3100, 2900, 3050, 500))
+        .await
+        .expect("Failed to create ETH candle");
 
     // Get candles for each market separately
     let start_time = DateTime::from_str("2023-01-01T00:00:00Z").unwrap();
@@ -234,11 +222,13 @@ async fn test_database_isolation() {
     assert_eq!(tokens.len(), 0, "Database should start empty");
 
     // Create some data
-    let _user = create_test_user(&test_db.db, "test_user")
+    let _user = test_db
+        .create_test_user("test_user")
         .await
         .expect("Failed to create user");
 
-    let market = create_test_market(&test_db.db, "SOL", "USD")
+    let market = test_db
+        .create_test_market("SOL", "USD")
         .await
         .expect("Failed to create market");
 

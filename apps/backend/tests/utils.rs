@@ -76,6 +76,7 @@ impl TestDb {
             .with_user("default")
             .with_database("exchange");
 
+        // ================================ Return database connections ================================
         let db = Db {
             postgres,
             clickhouse,
@@ -111,62 +112,68 @@ impl TestDb {
 
         Ok(())
     }
-}
 
-/// Helper function to create test user
-pub async fn create_test_user(
-    db: &Db,
-    address: &str,
-) -> anyhow::Result<backend::models::domain::User> {
-    db.create_user(address.to_string())
-        .await
-        .map_err(|e| anyhow::anyhow!("Failed to create test user: {}", e))
-}
+    /// Helper function to create test user
+    pub async fn create_test_user(
+        self: &TestDb,
+        address: &str,
+    ) -> anyhow::Result<backend::models::domain::User> {
+        self.db
+            .create_user(address.to_string())
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to create test user: {}", e))
+    }
 
-/// Helper function to create test token
-pub async fn create_test_token(
-    db: &Db,
-    ticker: &str,
-    decimals: u8,
-    name: &str,
-) -> anyhow::Result<backend::models::domain::Token> {
-    db.create_token(ticker.to_string(), decimals, name.to_string())
-        .await
-        .map_err(|e| anyhow::anyhow!("Failed to create test token: {}", e))
-}
+    /// Helper function to create test token
+    pub async fn create_test_token(
+        self: &TestDb,
+        ticker: &str,
+        decimals: u8,
+        name: &str,
+    ) -> anyhow::Result<backend::models::domain::Token> {
+        self.db
+            .create_token(ticker.to_string(), decimals, name.to_string())
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to create test token: {}", e))
+    }
 
-/// Helper function to create test market
-/// Automatically creates the base and quote tokens if they don't exist
-pub async fn create_test_market(
-    db: &Db,
-    base_ticker: &str,
-    quote_ticker: &str,
-) -> anyhow::Result<backend::models::domain::Market> {
-    // Create tokens first to satisfy foreign key constraints
-    create_test_token(db, base_ticker, 18, &format!("{} Token", base_ticker)).await?;
-    create_test_token(db, quote_ticker, 18, &format!("{} Token", quote_ticker)).await?;
+    /// Helper function to create test market
+    /// Automatically creates the base and quote tokens if they don't exist
+    pub async fn create_test_market(
+        self: &TestDb,
+        base_ticker: &str,
+        quote_ticker: &str,
+    ) -> anyhow::Result<backend::models::domain::Market> {
+        // Create tokens first to satisfy foreign key constraints
+        self.create_test_token(base_ticker, 18, &format!("{} Token", base_ticker))
+            .await?;
+        self.create_test_token(quote_ticker, 18, &format!("{} Token", quote_ticker))
+            .await?;
 
-    db.create_market(
-        base_ticker.to_string(),
-        quote_ticker.to_string(),
-        1000,    // tick_size
-        1000000, // lot_size
-        1000000, // min_size
-        10,      // maker_fee_bps
-        20,      // taker_fee_bps
-    )
-    .await
-    .map_err(|e| anyhow::anyhow!("Failed to create test market: {}", e))
-}
+        self.db
+            .create_market(
+                base_ticker.to_string(),
+                quote_ticker.to_string(),
+                1000,    // tick_size
+                1000000, // lot_size
+                1000000, // min_size
+                10,      // maker_fee_bps
+                20,      // taker_fee_bps
+            )
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to create test market: {}", e))
+    }
 
-/// Helper function to create test candle
-pub async fn create_test_candle(
-    db: &Db,
-    market_id: &str,
-    timestamp: chrono::DateTime<chrono::Utc>,
-    ohlcv: (u128, u128, u128, u128, u128), // (open, high, low, close, volume)
-) -> anyhow::Result<()> {
-    db.insert_candle(market_id.to_string(), timestamp, ohlcv)
-        .await
-        .map_err(|e| anyhow::anyhow!("Failed to create test candle: {}", e))
+    /// Helper function to create test candle
+    pub async fn create_test_candle(
+        self: &TestDb,
+        market_id: &str,
+        timestamp: chrono::DateTime<chrono::Utc>,
+        ohlcv: (u128, u128, u128, u128, u128), // (open, high, low, close, volume)
+    ) -> anyhow::Result<()> {
+        self.db
+            .insert_candle(market_id.to_string(), timestamp, ohlcv)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to create test candle: {}", e))
+    }
 }
