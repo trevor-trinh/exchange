@@ -4,14 +4,14 @@ use testcontainers::runners::AsyncRunner;
 use testcontainers_modules::{clickhouse::ClickHouse, postgres::Postgres};
 
 /// Test database container setup
+#[allow(dead_code)]
 pub struct TestDb {
     pub db: Db,
-    #[allow(dead_code)]
     postgres_container: testcontainers::ContainerAsync<Postgres>,
-    #[allow(dead_code)]
     clickhouse_container: testcontainers::ContainerAsync<ClickHouse>,
 }
 
+#[allow(dead_code)]
 impl TestDb {
     /// Set up test databases with containers
     pub async fn setup() -> anyhow::Result<Self> {
@@ -186,5 +186,70 @@ impl TestDb {
             .insert_candle(market_id.to_string(), timestamp, ohlcv)
             .await
             .map_err(|e| anyhow::anyhow!("Failed to create test candle: {}", e))
+    }
+}
+
+/// Test HTTP server for E2E API testing
+#[allow(dead_code)]
+pub struct TestServer {
+    pub address: String,
+    pub db: Db,
+    test_db: TestDb,
+    shutdown_tx: tokio::sync::oneshot::Sender<()>,
+}
+
+#[allow(dead_code)]
+impl TestServer {
+    /// Start a test HTTP server on a random available port
+    pub async fn start() -> anyhow::Result<Self> {
+        // main.rs that needs to get the url and connect to db
+        // instead, we can acess db handles directly! noice!
+        let test_db = TestDb::setup().await?;
+        let app = backend::api::rest::create_app(test_db.db.clone());
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to bind test server: {}", e))?;
+
+        let addr = listener
+            .local_addr()
+            .map_err(|e| anyhow::anyhow!("Failed to get local address: {}", e))?;
+
+        let address = format!("http://{}", addr);
+
+        // Create shutdown channel
+        let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
+
+        // Spawn server in background
+        tokio::spawn(async move {
+            axum::serve(listener, app)
+                .with_graceful_shutdown(async {
+                    shutdown_rx.await.ok();
+                })
+                .await
+                .expect("Server failed to start");
+        });
+
+        // Give server a moment to start
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+        Ok(Self {
+            address,
+            db: test_db.db.clone(),
+            test_db,
+            shutdown_tx,
+        })
+    }
+
+    /// Helper to make a GET request
+    pub async fn get(&self, path: &str) -> reqwest::Response {
+        reqwest::get(&format!("{}{}", self.address, path))
+            .await
+            .expect("Failed to make GET request")
+    }
+
+    /// Helper to get a reqwest client for more complex requests
+    pub fn client(&self) -> reqwest::Client {
+        reqwest::Client::new()
     }
 }

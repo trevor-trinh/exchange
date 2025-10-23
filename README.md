@@ -24,6 +24,7 @@ backend
 infra
 
 - [ ] railway testing?
+- [ ] test with testcontainers. then local fullstack. then railway
 
 devx
 

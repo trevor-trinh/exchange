@@ -30,5 +30,7 @@ utoipa-swagger-ui = { version = "9.0", features = ["axum"] }
 uuid = { version = "1.0", features = ["v4", "serde"] }
 
 [dev-dependencies]
+futures = "0.3"
+reqwest = { version = "0.12", features = ["json"] }
 testcontainers = "0.25.0"
 testcontainers-modules = { version = "0.13.0", features = ["clickhouse", "postgres"] }
