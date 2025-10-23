@@ -67,7 +67,9 @@ missing production
 - understand db <> domain <> api From and Into conversions
 - use u128 integers and keep everything in atoms
 - continue refining understanding of me and api layer architecture. consider socketio for ws.
--
+- consider hexagon architecture
+- opt for simpler impl rather than repository pattern
+- use sqlx prepare
 
 ### frontend dev
 
