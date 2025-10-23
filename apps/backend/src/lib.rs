@@ -7,6 +7,7 @@ pub mod api;
 pub mod db;
 pub mod engine;
 pub mod models;
+pub mod utils;
 
 use api::rest;
 use models::ApiResponse;

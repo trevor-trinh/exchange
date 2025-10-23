@@ -1,6 +1,15 @@
-// Database modules
+// Database connection modules
 pub mod ch;
 pub mod pg;
+
+// Entity modules
+// pub mod balances;
+// pub mod candles;
+pub mod markets;
+// pub mod orders;
+// pub mod tokens;
+// pub mod trades;
+pub mod users;
 
 // Re-export common types
 pub use clickhouse::Client;
