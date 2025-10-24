@@ -84,4 +84,29 @@ impl Db {
             taker_fee_bps: row.taker_fee_bps,
         })
     }
+
+    /// List all markets
+    pub async fn list_markets(&self) -> Result<Vec<Market>> {
+        let rows = sqlx::query_as!(
+            MarketRow,
+            "SELECT id, base_ticker, quote_ticker, tick_size, lot_size, min_size, maker_fee_bps, taker_fee_bps FROM markets ORDER BY id"
+        )
+        .fetch_all(&self.postgres)
+        .await
+        .map_err(ExchangeError::from)?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| Market {
+                id: row.id,
+                base_ticker: row.base_ticker,
+                quote_ticker: row.quote_ticker,
+                tick_size: row.tick_size.to_u128(),
+                lot_size: row.lot_size.to_u128(),
+                min_size: row.min_size.to_u128(),
+                maker_fee_bps: row.maker_fee_bps,
+                taker_fee_bps: row.taker_fee_bps,
+            })
+            .collect())
+    }
 }

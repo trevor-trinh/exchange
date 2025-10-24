@@ -4,14 +4,10 @@ use backend::api::rest;
 use backend::api::ws;
 use backend::db::Db;
 use backend::engine::MatchingEngine;
-use backend::models::domain::{EngineRequest, EngineResponse};
+use backend::models::domain::{EngineEvent, EngineRequest};
+use backend::AppState;
+use tokio::sync::{broadcast, mpsc};
 use tower_http::cors::CorsLayer;
-
-pub struct AppState {
-    db: Db,
-    engine_tx: mpsc::Sender<EngineRequest>,
-    event_tx: broadcast::Sender<EngineResponse>,
-}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -40,12 +36,12 @@ async fn main() -> anyhow::Result<()> {
     // Create engine channels
     // ===============================
     let (engine_tx, engine_rx) = mpsc::channel::<EngineRequest>(100);
-    let (event_tx, _) = broadcast::channel::<EngineResponse>(100); // use event_tx to create more listeners
+    let (event_tx, _) = broadcast::channel::<EngineEvent>(1000); // use event_tx to create more listeners
 
     // ===============================
     // Run matching engine
     // ===============================
-    let engine = MatchingEngine::new(db, engine_rx, event_tx);
+    let engine = MatchingEngine::new(db.clone(), engine_rx, event_tx.clone());
 
     tokio::spawn(async move {
         engine.run().await;

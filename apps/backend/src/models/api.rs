@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use uuid::Uuid;
 
-use super::domain::{Order, Trade};
+use super::domain::{Balance, Market, Order, OrderType, Side, Token, Trade};
 
 // ============================================================================
 // REST API TYPES
@@ -15,16 +14,143 @@ pub struct ApiResponse {
 }
 
 /// Response after successfully placing an order
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct OrderPlaced {
     pub order: Order,
     pub trades: Vec<Trade>,
 }
 
 /// Response after successfully cancelling an order
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct OrderCancelled {
-    pub order_id: Uuid,
+    pub order_id: String, // UUID as string for OpenAPI compatibility
+}
+
+// ============================================================================
+// INFO API TYPES
+// ============================================================================
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct TokenInfoRequest {
+    pub ticker: String,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct MarketInfoRequest {
+    pub market_id: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct TokenInfoResponse {
+    pub token: Token,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct MarketInfoResponse {
+    pub market: Market,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AllTokensResponse {
+    pub tokens: Vec<Token>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AllMarketsResponse {
+    pub markets: Vec<Market>,
+}
+
+// ============================================================================
+// USER API TYPES
+// ============================================================================
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UserOrdersRequest {
+    pub user_address: String,
+    pub market_id: Option<String>,
+    pub status: Option<String>,
+    pub limit: Option<u32>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UserBalancesRequest {
+    pub user_address: String,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UserTradesRequest {
+    pub user_address: String,
+    pub market_id: Option<String>,
+    pub limit: Option<u32>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct UserOrdersResponse {
+    pub orders: Vec<Order>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct UserBalancesResponse {
+    pub balances: Vec<Balance>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct UserTradesResponse {
+    pub trades: Vec<Trade>,
+}
+
+// ============================================================================
+// TRADE API TYPES
+// ============================================================================
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct PlaceOrderRequest {
+    pub user_address: String,
+    pub market_id: String,
+    pub side: Side,
+    pub order_type: OrderType,
+    pub price: String, // u128 as string
+    pub size: String,  // u128 as string
+    pub signature: String, // Cryptographic signature for authentication
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CancelOrderRequest {
+    pub user_address: String,
+    pub order_id: String, // UUID as string
+    pub signature: String, // Cryptographic signature for authentication
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct TradeErrorResponse {
+    pub error: String,
+    pub code: String,
+}
+
+// ============================================================================
+// DRIP API TYPES
+// ============================================================================
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct DripTokensRequest {
+    pub user_address: String,
+    pub token_ticker: String,
+    pub amount: String, // u128 as string
+    pub signature: String, // Cryptographic signature for authentication
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct DripTokensResponse {
+    pub user_address: String,
+    pub token_ticker: String,
+    pub amount: String,
+    pub new_balance: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct DripErrorResponse {
+    pub error: String,
+    pub code: String,
 }
 
 // ============================================================================

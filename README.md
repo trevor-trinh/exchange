@@ -84,6 +84,9 @@ decide on structure, schema, and write e2e tests fast so iterate fast. stub out 
 - add db/app state to axum.
 - add e2e api tests.
 - setup ws api axum
+- scaffold matching engine parts and their state, and api state
+- use oneshot pattern for engine rest responses
+- implement api endpoints and their db interactions
 
 ### frontend dev
 

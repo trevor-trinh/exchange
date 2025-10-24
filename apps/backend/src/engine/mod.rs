@@ -6,7 +6,7 @@ pub mod matcher;
 pub mod orderbook;
 
 use crate::db::Db;
-use crate::models::domain::{EngineRequest, EngineResponse};
+use crate::models::domain::{EngineEvent, EngineRequest};
 use executor::Executor;
 use matcher::Matcher;
 use orderbook::Orderbooks;
@@ -20,14 +20,14 @@ pub struct MatchingEngine {
     executor: Executor,
 
     engine_rx: mpsc::Receiver<EngineRequest>,
-    response_tx: broadcast::Sender<EngineResponse>,
+    event_tx: broadcast::Sender<EngineEvent>,
 }
 
 impl MatchingEngine {
     pub fn new(
         db: Db,
         engine_rx: mpsc::Receiver<EngineRequest>,
-        response_tx: broadcast::Sender<EngineResponse>,
+        event_tx: broadcast::Sender<EngineEvent>,
     ) -> Self {
         Self {
             db: db.clone(),
@@ -35,7 +35,7 @@ impl MatchingEngine {
             matcher: Matcher::new(),
             executor: Executor::new(db),
             engine_rx,
-            response_tx,
+            event_tx,
         }
     }
 

@@ -1,6 +1,7 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::db::Db;
 use crate::models::domain::Trade;
 
 // TODO: Implement trade operations

@@ -1,13 +1,29 @@
-use sqlx::PgPool;
+use crate::db::Db;
+use crate::errors::{ExchangeError, Result};
+use crate::models::domain::{Balance, Order, OrderStatus, Trade};
 use uuid::Uuid;
 
-use crate::models::domain::{Order, OrderStatus};
+impl Db {
+    pub async fn create_order(&self, order: Order) -> Result<Order> {
+        todo!()
+    }
 
-// TODO: Implement order operations
-// - create_order(pool: &PgPool, ...) -> Result<Order, sqlx::Error>
-// - get_order(pool: &PgPool, id: Uuid) -> Result<Order, sqlx::Error>
-// - list_orders_by_user(pool: &PgPool, user_address: &str) -> Result<Vec<Order>, sqlx::Error>
-// - list_orders_by_market(pool: &PgPool, market_id: &str) -> Result<Vec<Order>, sqlx::Error>
-// - list_orders_by_status(pool: &PgPool, status: OrderStatus) -> Result<Vec<Order>, sqlx::Error>
-// - update_order_status(pool: &PgPool, id: Uuid, status: OrderStatus, filled_size: u128) -> Result<Order, sqlx::Error>
-// - cancel_order(pool: &PgPool, id: Uuid) -> Result<Order, sqlx::Error>
+    pub async fn get_order(&self, _order_id: &Uuid) -> Result<Order> {
+        todo!()
+    }
+
+    pub async fn cancel_order(&self, _order_id: &Uuid) -> Result<()> {
+        todo!()
+    }
+
+    pub async fn get_user_orders(
+        &self,
+        _user_address: &str,
+        _market_id: Option<&str>,
+        _status: Option<OrderStatus>,
+        _limit: u32,
+    ) -> Result<Vec<Order>> {
+        // TODO: Implement user orders retrieval
+        Ok(vec![])
+    }
+}
