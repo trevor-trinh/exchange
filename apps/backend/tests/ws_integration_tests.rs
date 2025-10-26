@@ -7,13 +7,13 @@ use tokio::time::{timeout, Duration};
 use tokio_tungstenite::tungstenite::Message;
 use utils::TestServer;
 
+// Type alias for WebSocket stream to reduce verbosity
+type WsStream = tokio_tungstenite::WebSocketStream<
+    tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
+>;
+
 /// Helper to send a JSON message to WebSocket
-async fn send_json<T: serde::Serialize>(
-    ws: &mut tokio_tungstenite::WebSocketStream<
-        tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
-    >,
-    msg: &T,
-) -> anyhow::Result<()> {
+async fn send_json<T: serde::Serialize>(ws: &mut WsStream, msg: &T) -> anyhow::Result<()> {
     let json = serde_json::to_string(msg)?;
     ws.send(Message::Text(json.into())).await?;
     Ok(())
@@ -29,7 +29,11 @@ async fn test_ws_connection_establishes() {
         .await
         .expect("Failed to start test server");
 
-    let mut ws = server.connect_ws().await.expect("Failed to connect to WS");
+    // Connect using raw tokio-tungstenite
+    let ws_url = server.ws_url("/ws");
+    let (mut ws, _response) = tokio_tungstenite::connect_async(&ws_url)
+        .await
+        .expect("Failed to connect to WebSocket");
 
     // Send a ping to verify connection is alive
     send_json(&mut ws, &ClientMessage::Ping)
@@ -46,7 +50,10 @@ async fn test_ws_connection_close_gracefully() {
         .await
         .expect("Failed to start test server");
 
-    let mut ws = server.connect_ws().await.expect("Failed to connect to WS");
+    let ws_url = server.ws_url("/ws");
+    let (mut ws, _) = tokio_tungstenite::connect_async(&ws_url)
+        .await
+        .expect("Failed to connect to WebSocket");
 
     // Close connection
     ws.close(None).await.expect("Failed to close connection");
@@ -65,7 +72,10 @@ async fn test_ws_multiple_concurrent_connections() {
     // Create multiple WebSocket connections
     let mut connections = Vec::new();
     for _ in 0..5 {
-        let ws = server.connect_ws().await.expect("Failed to connect to WS");
+        let ws_url = server.ws_url("/ws");
+        let (ws, _) = tokio_tungstenite::connect_async(&ws_url)
+            .await
+            .expect("Failed to connect to WebSocket");
         connections.push(ws);
     }
 
@@ -99,7 +109,10 @@ async fn test_ws_subscribe_to_trades() {
         .await
         .expect("Failed to create test market");
 
-    let mut ws = server.connect_ws().await.expect("Failed to connect to WS");
+    let ws_url = server.ws_url("/ws");
+    let (mut ws, _) = tokio_tungstenite::connect_async(&ws_url)
+        .await
+        .expect("Failed to connect to WebSocket");
 
     // Subscribe to trades for BTC/USD
     let subscribe_msg = ClientMessage::Subscribe {
@@ -131,7 +144,10 @@ async fn test_ws_subscribe_to_orderbook() {
         .await
         .expect("Failed to create test market");
 
-    let mut ws = server.connect_ws().await.expect("Failed to connect to WS");
+    let ws_url = server.ws_url("/ws");
+    let (mut ws, _) = tokio_tungstenite::connect_async(&ws_url)
+        .await
+        .expect("Failed to connect to WebSocket");
 
     // Subscribe to orderbook for ETH/USD
     let subscribe_msg = ClientMessage::Subscribe {
@@ -153,7 +169,10 @@ async fn test_ws_subscribe_to_user_updates() {
         .await
         .expect("Failed to start test server");
 
-    let mut ws = server.connect_ws().await.expect("Failed to connect to WS");
+    let ws_url = server.ws_url("/ws");
+    let (mut ws, _) = tokio_tungstenite::connect_async(&ws_url)
+        .await
+        .expect("Failed to connect to WebSocket");
 
     // Subscribe to user updates
     let subscribe_msg = ClientMessage::Subscribe {
@@ -182,7 +201,10 @@ async fn test_ws_unsubscribe_from_channel() {
         .await
         .expect("Failed to create test market");
 
-    let mut ws = server.connect_ws().await.expect("Failed to connect to WS");
+    let ws_url = server.ws_url("/ws");
+    let (mut ws, _) = tokio_tungstenite::connect_async(&ws_url)
+        .await
+        .expect("Failed to connect to WebSocket");
 
     // Subscribe first
     let subscribe_msg = ClientMessage::Subscribe {
@@ -224,7 +246,10 @@ async fn test_ws_multiple_subscriptions_same_connection() {
         .await
         .expect("Failed to create ETH/USD market");
 
-    let mut ws = server.connect_ws().await.expect("Failed to connect to WS");
+    let ws_url = server.ws_url("/ws");
+    let (mut ws, _) = tokio_tungstenite::connect_async(&ws_url)
+        .await
+        .expect("Failed to connect to WebSocket");
 
     // Subscribe to multiple channels
     let subscriptions = vec![
@@ -271,7 +296,10 @@ async fn test_ws_server_sends_pings() {
         .await
         .expect("Failed to start test server");
 
-    let mut ws = server.connect_ws().await.expect("Failed to connect to WS");
+    let ws_url = server.ws_url("/ws");
+    let (mut ws, _) = tokio_tungstenite::connect_async(&ws_url)
+        .await
+        .expect("Failed to connect to WebSocket");
 
     // Wait for server ping (happens every 30 seconds, but we'll wait up to 35 seconds)
     let result = timeout(Duration::from_secs(35), async {
@@ -321,7 +349,10 @@ async fn test_ws_client_can_send_application_ping() {
         .await
         .expect("Failed to start test server");
 
-    let mut ws = server.connect_ws().await.expect("Failed to connect to WS");
+    let ws_url = server.ws_url("/ws");
+    let (mut ws, _) = tokio_tungstenite::connect_async(&ws_url)
+        .await
+        .expect("Failed to connect to WebSocket");
 
     // Send application-level ping
     send_json(&mut ws, &ClientMessage::Ping)
@@ -344,7 +375,10 @@ async fn test_ws_handles_invalid_json() {
         .await
         .expect("Failed to start test server");
 
-    let mut ws = server.connect_ws().await.expect("Failed to connect to WS");
+    let ws_url = server.ws_url("/ws");
+    let (mut ws, _) = tokio_tungstenite::connect_async(&ws_url)
+        .await
+        .expect("Failed to connect to WebSocket");
 
     // Send invalid JSON
     ws.send(Message::Text("{invalid json}".to_string().into()))
@@ -366,7 +400,10 @@ async fn test_ws_handles_unknown_message_type() {
         .await
         .expect("Failed to start test server");
 
-    let mut ws = server.connect_ws().await.expect("Failed to connect to WS");
+    let ws_url = server.ws_url("/ws");
+    let (mut ws, _) = tokio_tungstenite::connect_async(&ws_url)
+        .await
+        .expect("Failed to connect to WebSocket");
 
     // Send message with unknown type
     let invalid_msg = json!({
@@ -403,7 +440,10 @@ async fn test_ws_rapid_subscribe_unsubscribe() {
         .await
         .expect("Failed to create test market");
 
-    let mut ws = server.connect_ws().await.expect("Failed to connect to WS");
+    let ws_url = server.ws_url("/ws");
+    let (mut ws, _) = tokio_tungstenite::connect_async(&ws_url)
+        .await
+        .expect("Failed to connect to WebSocket");
 
     // Rapidly subscribe and unsubscribe
     for _ in 0..10 {

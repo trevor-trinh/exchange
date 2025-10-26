@@ -270,51 +270,37 @@ impl TestServer {
     }
 
     // ============================================================================
+    // URL Builders - Use these with raw reqwest/tokio-tungstenite in tests
+    // ============================================================================
+
+    /// Build full HTTP URL for a path
+    ///
+    /// # Example
+    /// ```
+    /// let url = server.url("/api/health");
+    /// let response = reqwest::get(&url).await?;
+    /// ```
+    pub fn url(&self, path: &str) -> String {
+        format!("{}{}", self.address, path)
+    }
+
+    /// Build WebSocket URL for a path
+    ///
+    /// # Example
+    /// ```
+    /// let ws_url = server.ws_url("/ws");
+    /// let (ws, _) = tokio_tungstenite::connect_async(&ws_url).await?;
+    /// ```
+    pub fn ws_url(&self, path: &str) -> String {
+        format!("{}{}", self.address.replace("http://", "ws://"), path)
+    }
+
+    // ============================================================================
     // Database Access
     // ============================================================================
 
-    /// Get reference to database connection
+    /// Get reference to database connection for direct DB operations in tests
     pub fn db(&self) -> &Db {
         &self.test_db.db
-    }
-
-    // ============================================================================
-    // HTTP Helpers
-    // ============================================================================
-
-    /// Make a GET request to the test server
-    pub async fn get(&self, path: &str) -> reqwest::Response {
-        reqwest::get(&format!("{}{}", self.address, path))
-            .await
-            .expect("Failed to make GET request")
-    }
-
-    /// Get a reqwest client for more complex HTTP requests
-    pub fn client(&self) -> reqwest::Client {
-        reqwest::Client::new()
-    }
-
-    // ============================================================================
-    // WebSocket Helpers
-    // ============================================================================
-
-    /// Get WebSocket URL for the test server
-    pub fn ws_url(&self) -> String {
-        self.address.replace("http://", "ws://")
-    }
-
-    /// Connect to the WebSocket endpoint
-    pub async fn connect_ws(
-        &self,
-    ) -> anyhow::Result<
-        tokio_tungstenite::WebSocketStream<
-            tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
-        >,
-    > {
-        let url = format!("{}/ws", self.ws_url());
-        let (ws_stream, _) = tokio_tungstenite::connect_async(&url)
-            .await
-            .map_err(|e| anyhow::anyhow!("Failed to connect to WebSocket: {}", e))?;
-        Ok(ws_stream)
     }
 }

@@ -9,8 +9,9 @@ async fn test_health_endpoint_e2e() {
         .await
         .expect("Failed to start test server");
 
-    // Make real HTTP GET request
-    let response = server.get("/api/health").await;
+    // Make real HTTP GET request using raw reqwest
+    let url = server.url("/api/health");
+    let response = reqwest::get(&url).await.expect("Failed to make request");
 
     assert_eq!(response.status(), 200);
 
@@ -25,7 +26,8 @@ async fn test_health_endpoint_content_type() {
         .await
         .expect("Failed to start test server");
 
-    let response = server.get("/api/health").await;
+    let url = server.url("/api/health");
+    let response = reqwest::get(&url).await.expect("Failed to make request");
 
     assert_eq!(response.status(), 200);
 
@@ -46,7 +48,8 @@ async fn test_openapi_endpoint_e2e() {
         .await
         .expect("Failed to start test server");
 
-    let response = server.get("/api/openapi.json").await;
+    let url = server.url("/api/openapi.json");
+    let response = reqwest::get(&url).await.expect("Failed to make request");
 
     assert_eq!(response.status(), 200);
 
@@ -67,7 +70,8 @@ async fn test_swagger_ui_endpoint_e2e() {
         .await
         .expect("Failed to start test server");
 
-    let response = server.get("/api/docs").await;
+    let url = server.url("/api/docs");
+    let response = reqwest::get(&url).await.expect("Failed to make request");
 
     // Swagger UI should return 200 or redirect (depending on trailing slash)
     assert!(
@@ -83,7 +87,8 @@ async fn test_404_not_found_e2e() {
         .await
         .expect("Failed to start test server");
 
-    let response = server.get("/nonexistent/path").await;
+    let url = server.url("/nonexistent/path");
+    let response = reqwest::get(&url).await.expect("Failed to make request");
 
     assert_eq!(response.status(), 404);
 }
@@ -94,9 +99,11 @@ async fn test_cors_headers_present() {
         .await
         .expect("Failed to start test server");
 
-    let client = server.client();
+    // Use raw reqwest Client to send custom headers
+    let client = reqwest::Client::new();
+    let url = server.url("/api/health");
     let response = client
-        .get(&format!("{}/api/health", server.address))
+        .get(&url)
         .header("Origin", "http://localhost:3000")
         .send()
         .await
@@ -117,11 +124,12 @@ async fn test_concurrent_requests() {
         .expect("Failed to start test server");
 
     // Make multiple concurrent requests to verify server handles concurrency
+    let url = server.url("/api/health");
     let tasks: Vec<_> = (0..10)
         .map(|_| {
-            let addr = server.address.clone();
+            let url = url.clone();
             tokio::spawn(async move {
-                reqwest::get(&format!("{}/api/health", addr))
+                reqwest::get(&url)
                     .await
                     .expect("Request failed")
                     .status()
