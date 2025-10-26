@@ -171,7 +171,7 @@ pub struct DripErrorResponse {
 // WEBSOCKET MESSAGE TYPES (Client → Server)
 // ============================================================================
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum ClientMessage {
     Subscribe {
@@ -190,7 +190,7 @@ pub enum ClientMessage {
 // WEBSOCKET MESSAGE TYPES (Server → Client)
 // ============================================================================
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum ServerMessage {
     Subscribed {
@@ -238,7 +238,7 @@ pub enum ServerMessage {
     Pong,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PriceLevel {
     pub price: String,
     pub size: String,

@@ -87,6 +87,9 @@ decide on structure, schema, and write e2e tests fast so iterate fast. stub out 
 - scaffold matching engine parts and their state, and api state
 - use oneshot pattern for engine rest responses
 - implement api endpoints and their db interactions
+- hookup ws api to spawn two tasks to handle incoming and outgoing messages
+- use tokio tungstenite for ws e2e testing
+- add ws integration tests and improve utils
 
 ### frontend dev
 

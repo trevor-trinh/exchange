@@ -146,13 +146,17 @@ async fn test_database_accessible_from_api() {
 
     // Setup: Create a user directly via database
     server
-        .db
+        .db()
         .create_user("test_user_address".to_string())
         .await
         .expect("Failed to create test user");
 
     // Verify we can query the database that the API is using
-    let users = server.db.list_users().await.expect("Failed to list users");
+    let users = server
+        .db()
+        .list_users()
+        .await
+        .expect("Failed to list users");
 
     assert_eq!(users.len(), 1);
     assert_eq!(users[0].address, "test_user_address");
