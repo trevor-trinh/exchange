@@ -3,6 +3,15 @@ use clickhouse::Client;
 use testcontainers::runners::AsyncRunner;
 use testcontainers_modules::{clickhouse::ClickHouse, postgres::Postgres};
 
+use axum::Router;
+use backend::api::rest;
+use backend::api::ws;
+use backend::engine::MatchingEngine;
+use backend::models::domain::{EngineEvent, EngineRequest};
+use backend::AppState;
+use tokio::sync::{broadcast, mpsc};
+use tower_http::cors::CorsLayer;
+
 /// Test database container setup
 #[allow(dead_code)]
 pub struct TestDb {
@@ -189,7 +198,6 @@ impl TestDb {
     }
 }
 
-/// Test HTTP server for E2E API testing
 #[allow(dead_code)]
 pub struct TestServer {
     pub address: String,
@@ -205,8 +213,28 @@ impl TestServer {
         // main.rs that needs to get the url and connect to db
         // instead, we can acess db handles directly! noice!
         let test_db = TestDb::setup().await?;
-        let app = backend::api::rest::create_app(test_db.db.clone());
 
+        // setup matching engine & api
+        // exact same logic as main.rs
+        let (engine_tx, engine_rx) = mpsc::channel::<EngineRequest>(100);
+        let (event_tx, _) = broadcast::channel::<EngineEvent>(1000);
+        let engine = MatchingEngine::new(test_db.db.clone(), engine_rx, event_tx.clone());
+        tokio::spawn(async move {
+            engine.run().await;
+        });
+
+        let rest = rest::create_rest();
+        let ws = ws::create_ws();
+        let state = AppState {
+            db: test_db.db.clone(),
+            engine_tx,
+            event_tx,
+        };
+        let app = Router::new()
+            .merge(rest)
+            .merge(ws)
+            .with_state(state)
+            .layer(CorsLayer::permissive());
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to bind test server: {}", e))?;
@@ -221,6 +249,8 @@ impl TestServer {
         let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
 
         // Spawn server in background
+        // in main.rs we spawn on main thread instead
+        // here is because we need main thread to run tests
         tokio::spawn(async move {
             axum::serve(listener, app)
                 .with_graceful_shutdown(async {
