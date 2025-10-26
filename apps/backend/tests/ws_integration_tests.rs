@@ -1,6 +1,6 @@
 mod utils;
 
-use backend::models::api::ClientMessage;
+use backend::models::api::{ClientMessage, SubscriptionChannel};
 use futures::{SinkExt, StreamExt};
 use serde_json::json;
 use tokio::time::{timeout, Duration};
@@ -8,9 +8,8 @@ use tokio_tungstenite::tungstenite::Message;
 use utils::TestServer;
 
 // Type alias for WebSocket stream to reduce verbosity
-type WsStream = tokio_tungstenite::WebSocketStream<
-    tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
->;
+type WsStream =
+    tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>;
 
 /// Helper to send a JSON message to WebSocket
 async fn send_json<T: serde::Serialize>(ws: &mut WsStream, msg: &T) -> anyhow::Result<()> {
@@ -116,7 +115,7 @@ async fn test_ws_subscribe_to_trades() {
 
     // Subscribe to trades for BTC/USD
     let subscribe_msg = ClientMessage::Subscribe {
-        channel: "trades".to_string(),
+        channel: SubscriptionChannel::Trades,
         market_id: Some("BTC/USD".to_string()),
         user_address: None,
     };
@@ -151,7 +150,7 @@ async fn test_ws_subscribe_to_orderbook() {
 
     // Subscribe to orderbook for ETH/USD
     let subscribe_msg = ClientMessage::Subscribe {
-        channel: "orderbook".to_string(),
+        channel: SubscriptionChannel::Orderbook,
         market_id: Some("ETH/USD".to_string()),
         user_address: None,
     };
@@ -176,7 +175,7 @@ async fn test_ws_subscribe_to_user_updates() {
 
     // Subscribe to user updates
     let subscribe_msg = ClientMessage::Subscribe {
-        channel: "user".to_string(),
+        channel: SubscriptionChannel::User,
         market_id: None,
         user_address: Some("0x1234567890abcdef".to_string()),
     };
@@ -208,7 +207,7 @@ async fn test_ws_unsubscribe_from_channel() {
 
     // Subscribe first
     let subscribe_msg = ClientMessage::Subscribe {
-        channel: "trades".to_string(),
+        channel: SubscriptionChannel::Trades,
         market_id: Some("BTC/USD".to_string()),
         user_address: None,
     };
@@ -218,8 +217,9 @@ async fn test_ws_unsubscribe_from_channel() {
 
     // Then unsubscribe
     let unsubscribe_msg = ClientMessage::Unsubscribe {
-        channel: "trades".to_string(),
+        channel: SubscriptionChannel::Trades,
         market_id: Some("BTC/USD".to_string()),
+        user_address: None,
     };
     send_json(&mut ws, &unsubscribe_msg)
         .await
@@ -254,17 +254,17 @@ async fn test_ws_multiple_subscriptions_same_connection() {
     // Subscribe to multiple channels
     let subscriptions = vec![
         ClientMessage::Subscribe {
-            channel: "trades".to_string(),
+            channel: SubscriptionChannel::Trades,
             market_id: Some("BTC/USD".to_string()),
             user_address: None,
         },
         ClientMessage::Subscribe {
-            channel: "orderbook".to_string(),
+            channel: SubscriptionChannel::Orderbook,
             market_id: Some("ETH/USD".to_string()),
             user_address: None,
         },
         ClientMessage::Subscribe {
-            channel: "user".to_string(),
+            channel: SubscriptionChannel::User,
             market_id: None,
             user_address: Some("0xuser123".to_string()),
         },
@@ -448,7 +448,7 @@ async fn test_ws_rapid_subscribe_unsubscribe() {
     // Rapidly subscribe and unsubscribe
     for _ in 0..10 {
         let subscribe_msg = ClientMessage::Subscribe {
-            channel: "trades".to_string(),
+            channel: SubscriptionChannel::Trades,
             market_id: Some("BTC/USD".to_string()),
             user_address: None,
         };
@@ -457,8 +457,9 @@ async fn test_ws_rapid_subscribe_unsubscribe() {
             .expect("Failed to send subscribe");
 
         let unsubscribe_msg = ClientMessage::Unsubscribe {
-            channel: "trades".to_string(),
+            channel: SubscriptionChannel::Trades,
             market_id: Some("BTC/USD".to_string()),
+            user_address: None,
         };
         send_json(&mut ws, &unsubscribe_msg)
             .await

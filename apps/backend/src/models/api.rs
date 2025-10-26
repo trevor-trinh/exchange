@@ -172,35 +172,58 @@ pub struct DripErrorResponse {
 // ============================================================================
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum ClientMessage {
     Subscribe {
-        channel: String, // "trades", "orderbook", "candles", "user"
+        channel: SubscriptionChannel,
+        #[serde(skip_serializing_if = "Option::is_none")]
         market_id: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
         user_address: Option<String>,
     },
     Unsubscribe {
-        channel: String,
+        channel: SubscriptionChannel,
+        #[serde(skip_serializing_if = "Option::is_none")]
         market_id: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        user_address: Option<String>,
     },
     Ping,
+}
+
+/// Channel types for WebSocket subscriptions
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "snake_case")]
+pub enum SubscriptionChannel {
+    Trades,
+    Orderbook,
+    User,
 }
 
 // ============================================================================
 // WEBSOCKET MESSAGE TYPES (Server → Client)
 // ============================================================================
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[derive(Debug, Serialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum ServerMessage {
+    // Subscription acknowledgments
     Subscribed {
-        channel: String,
+        channel: SubscriptionChannel,
+        #[serde(skip_serializing_if = "Option::is_none")]
         market_id: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        user_address: Option<String>,
     },
     Unsubscribed {
-        channel: String,
+        channel: SubscriptionChannel,
+        #[serde(skip_serializing_if = "Option::is_none")]
         market_id: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        user_address: Option<String>,
     },
+
+    // Real-time data updates
     Trade {
         market_id: String,
         price: String,
@@ -232,6 +255,8 @@ pub enum ServerMessage {
         close: String,
         volume: String,
     },
+
+    // Connection management
     Error {
         message: String,
     },
@@ -242,33 +267,4 @@ pub enum ServerMessage {
 pub struct PriceLevel {
     pub price: String,
     pub size: String,
-}
-
-// ============================================================================
-// SUBSCRIPTION TYPES
-// ============================================================================
-
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub enum Subscription {
-    Trades { market_id: String },
-    Orderbook { market_id: String },
-    Candles { market_id: String },
-    User { user_address: String },
-}
-
-impl Subscription {
-    /// Create a subscription from a channel name and optional identifiers
-    pub fn from_channel(
-        channel: &str,
-        market_id: Option<String>,
-        user_address: Option<String>,
-    ) -> Option<Self> {
-        match channel {
-            "trades" => market_id.map(|id| Subscription::Trades { market_id: id }),
-            "orderbook" => market_id.map(|id| Subscription::Orderbook { market_id: id }),
-            "candles" => market_id.map(|id| Subscription::Candles { market_id: id }),
-            "user" => user_address.map(|addr| Subscription::User { user_address: addr }),
-            _ => None,
-        }
-    }
 }

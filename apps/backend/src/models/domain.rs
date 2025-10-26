@@ -243,3 +243,49 @@ pub enum EngineEvent {
         locked: u128,
     },
 }
+
+// ============================================================================
+// SUBSCRIPTION TYPES
+// ============================================================================
+
+/// Represents what real-time data a WebSocket client wants to receive
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub enum Subscription {
+    Trades { market_id: String },
+    Orderbook { market_id: String },
+    Candles { market_id: String },
+    User { user_address: String },
+}
+
+impl Subscription {
+    /// Convert a client message to a domain subscription
+    pub fn from_message(msg: &crate::models::api::ClientMessage) -> Option<Self> {
+        use crate::models::api::{ClientMessage, SubscriptionChannel};
+
+        match msg {
+            ClientMessage::Subscribe {
+                channel,
+                market_id,
+                user_address,
+            }
+            | ClientMessage::Unsubscribe {
+                channel,
+                market_id,
+                user_address,
+            } => match channel {
+                SubscriptionChannel::Trades => market_id.as_ref().map(|id| Subscription::Trades {
+                    market_id: id.clone(),
+                }),
+                SubscriptionChannel::Orderbook => {
+                    market_id.as_ref().map(|id| Subscription::Orderbook {
+                        market_id: id.clone(),
+                    })
+                }
+                SubscriptionChannel::User => user_address.as_ref().map(|addr| Subscription::User {
+                    user_address: addr.clone(),
+                }),
+            },
+            ClientMessage::Ping => None,
+        }
+    }
+}

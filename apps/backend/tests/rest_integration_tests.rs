@@ -128,12 +128,7 @@ async fn test_concurrent_requests() {
     let tasks: Vec<_> = (0..10)
         .map(|_| {
             let url = url.clone();
-            tokio::spawn(async move {
-                reqwest::get(&url)
-                    .await
-                    .expect("Request failed")
-                    .status()
-            })
+            tokio::spawn(async move { reqwest::get(&url).await.expect("Request failed").status() })
         })
         .collect();
 
