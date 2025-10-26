@@ -200,6 +200,26 @@ pub struct Match {
 }
 
 // ============================================================================
+// ORDERBOOK TYPES
+// ============================================================================
+
+/// Represents a price level in the orderbook
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OrderbookLevel {
+    pub price: u128,
+    pub size: u128,
+}
+
+/// Snapshot of an orderbook at a point in time
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OrderbookSnapshot {
+    pub market_id: String,
+    pub bids: Vec<OrderbookLevel>, // Sorted by price descending (highest first)
+    pub asks: Vec<OrderbookLevel>, // Sorted by price ascending (lowest first)
+    pub timestamp: DateTime<Utc>,
+}
+
+// ============================================================================
 // ENGINE REQUEST/RESPONSE TYPES
 // ============================================================================
 
@@ -231,16 +251,14 @@ pub enum EngineEvent {
         order_id: Uuid,
         user_address: String,
     },
-    OrderbookChanged {
-        market_id: String,
-        bids: Vec<(u128, u128)>, // (price, total_size)
-        asks: Vec<(u128, u128)>,
-    },
     BalanceUpdated {
         user_address: String,
         token_ticker: String,
         available: u128,
         locked: u128,
+    },
+    OrderbookSnapshot {
+        orderbook: OrderbookSnapshot,
     },
 }
 

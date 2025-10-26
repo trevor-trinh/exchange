@@ -71,14 +71,14 @@ impl SubscriptionSet {
                     user_address: user_address.clone(),
                 })
             }
-            EngineEvent::OrderbookChanged { market_id, .. } => {
-                self.subs.contains(&Subscription::Orderbook {
-                    market_id: market_id.clone(),
-                })
-            }
             EngineEvent::BalanceUpdated { user_address, .. } => {
                 self.subs.contains(&Subscription::User {
                     user_address: user_address.clone(),
+                })
+            }
+            EngineEvent::OrderbookSnapshot { orderbook } => {
+                self.subs.contains(&Subscription::Orderbook {
+                    market_id: orderbook.market_id.clone(),
                 })
             }
         }

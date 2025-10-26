@@ -83,13 +83,14 @@ decide on structure, schema, and write e2e tests fast so iterate fast. stub out 
 - add error handling, thiserror and anyhow. learning about Result/Error/unwrap_or_else. use from macro.
 - add db/app state to axum.
 - add e2e api tests.
-- setup ws api axum
+- setup ws api axum. naieve implemetnation. incoming/outgoing tasks, shared state, subscriptions is a set and filter braodcasted events through the set before sending.
 - scaffold matching engine parts and their state, and api state
 - use oneshot pattern for engine rest responses
 - implement api endpoints and their db interactions
 - hookup ws api to spawn two tasks to handle incoming and outgoing messages
 - use tokio tungstenite for ws e2e testing
 - add ws integration tests and improve utils
+- consider orderbook snapshot emission from engine task
 
 ### frontend dev
 

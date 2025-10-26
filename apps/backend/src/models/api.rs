@@ -231,7 +231,7 @@ pub enum ServerMessage {
         side: String,
         timestamp: i64,
     },
-    OrderbookUpdate {
+    OrderbookSnapshot {
         market_id: String,
         bids: Vec<PriceLevel>,
         asks: Vec<PriceLevel>,

@@ -100,27 +100,6 @@ fn engine_event_to_message(event: EngineEvent) -> ServerMessage {
             status: "cancelled".to_string(),
             filled_size: "0".to_string(),
         },
-        EngineEvent::OrderbookChanged {
-            market_id,
-            bids,
-            asks,
-        } => ServerMessage::OrderbookUpdate {
-            market_id,
-            bids: bids
-                .into_iter()
-                .map(|(price, size)| PriceLevel {
-                    price: price.to_string(),
-                    size: size.to_string(),
-                })
-                .collect(),
-            asks: asks
-                .into_iter()
-                .map(|(price, size)| PriceLevel {
-                    price: price.to_string(),
-                    size: size.to_string(),
-                })
-                .collect(),
-        },
         EngineEvent::BalanceUpdated {
             token_ticker,
             available,
@@ -130,6 +109,25 @@ fn engine_event_to_message(event: EngineEvent) -> ServerMessage {
             token_ticker,
             available: available.to_string(),
             locked: locked.to_string(),
+        },
+        EngineEvent::OrderbookSnapshot { orderbook } => ServerMessage::OrderbookSnapshot {
+            market_id: orderbook.market_id,
+            bids: orderbook
+                .bids
+                .into_iter()
+                .map(|level| PriceLevel {
+                    price: level.price.to_string(),
+                    size: level.size.to_string(),
+                })
+                .collect(),
+            asks: orderbook
+                .asks
+                .into_iter()
+                .map(|level| PriceLevel {
+                    price: level.price.to_string(),
+                    size: level.size.to_string(),
+                })
+                .collect(),
         },
     }
 }

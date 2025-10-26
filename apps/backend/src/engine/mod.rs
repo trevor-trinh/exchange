@@ -41,6 +41,8 @@ impl MatchingEngine {
 
     pub async fn run(self) {
         todo!()
+
+        // spawn task to emit orderbook snapshots
     }
 }
 
