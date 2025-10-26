@@ -1,4 +1,5 @@
-mod helpers;
+mod events;
+mod subscriptions;
 
 use axum::{
     body::Bytes,
@@ -11,20 +12,20 @@ use axum::{
     Router,
 };
 use futures::{SinkExt, StreamExt};
-use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
 use tokio::time::{interval, Duration, Instant};
 
-use crate::models::api::{ClientMessage, Subscription};
+use crate::api::ws::subscriptions::SubscriptionSet;
+use crate::models::api::{ClientMessage, ServerMessage, Subscription};
 use crate::models::domain::EngineEvent;
-use helpers::{event_to_message, should_send_event};
 
 // Configuration constants
 const PING_INTERVAL: Duration = Duration::from_secs(30);
 const PONG_TIMEOUT: Duration = Duration::from_secs(60);
 const UNSUBSCRIBED_TIMEOUT: Duration = Duration::from_secs(300); // 5 minutes
 
+/// Create the WebSocket router
 pub fn create_ws() -> Router<crate::AppState> {
     Router::new().route("/ws", get(ws_handler))
 }
@@ -37,7 +38,7 @@ async fn ws_handler(ws: WebSocketUpgrade, State(state): State<crate::AppState>) 
 /// Handle a WebSocket connection with ping/pong keepalive
 async fn handle_socket(socket: WebSocket, state: crate::AppState) {
     let (sender, receiver) = socket.split();
-    let subscriptions = Arc::new(RwLock::new(HashSet::<Subscription>::new()));
+    let subscriptions = Arc::new(RwLock::new(SubscriptionSet::new()));
     let event_rx = state.event_tx.subscribe();
 
     let last_pong = Arc::new(RwLock::new(Instant::now()));
@@ -89,7 +90,7 @@ async fn handle_socket(socket: WebSocket, state: crate::AppState) {
 /// Handle incoming messages from the client
 async fn handle_client_messages(
     mut receiver: futures::stream::SplitStream<WebSocket>,
-    subscriptions: Arc<RwLock<HashSet<Subscription>>>,
+    subscriptions: Arc<RwLock<SubscriptionSet>>,
     last_pong: Arc<RwLock<Instant>>,
     last_subscription_change: Arc<RwLock<Instant>>,
 ) {
@@ -104,20 +105,44 @@ async fn handle_client_messages(
                             market_id,
                             user_address,
                         } => {
-                            if let Some(sub) =
-                                Subscription::from_channel(&channel, market_id, user_address)
-                            {
-                                subscriptions.write().await.insert(sub);
+                            if let Some(sub) = Subscription::from_channel(
+                                &channel,
+                                market_id.clone(),
+                                user_address,
+                            ) {
+                                let was_added = subscriptions.write().await.subscribe(sub);
                                 *last_subscription_change.write().await = Instant::now();
-                                log::debug!("Client subscribed to: {}", channel);
+
+                                if was_added {
+                                    log::debug!("Client subscribed to: {}", channel);
+                                } else {
+                                    log::debug!("Client already subscribed to: {}", channel);
+                                }
+
+                                // Note: Subscription acknowledgment would be sent from handle_server_messages
+                                // if we had a channel to send messages back. For now, we just log.
+                                // In a production system, you'd want to send:
+                                // ServerMessage::Subscribed { channel, market_id }
+                            } else {
+                                log::warn!("Invalid subscription channel: {}", channel);
                             }
                         }
                         ClientMessage::Unsubscribe { channel, market_id } => {
-                            if let Some(sub) = Subscription::from_channel(&channel, market_id, None)
+                            if let Some(sub) =
+                                Subscription::from_channel(&channel, market_id.clone(), None)
                             {
-                                subscriptions.write().await.remove(&sub);
+                                let was_removed = subscriptions.write().await.unsubscribe(&sub);
                                 *last_subscription_change.write().await = Instant::now();
-                                log::debug!("Client unsubscribed from: {}", channel);
+
+                                if was_removed {
+                                    log::debug!("Client unsubscribed from: {}", channel);
+                                } else {
+                                    log::debug!("Client was not subscribed to: {}", channel);
+                                }
+
+                                // Note: Unsubscription acknowledgment would be sent similarly
+                            } else {
+                                log::warn!("Invalid unsubscription channel: {}", channel);
                             }
                         }
                         ClientMessage::Ping => {
@@ -149,7 +174,7 @@ async fn handle_client_messages(
 async fn handle_server_messages(
     mut sender: futures::stream::SplitSink<WebSocket, Message>,
     mut event_rx: broadcast::Receiver<EngineEvent>,
-    subscriptions: Arc<RwLock<HashSet<Subscription>>>,
+    subscriptions: Arc<RwLock<SubscriptionSet>>,
     last_pong: Arc<RwLock<Instant>>,
     last_subscription_change: Arc<RwLock<Instant>>,
 ) {
@@ -188,8 +213,8 @@ async fn handle_server_messages(
             // Forward engine events to client
             Ok(event) = event_rx.recv() => {
                 let subs = subscriptions.read().await;
-                if should_send_event(&event, &*subs) {
-                    let server_msg = event_to_message(event);
+                if subs.wants_event(&event) {
+                    let server_msg = ServerMessage::from(event);
                     if let Ok(json) = serde_json::to_string(&server_msg) {
                         if sender.send(Message::Text(json.into())).await.is_err() {
                             log::error!("Failed to send message to client");
