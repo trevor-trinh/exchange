@@ -51,7 +51,9 @@ missing production
 - metrics / alerting
 - backups / disaster recovery
 - scaling / k8s
-- vip mm channel
+- mm channel prioritization
+- cancel prioritization
+- nice rust/python/typescript sdks
 
 # process
 

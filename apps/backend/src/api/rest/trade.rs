@@ -1,4 +1,4 @@
-use axum::{extract::State, response::Json};
+use axum::{extract::State, http::StatusCode, response::Json};
 use chrono::Utc;
 use uuid::Uuid;
 
@@ -23,7 +23,7 @@ use tokio::sync::oneshot;
 pub async fn trade(
     State(state): State<crate::AppState>,
     Json(request): Json<TradeRequest>,
-) -> Result<Json<TradeResponse>, Json<TradeErrorResponse>> {
+) -> Result<Json<TradeResponse>, (StatusCode, Json<TradeErrorResponse>)> {
     match request {
         TradeRequest::PlaceOrder {
             user_address,
@@ -38,25 +38,34 @@ pub async fn trade(
 
             // Parse price and size from strings to u128
             let price_value = price.parse::<u128>().map_err(|_| {
-                Json(TradeErrorResponse {
-                    error: "Invalid price format".to_string(),
-                    code: "INVALID_PRICE".to_string(),
-                })
+                (
+                    StatusCode::BAD_REQUEST,
+                    Json(TradeErrorResponse {
+                        error: "Invalid price format".to_string(),
+                        code: "INVALID_PRICE".to_string(),
+                    }),
+                )
             })?;
 
             let size_value = size.parse::<u128>().map_err(|_| {
-                Json(TradeErrorResponse {
-                    error: "Invalid size format".to_string(),
-                    code: "INVALID_SIZE".to_string(),
-                })
+                (
+                    StatusCode::BAD_REQUEST,
+                    Json(TradeErrorResponse {
+                        error: "Invalid size format".to_string(),
+                        code: "INVALID_SIZE".to_string(),
+                    }),
+                )
             })?;
 
             // Get market config for validation
             let market = state.db.get_market(&market_id).await.map_err(|e| {
-                Json(TradeErrorResponse {
-                    error: format!("Market not found: {}", e),
-                    code: "MARKET_NOT_FOUND".to_string(),
-                })
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(TradeErrorResponse {
+                        error: format!("Market not found: {}", e),
+                        code: "MARKET_NOT_FOUND".to_string(),
+                    }),
+                )
             })?;
 
             // Validate order parameters
@@ -84,25 +93,34 @@ pub async fn trade(
                 .send(EngineRequest::PlaceOrder { order, response_tx })
                 .await
                 .map_err(|_| {
-                    Json(TradeErrorResponse {
-                        error: "Failed to send order to engine".to_string(),
-                        code: "ENGINE_ERROR".to_string(),
-                    })
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(TradeErrorResponse {
+                            error: "Failed to send order to engine".to_string(),
+                            code: "ENGINE_ERROR".to_string(),
+                        }),
+                    )
                 })?;
 
             // Wait for response
             let result = response_rx.await.map_err(|_| {
-                Json(TradeErrorResponse {
-                    error: "Failed to receive response from engine".to_string(),
-                    code: "ENGINE_ERROR".to_string(),
-                })
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(TradeErrorResponse {
+                        error: "Failed to receive response from engine".to_string(),
+                        code: "ENGINE_ERROR".to_string(),
+                    }),
+                )
             })?;
 
             let placed = result.map_err(|e| {
-                Json(TradeErrorResponse {
-                    error: e.to_string(),
-                    code: "PLACE_ORDER_ERROR".to_string(),
-                })
+                (
+                    StatusCode::BAD_REQUEST,
+                    Json(TradeErrorResponse {
+                        error: e.to_string(),
+                        code: "PLACE_ORDER_ERROR".to_string(),
+                    }),
+                )
             })?;
 
             Ok(Json(TradeResponse::PlaceOrder {
@@ -119,10 +137,13 @@ pub async fn trade(
 
             // Parse order_id
             let order_uuid = Uuid::parse_str(&order_id).map_err(|_| {
-                Json(TradeErrorResponse {
-                    error: "Invalid order ID format".to_string(),
-                    code: "INVALID_ORDER_ID".to_string(),
-                })
+                (
+                    StatusCode::BAD_REQUEST,
+                    Json(TradeErrorResponse {
+                        error: "Invalid order ID format".to_string(),
+                        code: "INVALID_ORDER_ID".to_string(),
+                    }),
+                )
             })?;
 
             // Send to matching engine
@@ -136,25 +157,34 @@ pub async fn trade(
                 })
                 .await
                 .map_err(|_| {
-                    Json(TradeErrorResponse {
-                        error: "Failed to send cancel request to engine".to_string(),
-                        code: "ENGINE_ERROR".to_string(),
-                    })
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(TradeErrorResponse {
+                            error: "Failed to send cancel request to engine".to_string(),
+                            code: "ENGINE_ERROR".to_string(),
+                        }),
+                    )
                 })?;
 
             // Wait for response
             let result = response_rx.await.map_err(|_| {
-                Json(TradeErrorResponse {
-                    error: "Failed to receive response from engine".to_string(),
-                    code: "ENGINE_ERROR".to_string(),
-                })
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(TradeErrorResponse {
+                        error: "Failed to receive response from engine".to_string(),
+                        code: "ENGINE_ERROR".to_string(),
+                    }),
+                )
             })?;
 
             let cancelled = result.map_err(|e| {
-                Json(TradeErrorResponse {
-                    error: e.to_string(),
-                    code: "CANCEL_ORDER_ERROR".to_string(),
-                })
+                (
+                    StatusCode::BAD_REQUEST,
+                    Json(TradeErrorResponse {
+                        error: e.to_string(),
+                        code: "CANCEL_ORDER_ERROR".to_string(),
+                    }),
+                )
             })?;
 
             Ok(Json(TradeResponse::CancelOrder {
@@ -169,38 +199,47 @@ fn validate_order_params(
     price: u128,
     size: u128,
     market: &Market,
-) -> Result<(), Json<TradeErrorResponse>> {
+) -> Result<(), (StatusCode, Json<TradeErrorResponse>)> {
     // Validate tick size (price must be multiple of tick_size)
     if price % market.tick_size != 0 {
-        return Err(Json(TradeErrorResponse {
-            error: format!(
-                "Price {} is not a multiple of tick size {}",
-                price, market.tick_size
-            ),
-            code: "INVALID_TICK_SIZE".to_string(),
-        }));
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(TradeErrorResponse {
+                error: format!(
+                    "Price {} is not a multiple of tick size {}",
+                    price, market.tick_size
+                ),
+                code: "INVALID_TICK_SIZE".to_string(),
+            }),
+        ));
     }
 
     // Validate lot size (size must be multiple of lot_size)
     if size % market.lot_size != 0 {
-        return Err(Json(TradeErrorResponse {
-            error: format!(
-                "Size {} is not a multiple of lot size {}",
-                size, market.lot_size
-            ),
-            code: "INVALID_LOT_SIZE".to_string(),
-        }));
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(TradeErrorResponse {
+                error: format!(
+                    "Size {} is not a multiple of lot size {}",
+                    size, market.lot_size
+                ),
+                code: "INVALID_LOT_SIZE".to_string(),
+            }),
+        ));
     }
 
     // Validate minimum order size
     if size < market.min_size {
-        return Err(Json(TradeErrorResponse {
-            error: format!(
-                "Size {} is below minimum order size {}",
-                size, market.min_size
-            ),
-            code: "BELOW_MIN_SIZE".to_string(),
-        }));
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(TradeErrorResponse {
+                error: format!(
+                    "Size {} is below minimum order size {}",
+                    size, market.min_size
+                ),
+                code: "BELOW_MIN_SIZE".to_string(),
+            }),
+        ));
     }
 
     Ok(())

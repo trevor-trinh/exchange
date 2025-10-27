@@ -9,7 +9,7 @@ use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
 use tokio::time::interval;
 
-use crate::models::api::{PriceLevel, ServerMessage};
+use crate::models::api::{OrderbookData, PriceLevel, ServerMessage};
 use crate::models::domain::EngineEvent;
 
 use super::{SocketState, PING_INTERVAL, PONG_TIMEOUT, UNSUBSCRIBED_TIMEOUT};
@@ -83,13 +83,7 @@ pub(super) async fn handle_server_messages(
 /// Convert an EngineEvent to a ServerMessage for WebSocket transmission
 fn engine_event_to_message(event: EngineEvent) -> ServerMessage {
     match event {
-        EngineEvent::TradeExecuted { trade } => ServerMessage::Trade {
-            market_id: trade.market_id,
-            price: trade.price.to_string(),
-            size: trade.size.to_string(),
-            side: "unknown".to_string(), // Will be determined by client context
-            timestamp: trade.timestamp.timestamp(),
-        },
+        EngineEvent::TradeExecuted { trade } => ServerMessage::TradeExecuted { trade },
         EngineEvent::OrderPlaced { order } => ServerMessage::OrderUpdate {
             order_id: order.id.to_string(),
             status: format!("{:?}", order.status).to_lowercase(),
@@ -111,23 +105,25 @@ fn engine_event_to_message(event: EngineEvent) -> ServerMessage {
             locked: locked.to_string(),
         },
         EngineEvent::OrderbookSnapshot { orderbook } => ServerMessage::OrderbookSnapshot {
-            market_id: orderbook.market_id,
-            bids: orderbook
-                .bids
-                .into_iter()
-                .map(|level| PriceLevel {
-                    price: level.price.to_string(),
-                    size: level.size.to_string(),
-                })
-                .collect(),
-            asks: orderbook
-                .asks
-                .into_iter()
-                .map(|level| PriceLevel {
-                    price: level.price.to_string(),
-                    size: level.size.to_string(),
-                })
-                .collect(),
+            orderbook: OrderbookData {
+                market_id: orderbook.market_id,
+                bids: orderbook
+                    .bids
+                    .into_iter()
+                    .map(|level| PriceLevel {
+                        price: level.price.to_string(),
+                        size: level.size.to_string(),
+                    })
+                    .collect(),
+                asks: orderbook
+                    .asks
+                    .into_iter()
+                    .map(|level| PriceLevel {
+                        price: level.price.to_string(),
+                        size: level.size.to_string(),
+                    })
+                    .collect(),
+            },
         },
     }
 }

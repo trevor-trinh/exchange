@@ -231,10 +231,11 @@ pub enum ServerMessage {
         side: String,
         timestamp: i64,
     },
+    TradeExecuted {
+        trade: super::domain::Trade,
+    },
     OrderbookSnapshot {
-        market_id: String,
-        bids: Vec<PriceLevel>,
-        asks: Vec<PriceLevel>,
+        orderbook: OrderbookData,
     },
     OrderUpdate {
         order_id: String,
@@ -267,4 +268,11 @@ pub enum ServerMessage {
 pub struct PriceLevel {
     pub price: String,
     pub size: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct OrderbookData {
+    pub market_id: String,
+    pub bids: Vec<PriceLevel>,
+    pub asks: Vec<PriceLevel>,
 }
