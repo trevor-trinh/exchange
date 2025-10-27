@@ -32,6 +32,11 @@ devx
 - [ ] devcontainers
 - [ ] video walkthrough
 
+bots
+
+- [ ] copy binance book. one maker copy entire orderbook. other taker on trade.
+- [ ] ai bot. similar to nof1 or krafer nueral net trading.
+
 missing features
 
 - perps
@@ -42,6 +47,7 @@ missing production
 
 - helllaaa latency
 - write ahead log lmao
+- design for concurrency
 - metrics / alerting
 - backups / disaster recovery
 - scaling / k8s
@@ -91,6 +97,7 @@ decide on structure, schema, and write e2e tests fast so iterate fast. stub out 
 - use tokio tungstenite for ws e2e testing
 - add ws integration tests and improve utils
 - consider orderbook snapshot emission from engine task
+- implement engine. concurrency limitation for multiple markets since all pass through same engine.
 
 ### frontend dev
 

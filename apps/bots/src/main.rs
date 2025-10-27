@@ -5,4 +5,7 @@
 // maker - upon binance trade, place limit at price
 // taker - upon binance trade, market
 
-// binance mode and random mode
+// maybe multiple markets. one is binance other is random.
+// binance mode has the copy bots.
+
+// another bot for ai trading. similar to nof1 or krafer nueral net trading.
