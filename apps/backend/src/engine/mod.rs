@@ -93,8 +93,8 @@ impl MatchingEngine {
                 vec![]
             };
 
-            // Update orderbook with matches (handles min_size check internally)
-            orderbook.apply_matches(&order, &matches, &market);
+            // Update orderbook with executed trades
+            orderbook.apply_trades(&order, &trades, &market);
 
             (matches, trades)
         };

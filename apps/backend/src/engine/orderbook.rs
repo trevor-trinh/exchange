@@ -5,9 +5,7 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 
 use crate::errors::{ExchangeError, Result};
-use crate::models::domain::{
-    Market, Match, Order, OrderStatus, OrderbookLevel, OrderbookSnapshot, Side,
-};
+use crate::models::domain::{Market, Order, OrderStatus, OrderbookLevel, OrderbookSnapshot, Side};
 use chrono::Utc;
 use uuid::Uuid;
 
@@ -74,18 +72,28 @@ impl Orderbook {
         }
     }
 
-    /// Apply matches to the orderbook
+    /// Apply executed trades to the orderbook
     /// - Updates filled amounts on maker orders
     /// - Removes fully filled orders
     /// - Adds remaining taker order if not fully filled AND meets minimum size
-    pub fn apply_matches(&mut self, taker_order: &Order, matches: &[Match], market: &Market) {
-        // Update maker orders that were matched
-        for m in matches {
-            self.update_order_fill(m.maker_order.id, m.size);
+    pub fn apply_trades(
+        &mut self,
+        taker_order: &Order,
+        trades: &[crate::models::domain::Trade],
+        market: &Market,
+    ) {
+        // Update maker orders that were executed
+        // Determine maker order ID based on taker side
+        for trade in trades {
+            let maker_order_id = match taker_order.side {
+                Side::Buy => trade.seller_order_id, // Taker is buyer, maker is seller
+                Side::Sell => trade.buyer_order_id, // Taker is seller, maker is buyer
+            };
+            self.update_order_fill(maker_order_id, trade.size);
         }
 
         // Add taker order to book if not fully filled
-        let total_matched: u128 = matches.iter().map(|m| m.size).sum();
+        let total_matched: u128 = trades.iter().map(|t| t.size).sum();
         let remaining_size = taker_order.size - total_matched;
 
         // Only add to book if remaining size meets minimum order size

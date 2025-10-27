@@ -93,6 +93,7 @@ impl Db {
 
     /// Update an order's filled size and status (within a transaction)
     pub async fn update_order_fill_tx(
+        &self,
         tx: &mut crate::db::Transaction<'_, crate::db::Postgres>,
         order_id: Uuid,
         filled_size: u128,

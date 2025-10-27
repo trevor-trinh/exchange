@@ -32,6 +32,7 @@ impl Db {
 
     /// Insert a new trade into the database (within a transaction)
     pub async fn create_trade_tx(
+        &self,
         tx: &mut crate::db::Transaction<'_, crate::db::Postgres>,
         trade: &Trade,
     ) -> Result<()> {

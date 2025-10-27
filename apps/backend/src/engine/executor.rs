@@ -64,11 +64,11 @@ impl Executor {
             } else {
                 OrderStatus::PartiallyFilled
             };
-            Db::update_order_fill_tx(&mut tx, maker_order.id, maker_new_filled, maker_status)
+            db.update_order_fill_tx(&mut tx, maker_order.id, maker_new_filled, maker_status)
                 .await?;
 
             // Insert trade into PostgreSQL (in transaction)
-            Db::create_trade_tx(&mut tx, &trade).await?;
+            db.create_trade_tx(&mut tx, &trade).await?;
 
             trades.push(trade);
         }
@@ -83,7 +83,8 @@ impl Executor {
         } else {
             OrderStatus::Pending
         };
-        Db::update_order_fill_tx(&mut tx, taker_order.id, taker_new_filled, taker_status).await?;
+        db.update_order_fill_tx(&mut tx, taker_order.id, taker_new_filled, taker_status)
+            .await?;
 
         // Commit transaction - all or nothing!
         tx.commit().await?;
