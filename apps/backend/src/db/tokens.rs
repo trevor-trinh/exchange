@@ -17,11 +17,7 @@ impl Db {
         .fetch_one(&self.postgres)
         .await?;
 
-        Ok(Token {
-            ticker: row.ticker,
-            decimals: row.decimals as u8,
-            name: row.name,
-        })
+        Ok(row.into())
     }
 
     /// Get a token by ticker
@@ -34,11 +30,7 @@ impl Db {
         .fetch_one(&self.postgres)
         .await?;
 
-        Ok(Token {
-            ticker: row.ticker,
-            decimals: row.decimals as u8,
-            name: row.name,
-        })
+        Ok(row.into())
     }
 
     /// List all tokens
@@ -50,13 +42,6 @@ impl Db {
         .fetch_all(&self.postgres)
         .await?;
 
-        Ok(rows
-            .into_iter()
-            .map(|row| Token {
-                ticker: row.ticker,
-                decimals: row.decimals as u8,
-                name: row.name,
-            })
-            .collect())
+        Ok(rows.into_iter().map(|row| row.into()).collect())
     }
 }

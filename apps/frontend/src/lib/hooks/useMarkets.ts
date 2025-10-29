@@ -14,10 +14,7 @@ export function useMarkets() {
 
     async function fetchData() {
       try {
-        const [marketsData, tokensData] = await Promise.all([
-          exchange.getMarkets(),
-          exchange.getTokens()
-        ]);
+        const [marketsData, tokensData] = await Promise.all([exchange.getMarkets(), exchange.getTokens()]);
 
         if (mounted) {
           setMarkets(marketsData);

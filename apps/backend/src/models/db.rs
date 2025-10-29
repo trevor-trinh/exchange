@@ -5,6 +5,9 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+use crate::models::domain::{Balance, Market, Order, Token, Trade, User};
+use crate::utils::BigDecimalExt;
+
 // ============================================================================
 // DATABASE ROW TYPES
 // ============================================================================
@@ -96,4 +99,94 @@ pub struct CandleRow {
     pub low: u128,
     pub close: u128,
     pub volume: u128,
+}
+
+// ============================================================================
+// ROW TO DOMAIN TYPE CONVERSIONS
+// ============================================================================
+
+impl From<UserRow> for User {
+    fn from(row: UserRow) -> Self {
+        Self {
+            address: row.address,
+            created_at: row.created_at,
+        }
+    }
+}
+
+impl From<TokenRow> for Token {
+    fn from(row: TokenRow) -> Self {
+        Self {
+            ticker: row.ticker,
+            decimals: row.decimals as u8,
+            name: row.name,
+        }
+    }
+}
+
+impl From<MarketRow> for Market {
+    fn from(row: MarketRow) -> Self {
+        Self {
+            id: row.id,
+            base_ticker: row.base_ticker,
+            quote_ticker: row.quote_ticker,
+            tick_size: row.tick_size.to_u128(),
+            lot_size: row.lot_size.to_u128(),
+            min_size: row.min_size.to_u128(),
+            maker_fee_bps: row.maker_fee_bps,
+            taker_fee_bps: row.taker_fee_bps,
+        }
+    }
+}
+
+impl From<OrderRow> for Order {
+    fn from(row: OrderRow) -> Self {
+        Self {
+            id: row.id,
+            user_address: row.user_address,
+            market_id: row.market_id,
+            price: row.price.to_u128(),
+            size: row.size.to_u128(),
+            side: row.side.parse().unwrap_or(crate::models::domain::Side::Buy),
+            order_type: row
+                .order_type
+                .parse()
+                .unwrap_or(crate::models::domain::OrderType::Limit),
+            status: row
+                .status
+                .parse()
+                .unwrap_or(crate::models::domain::OrderStatus::Pending),
+            filled_size: row.filled_size.to_u128(),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+        }
+    }
+}
+
+impl From<TradeRow> for Trade {
+    fn from(row: TradeRow) -> Self {
+        Self {
+            id: row.id,
+            market_id: row.market_id,
+            buyer_address: row.buyer_address,
+            seller_address: row.seller_address,
+            buyer_order_id: row.buyer_order_id,
+            seller_order_id: row.seller_order_id,
+            price: row.price.to_u128(),
+            size: row.size.to_u128(),
+            timestamp: row.timestamp,
+        }
+    }
+}
+
+impl From<BalanceRow> for Balance {
+    fn from(row: BalanceRow) -> Self {
+        Self {
+            user_address: row.user_address,
+            token_ticker: row.token_ticker,
+            amount: row.amount.to_u128(),
+            open_interest: row.open_interest.to_u128(),
+            updated_at: row.updated_at,
+        }
+    }
 }

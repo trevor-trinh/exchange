@@ -2,7 +2,6 @@ use crate::db::Db;
 use crate::errors::Result;
 use crate::models::db::BalanceRow;
 use crate::models::domain::Balance;
-use crate::utils::BigDecimalExt;
 use chrono::Utc;
 
 impl Db {
@@ -20,13 +19,7 @@ impl Db {
         .fetch_one(&self.postgres)
         .await?;
 
-        Ok(Balance {
-            user_address: row.user_address,
-            token_ticker: row.token_ticker,
-            amount: row.amount.to_u128(),
-            open_interest: row.open_interest.to_u128(),
-            updated_at: row.updated_at,
-        })
+        Ok(row.into())
     }
 
     /// List all balances for a user
@@ -42,18 +35,7 @@ impl Db {
         .fetch_all(&self.postgres)
         .await?;
 
-        let balances = rows
-            .into_iter()
-            .map(|row| Balance {
-                user_address: row.user_address,
-                token_ticker: row.token_ticker,
-                amount: row.amount.to_u128(),
-                open_interest: row.open_interest.to_u128(),
-                updated_at: row.updated_at,
-            })
-            .collect();
-
-        Ok(balances)
+        Ok(rows.into_iter().map(|row| row.into()).collect())
     }
 
     /// Update or insert balance (upsert)

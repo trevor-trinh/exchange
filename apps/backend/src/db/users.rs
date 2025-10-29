@@ -13,10 +13,7 @@ impl Db {
         .fetch_one(&self.postgres)
         .await?;
 
-        Ok(User {
-            address: row.address,
-            created_at: row.created_at,
-        })
+        Ok(row.into())
     }
 
     /// Get a user by address
@@ -29,10 +26,7 @@ impl Db {
         .fetch_one(&self.postgres)
         .await?;
 
-        Ok(User {
-            address: row.address,
-            created_at: row.created_at,
-        })
+        Ok(row.into())
     }
 
     /// List all users
@@ -44,12 +38,6 @@ impl Db {
         .fetch_all(&self.postgres)
         .await?;
 
-        Ok(rows
-            .into_iter()
-            .map(|row| User {
-                address: row.address,
-                created_at: row.created_at,
-            })
-            .collect())
+        Ok(rows.into_iter().map(|row| row.into()).collect())
     }
 }

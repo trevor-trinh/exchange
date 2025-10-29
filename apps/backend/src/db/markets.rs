@@ -3,7 +3,6 @@ use bigdecimal::BigDecimal;
 use crate::db::Db;
 use crate::errors::{ExchangeError, Result};
 use crate::models::{db::MarketRow, domain::Market};
-use crate::utils::BigDecimalExt;
 
 impl Db {
     /// Create a new market
@@ -53,16 +52,7 @@ impl Db {
             _ => ExchangeError::Database(e),
         })?;
 
-        Ok(Market {
-            id: row.id,
-            base_ticker: row.base_ticker,
-            quote_ticker: row.quote_ticker,
-            tick_size: row.tick_size.to_u128(),
-            lot_size: row.lot_size.to_u128(),
-            min_size: row.min_size.to_u128(),
-            maker_fee_bps: row.maker_fee_bps,
-            taker_fee_bps: row.taker_fee_bps,
-        })
+        Ok(row.into())
     }
 
     /// Get a market by id
@@ -73,16 +63,7 @@ impl Db {
                 .await
                 .map_err(ExchangeError::from)?;
 
-        Ok(Market {
-            id: row.id,
-            base_ticker: row.base_ticker,
-            quote_ticker: row.quote_ticker,
-            tick_size: row.tick_size.to_u128(),
-            lot_size: row.lot_size.to_u128(),
-            min_size: row.min_size.to_u128(),
-            maker_fee_bps: row.maker_fee_bps,
-            taker_fee_bps: row.taker_fee_bps,
-        })
+        Ok(row.into())
     }
 
     /// List all markets
@@ -95,18 +76,6 @@ impl Db {
         .await
         .map_err(ExchangeError::from)?;
 
-        Ok(rows
-            .into_iter()
-            .map(|row| Market {
-                id: row.id,
-                base_ticker: row.base_ticker,
-                quote_ticker: row.quote_ticker,
-                tick_size: row.tick_size.to_u128(),
-                lot_size: row.lot_size.to_u128(),
-                min_size: row.min_size.to_u128(),
-                maker_fee_bps: row.maker_fee_bps,
-                taker_fee_bps: row.taker_fee_bps,
-            })
-            .collect())
+        Ok(rows.into_iter().map(|row| row.into()).collect())
     }
 }

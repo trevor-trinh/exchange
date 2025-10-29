@@ -121,7 +121,9 @@ missing production
 - add mm bot. copy entire orderbook. other taker on trade.
 - add frontend api layer (ws and rest), zustand
 - fix bots. try to run backend + bots + frontend.
--
+- streamline backend types
+- cleanup frontend sdk
+- setup devcontainer
 
 - add trading signatures
 - add benchmarks
