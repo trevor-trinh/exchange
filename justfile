@@ -39,6 +39,8 @@ install:
 test:
   cd apps/backend && cargo test
 
+bench:
+  cd apps/backend && cargo bench
 
 # ================================
 

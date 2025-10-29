@@ -120,6 +120,8 @@ missing production
 - fill out missing api endpoints and db functions
 - address executor and orderbook consistency with db using transactions
 - add open interest check and fees
+- add benchmarks
+- add sdk with backend as source of truth
 
 - add trading signatures
 - add benchmarks

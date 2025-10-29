@@ -65,12 +65,11 @@ impl Executor {
             };
 
             // Calculate trade value in quote tokens
-            let quote_amount = m
-                .price
-                .checked_mul(m.size)
-                .ok_or_else(|| crate::errors::ExchangeError::InvalidParameter {
+            let quote_amount = m.price.checked_mul(m.size).ok_or_else(|| {
+                crate::errors::ExchangeError::InvalidParameter {
                     message: "Trade value overflow".to_string(),
-                })?;
+                }
+            })?;
 
             // Calculate fees (charged on what each party receives)
             // Buyer receives base tokens (size), pays taker fee if taker, maker fee if maker
@@ -91,23 +90,47 @@ impl Executor {
             // Fee on quote tokens (for seller)
             let seller_fee = (quote_amount as i128 * seller_fee_bps as i128 / 10000) as u128;
 
+            // Fee recipient address (hardcoded in db schema)
+            const FEE_RECIPIENT: &str = "system";
+
             // Calculate amounts to unlock (what was locked when orders were placed)
             // Buyer locked quote_amount, seller locked size
             let buyer_unlock_amount = quote_amount;
             let seller_unlock_amount = m.size;
 
             // Unlock the locked amounts for both parties
-            db.unlock_balance_tx(&mut tx, &buyer_address, &market.quote_ticker, buyer_unlock_amount)
-                .await?;
-            db.unlock_balance_tx(&mut tx, &seller_address, &market.base_ticker, seller_unlock_amount)
-                .await?;
+            db.unlock_balance_tx(
+                &mut tx,
+                &buyer_address,
+                &market.quote_ticker,
+                buyer_unlock_amount,
+            )
+            .await?;
+            db.unlock_balance_tx(
+                &mut tx,
+                &seller_address,
+                &market.base_ticker,
+                seller_unlock_amount,
+            )
+            .await?;
 
             // Transfer base tokens: seller -> buyer (minus buyer's fee)
             db.subtract_balance_tx(&mut tx, &seller_address, &market.base_ticker, m.size)
                 .await?;
             let buyer_receives_base = m.size - buyer_fee;
-            db.add_balance_tx(&mut tx, &buyer_address, &market.base_ticker, buyer_receives_base)
-                .await?;
+            db.add_balance_tx(
+                &mut tx,
+                &buyer_address,
+                &market.base_ticker,
+                buyer_receives_base,
+            )
+            .await?;
+
+            // Send buyer's fee to fee recipient (base tokens)
+            if buyer_fee > 0 {
+                db.add_balance_tx(&mut tx, FEE_RECIPIENT, &market.base_ticker, buyer_fee)
+                    .await?;
+            }
 
             // Transfer quote tokens: buyer -> seller (minus seller's fee)
             db.subtract_balance_tx(&mut tx, &buyer_address, &market.quote_ticker, quote_amount)
@@ -120,6 +143,12 @@ impl Executor {
                 seller_receives_quote,
             )
             .await?;
+
+            // Send seller's fee to fee recipient (quote tokens)
+            if seller_fee > 0 {
+                db.add_balance_tx(&mut tx, FEE_RECIPIENT, &market.quote_ticker, seller_fee)
+                    .await?;
+            }
 
             // Update maker order fill status (in transaction)
             let maker_new_filled = maker_order.filled_size + m.size;

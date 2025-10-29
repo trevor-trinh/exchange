@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+INSERT INTO users (address) VALUES ('system');
+
 CREATE TABLE IF NOT EXISTS tokens (
     ticker TEXT PRIMARY KEY,
     decimals INT NOT NULL,

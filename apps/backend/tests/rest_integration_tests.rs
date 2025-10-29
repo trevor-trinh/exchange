@@ -161,7 +161,7 @@ async fn test_database_accessible_from_api() {
         .await
         .expect("Failed to list users");
 
-    assert_eq!(users.len(), 1);
+    assert_eq!(users.len(), 2); // includes default system user for fees
     assert_eq!(users[0].address, "test_user_address");
 
     // This demonstrates that:

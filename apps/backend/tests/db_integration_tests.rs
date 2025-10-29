@@ -32,7 +32,7 @@ async fn test_user_crud_operations() {
 
     // Test listing users
     let users = test_db.db.list_users().await.expect("Failed to list users");
-    assert_eq!(users.len(), 1);
+    assert_eq!(users.len(), 2); // includes default system user for fees
     assert_eq!(users[0].address, user_address);
 
     // Test creating another user
@@ -43,7 +43,7 @@ async fn test_user_crud_operations() {
         .expect("Failed to create second user");
 
     let users = test_db.db.list_users().await.expect("Failed to list users");
-    assert_eq!(users.len(), 2);
+    assert_eq!(users.len(), 3); // includes default system user for fees
 }
 
 #[tokio::test]
@@ -222,7 +222,7 @@ async fn test_database_isolation() {
 
     // Each test gets a fresh database - verify it starts empty
     let users = test_db.db.list_users().await.expect("Failed to list users");
-    assert_eq!(users.len(), 0, "Database should start empty");
+    assert_eq!(users.len(), 1, "Database should have 1 user"); // system user for fees
 
     let tokens = test_db
         .db
@@ -244,7 +244,7 @@ async fn test_database_isolation() {
 
     // Verify data exists
     let users = test_db.db.list_users().await.expect("Failed to list users");
-    assert_eq!(users.len(), 1);
+    assert_eq!(users.len(), 2);
 
     let retrieved_market = test_db
         .db
