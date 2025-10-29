@@ -41,6 +41,7 @@ test:
 
 bench:
   cd apps/backend && cargo bench
+  open target/criterion/report/index.html
 
 # ================================
 
