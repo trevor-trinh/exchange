@@ -1,5 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::fmt::{self, Display};
+use std::str::FromStr;
 use tokio::sync::oneshot;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -31,6 +33,89 @@ pub enum OrderStatus {
     Filled,
     PartiallyFilled,
     Cancelled,
+}
+
+// ============================================================================
+// ENUM STRING CONVERSIONS
+// ============================================================================
+
+impl Display for Side {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Side::Buy => "buy",
+                Side::Sell => "sell",
+            }
+        )
+    }
+}
+
+impl FromStr for Side {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "buy" => Ok(Side::Buy),
+            "sell" => Ok(Side::Sell),
+            _ => Err(format!("Invalid side: {}", s)),
+        }
+    }
+}
+
+impl Display for OrderType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                OrderType::Limit => "limit",
+                OrderType::Market => "market",
+            }
+        )
+    }
+}
+
+impl FromStr for OrderType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "limit" => Ok(OrderType::Limit),
+            "market" => Ok(OrderType::Market),
+            _ => Err(format!("Invalid order type: {}", s)),
+        }
+    }
+}
+
+impl Display for OrderStatus {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                OrderStatus::Pending => "pending",
+                OrderStatus::Filled => "filled",
+                OrderStatus::PartiallyFilled => "partially_filled",
+                OrderStatus::Cancelled => "cancelled",
+            }
+        )
+    }
+}
+
+impl FromStr for OrderStatus {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "pending" => Ok(OrderStatus::Pending),
+            "filled" => Ok(OrderStatus::Filled),
+            "partially_filled" => Ok(OrderStatus::PartiallyFilled),
+            "cancelled" => Ok(OrderStatus::Cancelled),
+            _ => Err(format!("Invalid order status: {}", s)),
+        }
+    }
 }
 
 // ============================================================================

@@ -20,23 +20,9 @@ impl Db {
         let price_str = price_for_db.to_string();
         let size_str = order.size.to_string();
         let filled_size_str = order.filled_size.to_string();
-
-        let side_str = match order.side {
-            Side::Buy => "buy",
-            Side::Sell => "sell",
-        };
-
-        let order_type_str = match order.order_type {
-            OrderType::Limit => "limit",
-            OrderType::Market => "market",
-        };
-
-        let status_str = match order.status {
-            OrderStatus::Pending => "pending",
-            OrderStatus::PartiallyFilled => "partially_filled",
-            OrderStatus::Filled => "filled",
-            OrderStatus::Cancelled => "cancelled",
-        };
+        let side_str = order.side.to_string();
+        let order_type_str = order.order_type.to_string();
+        let status_str = order.status.to_string();
 
         sqlx::query(
             r#"
@@ -69,12 +55,7 @@ impl Db {
         status: OrderStatus,
     ) -> Result<()> {
         let filled_size_str = filled_size.to_string();
-        let status_str = match status {
-            OrderStatus::Pending => "pending",
-            OrderStatus::PartiallyFilled => "partially_filled",
-            OrderStatus::Filled => "filled",
-            OrderStatus::Cancelled => "cancelled",
-        };
+        let status_str = status.to_string();
 
         sqlx::query(
             r#"
@@ -102,12 +83,7 @@ impl Db {
         status: OrderStatus,
     ) -> Result<()> {
         let filled_size_str = filled_size.to_string();
-        let status_str = match status {
-            OrderStatus::Pending => "pending",
-            OrderStatus::PartiallyFilled => "partially_filled",
-            OrderStatus::Filled => "filled",
-            OrderStatus::Cancelled => "cancelled",
-        };
+        let status_str = status.to_string();
 
         sqlx::query(
             r#"
@@ -151,23 +127,9 @@ impl Db {
             market_id: row.get("market_id"),
             price: price.to_u128(),
             size: size.to_u128(),
-            side: match side_str.as_str() {
-                "buy" => Side::Buy,
-                "sell" => Side::Sell,
-                _ => Side::Buy,
-            },
-            order_type: match type_str.as_str() {
-                "limit" => OrderType::Limit,
-                "market" => OrderType::Market,
-                _ => OrderType::Limit,
-            },
-            status: match status_str.as_str() {
-                "pending" => OrderStatus::Pending,
-                "partially_filled" => OrderStatus::PartiallyFilled,
-                "filled" => OrderStatus::Filled,
-                "cancelled" => OrderStatus::Cancelled,
-                _ => OrderStatus::Pending,
-            },
+            side: side_str.parse().unwrap_or(Side::Buy),
+            order_type: type_str.parse().unwrap_or(OrderType::Limit),
+            status: status_str.parse().unwrap_or(OrderStatus::Pending),
             filled_size: filled_size.to_u128(),
             created_at: row.get("created_at"),
             updated_at: row.get("updated_at"),
@@ -183,14 +145,9 @@ impl Db {
     ) -> Result<Vec<Order>> {
         let limit = std::cmp::min(limit, 1000); // Cap at 1000
 
-        let status_str = status.map(|s| match s {
-            OrderStatus::Pending => "pending",
-            OrderStatus::PartiallyFilled => "partially_filled",
-            OrderStatus::Filled => "filled",
-            OrderStatus::Cancelled => "cancelled",
-        });
+        let status_str = status.map(|s| s.to_string());
 
-        let query = if let (Some(market), Some(stat)) = (market_id, status_str) {
+        let query = if let (Some(market), Some(stat)) = (market_id, &status_str) {
             sqlx::query(
                 r#"
                 SELECT id, user_address, market_id, price, size, side::TEXT as side, type::TEXT as type, status::TEXT as status, filled_size, created_at, updated_at
@@ -217,7 +174,7 @@ impl Db {
             .bind(user_address)
             .bind(market)
             .bind(limit as i64)
-        } else if let Some(stat) = status_str {
+        } else if let Some(stat) = &status_str {
             sqlx::query(
                 r#"
                 SELECT id, user_address, market_id, price, size, side::TEXT as side, type::TEXT as type, status::TEXT as status, filled_size, created_at, updated_at
@@ -262,23 +219,9 @@ impl Db {
                     market_id: row.get("market_id"),
                     price: price.to_u128(),
                     size: size.to_u128(),
-                    side: match side_str.as_str() {
-                        "buy" => Side::Buy,
-                        "sell" => Side::Sell,
-                        _ => Side::Buy,
-                    },
-                    order_type: match type_str.as_str() {
-                        "limit" => OrderType::Limit,
-                        "market" => OrderType::Market,
-                        _ => OrderType::Limit,
-                    },
-                    status: match status_str.as_str() {
-                        "pending" => OrderStatus::Pending,
-                        "partially_filled" => OrderStatus::PartiallyFilled,
-                        "filled" => OrderStatus::Filled,
-                        "cancelled" => OrderStatus::Cancelled,
-                        _ => OrderStatus::Pending,
-                    },
+                    side: side_str.parse().unwrap_or(Side::Buy),
+                    order_type: type_str.parse().unwrap_or(OrderType::Limit),
+                    status: status_str.parse().unwrap_or(OrderStatus::Pending),
                     filled_size: filled_size.to_u128(),
                     created_at: row.get("created_at"),
                     updated_at: row.get("updated_at"),
