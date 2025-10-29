@@ -27,6 +27,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/candles": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get OHLCV candles for a market
+     * @description GET /api/candles?market_id=BTC/USDC&interval=1m&from=1234567890&to=1234567899
+     */
+    get: operations["get_candles"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/drip": {
     parameters: {
       query?: never;
@@ -131,14 +151,14 @@ export interface components {
         }
       | {
           base_ticker: string;
-          lot_size: number;
+          lot_size: string;
           /** Format: int32 */
           maker_fee_bps: number;
-          min_size: number;
+          min_size: string;
           quote_ticker: string;
           /** Format: int32 */
           taker_fee_bps: number;
-          tick_size: number;
+          tick_size: string;
           /** @enum {string} */
           type: "create_market";
         }
@@ -158,7 +178,7 @@ export interface components {
           type: "create_token";
         }
       | {
-          market: components["schemas"]["Market"];
+          market: components["schemas"]["ApiMarket"];
           /** @enum {string} */
           type: "create_market";
         }
@@ -170,18 +190,73 @@ export interface components {
           type: "faucet";
           user_address: string;
         };
+    /** @description API representation of Balance with String fields for JSON compatibility */
+    ApiBalance: {
+      amount: string;
+      open_interest: string;
+      token_ticker: string;
+      /** Format: date-time */
+      updated_at: string;
+      user_address: string;
+    };
+    /** @description API representation of Market with String fields for JSON compatibility */
+    ApiMarket: {
+      base_ticker: string;
+      id: string;
+      lot_size: string;
+      /** Format: int32 */
+      maker_fee_bps: number;
+      min_size: string;
+      quote_ticker: string;
+      /** Format: int32 */
+      taker_fee_bps: number;
+      tick_size: string;
+    };
+    /** @description API representation of Order with String fields for JSON compatibility */
+    ApiOrder: {
+      /** Format: date-time */
+      created_at: string;
+      filled_size: string;
+      id: string;
+      market_id: string;
+      order_type: components["schemas"]["OrderType"];
+      price: string;
+      side: components["schemas"]["Side"];
+      size: string;
+      status: components["schemas"]["OrderStatus"];
+      /** Format: date-time */
+      updated_at: string;
+      user_address: string;
+    };
     ApiResponse: {
       message: string;
       /** Format: int64 */
       timestamp: number;
     };
-    Balance: {
-      amount: number;
-      open_interest: number;
-      token_ticker: string;
+    /** @description API representation of Trade with String fields for JSON compatibility */
+    ApiTrade: {
+      buyer_address: string;
+      buyer_order_id: string;
+      id: string;
+      market_id: string;
+      price: string;
+      seller_address: string;
+      seller_order_id: string;
+      size: string;
       /** Format: date-time */
-      updated_at: string;
-      user_address: string;
+      timestamp: string;
+    };
+    Candle: {
+      close: number;
+      high: number;
+      low: number;
+      open: number;
+      /** Format: int32 */
+      timestamp: number;
+      volume: number;
+    };
+    CandlesResponse: {
+      candles: components["schemas"]["Candle"][];
     };
     DripErrorResponse: {
       code: string;
@@ -237,12 +312,12 @@ export interface components {
           type: "token_details";
         }
       | {
-          market: components["schemas"]["Market"];
+          market: components["schemas"]["ApiMarket"];
           /** @enum {string} */
           type: "market_details";
         }
       | {
-          markets: components["schemas"]["Market"][];
+          markets: components["schemas"]["ApiMarket"][];
           /** @enum {string} */
           type: "all_markets";
         }
@@ -251,34 +326,6 @@ export interface components {
           /** @enum {string} */
           type: "all_tokens";
         };
-    Market: {
-      base_ticker: string;
-      id: string;
-      lot_size: number;
-      /** Format: int32 */
-      maker_fee_bps: number;
-      min_size: number;
-      quote_ticker: string;
-      /** Format: int32 */
-      taker_fee_bps: number;
-      tick_size: number;
-    };
-    Order: {
-      /** Format: date-time */
-      created_at: string;
-      filled_size: number;
-      /** Format: uuid */
-      id: string;
-      market_id: string;
-      order_type: components["schemas"]["OrderType"];
-      price: number;
-      side: components["schemas"]["Side"];
-      size: number;
-      status: components["schemas"]["OrderStatus"];
-      /** Format: date-time */
-      updated_at: string;
-      user_address: string;
-    };
     /** @enum {string} */
     OrderStatus: "pending" | "filled" | "partially_filled" | "cancelled";
     /** @enum {string} */
@@ -290,21 +337,6 @@ export interface components {
       decimals: number;
       name: string;
       ticker: string;
-    };
-    Trade: {
-      buyer_address: string;
-      /** Format: uuid */
-      buyer_order_id: string;
-      /** Format: uuid */
-      id: string;
-      market_id: string;
-      price: number;
-      seller_address: string;
-      /** Format: uuid */
-      seller_order_id: string;
-      size: number;
-      /** Format: date-time */
-      timestamp: string;
     };
     TradeErrorResponse: {
       code: string;
@@ -333,8 +365,8 @@ export interface components {
     /** @description Trade response with type discriminator */
     TradeResponse:
       | {
-          order: components["schemas"]["Order"];
-          trades: components["schemas"]["Trade"][];
+          order: components["schemas"]["ApiOrder"];
+          trades: components["schemas"]["ApiTrade"][];
           /** @enum {string} */
           type: "place_order";
         }
@@ -374,17 +406,17 @@ export interface components {
     /** @description User response with type discriminator */
     UserResponse:
       | {
-          orders: components["schemas"]["Order"][];
+          orders: components["schemas"]["ApiOrder"][];
           /** @enum {string} */
           type: "orders";
         }
       | {
-          balances: components["schemas"]["Balance"][];
+          balances: components["schemas"]["ApiBalance"][];
           /** @enum {string} */
           type: "balances";
         }
       | {
-          trades: components["schemas"]["Trade"][];
+          trades: components["schemas"]["ApiTrade"][];
           /** @enum {string} */
           type: "trades";
         };
@@ -420,6 +452,49 @@ export interface operations {
         };
       };
       /** @description Bad request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Internal server error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  get_candles: {
+    parameters: {
+      query: {
+        /** @description Market ID */
+        market_id: string;
+        /** @description Candle interval: 1m, 5m, 15m, 1h, 1d */
+        interval: string;
+        /** @description Start timestamp (Unix seconds) */
+        from: number;
+        /** @description End timestamp (Unix seconds) */
+        to: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Candles retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CandlesResponse"];
+        };
+      };
+      /** @description Invalid parameters */
       400: {
         headers: {
           [name: string]: unknown;

@@ -8,22 +8,22 @@
 
 export type ClientMessage =
   | {
-      type: 'subscribe';
+      type: "subscribe";
       channel: SubscriptionChannel;
       market_id?: string;
       user_address?: string;
     }
   | {
-      type: 'unsubscribe';
+      type: "unsubscribe";
       channel: SubscriptionChannel;
       market_id?: string;
       user_address?: string;
     }
   | {
-      type: 'ping';
+      type: "ping";
     };
 
-export type SubscriptionChannel = 'Trades' | 'Orderbook' | 'User';
+export type SubscriptionChannel = "Trades" | "Orderbook" | "User";
 
 // ============================================================================
 // Server → Client Messages
@@ -42,27 +42,27 @@ export type ServerMessage =
   | ErrorMessage;
 
 export interface SubscribedMessage {
-  type: 'subscribed';
+  type: "subscribed";
   channel: string;
   market_id?: string;
   user_address?: string;
 }
 
 export interface UnsubscribedMessage {
-  type: 'unsubscribed';
+  type: "unsubscribed";
   channel: string;
   market_id?: string;
   user_address?: string;
 }
 
 export interface PongMessage {
-  type: 'pong';
+  type: "pong";
   timestamp: number;
 }
 
 export interface TradeMessage {
-  type: 'trade';
-  channel: 'trades';
+  type: "trade";
+  channel: "trades";
   data: {
     id: string;
     market_id: string;
@@ -75,8 +75,8 @@ export interface TradeMessage {
 }
 
 export interface OrderbookSnapshotMessage {
-  type: 'orderbook_snapshot';
-  channel: 'orderbook';
+  type: "orderbook_snapshot";
+  channel: "orderbook";
   data: {
     market_id: string;
     bids: Array<{ price: string; size: string }>;
@@ -85,8 +85,8 @@ export interface OrderbookSnapshotMessage {
 }
 
 export interface OrderbookUpdateMessage {
-  type: 'orderbook_update';
-  channel: 'orderbook';
+  type: "orderbook_update";
+  channel: "orderbook";
   data: {
     market_id: string;
     bids: Array<{ price: string; size: string }>;
@@ -95,21 +95,21 @@ export interface OrderbookUpdateMessage {
 }
 
 export interface OrderPlacedMessage {
-  type: 'order_placed';
-  channel: 'user';
+  type: "order_placed";
+  channel: "user";
   data: {
     user_address: string;
     market_id: string;
     order_id: string;
-    side: 'Buy' | 'Sell';
+    side: "Buy" | "Sell";
     price: string;
     size: string;
   };
 }
 
 export interface OrderCancelledMessage {
-  type: 'order_cancelled';
-  channel: 'user';
+  type: "order_cancelled";
+  channel: "user";
   data: {
     user_address: string;
     order_id: string;
@@ -117,8 +117,8 @@ export interface OrderCancelledMessage {
 }
 
 export interface OrderFilledMessage {
-  type: 'order_filled';
-  channel: 'user';
+  type: "order_filled";
+  channel: "user";
   data: {
     user_address: string;
     order_id: string;
@@ -127,7 +127,7 @@ export interface OrderFilledMessage {
 }
 
 export interface ErrorMessage {
-  type: 'error';
+  type: "error";
   error: string;
   code?: string;
 }

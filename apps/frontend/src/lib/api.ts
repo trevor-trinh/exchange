@@ -3,17 +3,16 @@
  * Now using the @exchange/sdk package
  */
 
-import { RestClient, ApiError } from '@exchange/sdk';
-import type { Market, Token, Balance, Order, Trade } from './types/exchange';
+import { RestClient, ApiError } from "@exchange/sdk";
+import type { Market, Token, Balance, Order, Trade } from "./types/exchange";
 
 export class ExchangeAPI {
   private client: RestClient;
 
   constructor(baseUrl?: string) {
-    const url = baseUrl || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
+    const url = baseUrl || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8888";
     this.client = new RestClient({ baseUrl: url });
   }
-
 
   // ============================================================================
   // Info Endpoints
@@ -58,11 +57,11 @@ export class ExchangeAPI {
   async placeOrder(
     userAddress: string,
     marketId: string,
-    side: 'Buy' | 'Sell',
-    orderType: 'Limit' | 'Market',
+    side: "Buy" | "Sell",
+    orderType: "Limit" | "Market",
     price: string,
     size: string,
-    signature: string
+    signature: string,
   ): Promise<{ order: Order; trades: Trade[] }> {
     return this.client.placeOrder({
       userAddress,
@@ -75,11 +74,7 @@ export class ExchangeAPI {
     });
   }
 
-  async cancelOrder(
-    userAddress: string,
-    orderId: string,
-    signature: string
-  ): Promise<{ orderId: string }> {
+  async cancelOrder(userAddress: string, orderId: string, signature: string): Promise<{ orderId: string }> {
     return this.client.cancelOrder({
       userAddress,
       orderId,
@@ -91,11 +86,7 @@ export class ExchangeAPI {
   // Admin Endpoints (for setup/testing)
   // ============================================================================
 
-  async adminCreateToken(
-    ticker: string,
-    decimals: number,
-    name: string
-  ): Promise<Token> {
+  async adminCreateToken(ticker: string, decimals: number, name: string): Promise<Token> {
     return this.client.adminCreateToken({ ticker, decimals, name });
   }
 
@@ -106,7 +97,7 @@ export class ExchangeAPI {
     lotSize: number,
     minSize: number,
     makerFeeBps: number,
-    takerFeeBps: number
+    takerFeeBps: number,
   ): Promise<Market> {
     return this.client.adminCreateMarket({
       baseTicker,
@@ -119,11 +110,7 @@ export class ExchangeAPI {
     });
   }
 
-  async adminFaucet(
-    userAddress: string,
-    tokenTicker: string,
-    amount: string
-  ): Promise<string> {
+  async adminFaucet(userAddress: string, tokenTicker: string, amount: string): Promise<string> {
     const result = await this.client.adminFaucet({
       userAddress,
       tokenTicker,

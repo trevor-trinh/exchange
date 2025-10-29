@@ -55,9 +55,9 @@ pub struct Market {
     pub id: String, // Generated as "base_ticker/quote_ticker"
     pub base_ticker: String,
     pub quote_ticker: String,
-    pub tick_size: u128, // Minimum price increment in quote atoms
-    pub lot_size: u128, // Minimum size increment in base atoms
-    pub min_size: u128, // Minimum order size in base atoms
+    pub tick_size: u128,    // Minimum price increment in quote atoms
+    pub lot_size: u128,     // Minimum size increment in base atoms
+    pub min_size: u128,     // Minimum order size in base atoms
     pub maker_fee_bps: i32, // Maker fee in basis points (0-10000)
     pub taker_fee_bps: i32, // Taker fee in basis points (0-10000)
 }

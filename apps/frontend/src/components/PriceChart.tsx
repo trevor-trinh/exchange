@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
-import { usePriceHistory } from '@/lib/hooks';
+import { useEffect, useRef } from "react";
+import { usePriceHistory } from "@/lib/hooks";
 
 export function PriceChart() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -11,7 +11,7 @@ export function PriceChart() {
     if (!canvasRef.current || priceHistory.length === 0) return;
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const { width, height } = canvas;
@@ -20,7 +20,7 @@ export function PriceChart() {
     ctx.clearRect(0, 0, width, height);
 
     // Draw background
-    ctx.fillStyle = '#000';
+    ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, width, height);
 
     // Get price range
@@ -30,7 +30,7 @@ export function PriceChart() {
     const priceRange = maxPrice - minPrice || 1;
 
     // Draw grid lines
-    ctx.strokeStyle = '#333';
+    ctx.strokeStyle = "#333";
     ctx.lineWidth = 1;
     for (let i = 0; i <= 5; i++) {
       const y = (i / 5) * height;
@@ -41,7 +41,7 @@ export function PriceChart() {
     }
 
     // Draw price line
-    ctx.strokeStyle = '#3b82f6';
+    ctx.strokeStyle = "#3b82f6";
     ctx.lineWidth = 2;
     ctx.beginPath();
 
@@ -60,13 +60,13 @@ export function PriceChart() {
 
     // Draw current price label
     if (currentPrice) {
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 20px monospace';
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 20px monospace";
       ctx.fillText(`$${currentPrice.toFixed(2)}`, 20, 40);
 
       // Draw min/max labels
-      ctx.font = '12px monospace';
-      ctx.fillStyle = '#888';
+      ctx.font = "12px monospace";
+      ctx.fillStyle = "#888";
       ctx.fillText(`High: $${maxPrice.toFixed(2)}`, 20, height - 30);
       ctx.fillText(`Low: $${minPrice.toFixed(2)}`, 20, height - 10);
     }
@@ -80,7 +80,7 @@ export function PriceChart() {
         width={800}
         height={400}
         className="w-full"
-        style={{ maxWidth: '100%', height: 'auto' }}
+        style={{ maxWidth: "100%", height: "auto" }}
       />
     </div>
   );

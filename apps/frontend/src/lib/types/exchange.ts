@@ -29,9 +29,9 @@ export interface Balance {
   available: number;
 }
 
-export type Side = 'Buy' | 'Sell';
-export type OrderType = 'Limit' | 'Market';
-export type OrderStatus = 'Pending' | 'PartiallyFilled' | 'Filled' | 'Cancelled';
+export type Side = "Buy" | "Sell";
+export type OrderType = "Limit" | "Market";
+export type OrderStatus = "Pending" | "PartiallyFilled" | "Filled" | "Cancelled";
 
 export interface Order {
   id: string;

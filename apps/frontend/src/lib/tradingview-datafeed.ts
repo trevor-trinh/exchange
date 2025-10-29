@@ -106,7 +106,7 @@ export class ExchangeDatafeed implements IBasicDataFeed {
           minmov: 1,
           pricescale: 100, // 2 decimal places
           has_intraday: true,
-          has_no_volume: false,
+          listed_exchange: "Exchange",
           has_weekly_and_monthly: false,
           supported_resolutions: this.configurationData.supported_resolutions,
           volume_precision: 8,
@@ -146,9 +146,9 @@ export class ExchangeDatafeed implements IBasicDataFeed {
     )
       .then(async (response) => {
         if (!response.ok) {
-          console.error('Candles API error:', response.status, response.statusText);
+          console.error("Candles API error:", response.status, response.statusText);
           const text = await response.text();
-          console.error('Error details:', text);
+          console.error("Error details:", text);
           throw new Error(`HTTP ${response.status}: ${text}`);
         }
         return response.json();

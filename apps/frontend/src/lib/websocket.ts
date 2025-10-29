@@ -3,11 +3,11 @@
  * Now using the @exchange/sdk package
  */
 
-import { WebSocketClient } from '@exchange/sdk';
-import type { ServerMessage, SubscriptionChannel } from '@exchange/sdk';
+import { WebSocketClient } from "@exchange/sdk";
+import type { ServerMessage, SubscriptionChannel } from "@exchange/sdk";
 
 type MessageHandler = (message: ServerMessage) => void;
-type MessageType = ServerMessage['type'];
+type MessageType = ServerMessage["type"];
 
 export class WebSocketManager {
   private client: WebSocketClient;
@@ -25,15 +25,15 @@ export class WebSocketManager {
   private setupMessageHandlers(): void {
     // Forward all message types from SDK client to local handlers
     const messageTypes: MessageType[] = [
-      'subscribed',
-      'unsubscribed',
-      'trade',
-      'orderbook_snapshot',
-      'orderbook_update',
-      'order_placed',
-      'order_cancelled',
-      'pong',
-      'error',
+      "subscribed",
+      "unsubscribed",
+      "trade",
+      "orderbook_snapshot",
+      "orderbook_update",
+      "order_placed",
+      "order_cancelled",
+      "pong",
+      "error",
     ];
 
     messageTypes.forEach((type) => {
@@ -44,7 +44,7 @@ export class WebSocketManager {
             try {
               handler(message);
             } catch (error) {
-              console.error('[WebSocket] Handler error:', error);
+              console.error("[WebSocket] Handler error:", error);
             }
           });
         }
@@ -78,22 +78,14 @@ export class WebSocketManager {
   /**
    * Subscribe to a channel
    */
-  subscribe(
-    channel: SubscriptionChannel,
-    marketId?: string,
-    userAddress?: string
-  ): void {
+  subscribe(channel: SubscriptionChannel, marketId?: string, userAddress?: string): void {
     this.client.subscribe(channel, { marketId, userAddress });
   }
 
   /**
    * Unsubscribe from a channel
    */
-  unsubscribe(
-    channel: SubscriptionChannel,
-    marketId?: string,
-    userAddress?: string
-  ): void {
+  unsubscribe(channel: SubscriptionChannel, marketId?: string, userAddress?: string): void {
     this.client.unsubscribe(channel, { marketId, userAddress });
   }
 
@@ -108,7 +100,7 @@ export class WebSocketManager {
    * Close connection and clean up
    */
   close(): void {
-    console.log('[WebSocket] Closing connection');
+    console.log("[WebSocket] Closing connection");
     this.client.disconnect();
     this.handlers.clear();
   }
@@ -119,7 +111,7 @@ let wsManagerInstance: WebSocketManager | null = null;
 
 export function getWebSocketManager(): WebSocketManager {
   if (!wsManagerInstance) {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8888/ws';
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8888/ws";
     wsManagerInstance = new WebSocketManager(wsUrl);
   }
   return wsManagerInstance;

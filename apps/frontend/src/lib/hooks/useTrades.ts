@@ -2,10 +2,10 @@
  * Hook for subscribing to trade updates
  */
 
-import { useEffect } from 'react';
-import { useExchangeStore, selectRecentTrades } from '../store';
-import { getWebSocketManager } from '../websocket';
-import type { TradeMessage } from '../types/websocket';
+import { useEffect } from "react";
+import { useExchangeStore, selectRecentTrades } from "../store";
+import { getWebSocketManager } from "../websocket";
+import type { TradeMessage } from "../types/websocket";
 
 export function useTrades(marketId: string | null) {
   const addTrade = useExchangeStore((state) => state.addTrade);
@@ -26,23 +26,23 @@ export function useTrades(marketId: string | null) {
           seller_address: message.data.seller_address,
           price: message.data.price,
           size: message.data.size,
-          buyer_fee: '0', // Not included in WebSocket message
-          seller_fee: '0', // Not included in WebSocket message
+          buyer_fee: "0", // Not included in WebSocket message
+          seller_fee: "0", // Not included in WebSocket message
           timestamp: message.data.timestamp,
         });
       }
     };
 
     // Register handler
-    ws.on('trade', handleTrade as any);
+    ws.on("trade", handleTrade as any);
 
     // Subscribe to trades
-    ws.subscribe('Trades', marketId);
+    ws.subscribe("Trades", marketId);
 
     // Cleanup
     return () => {
-      ws.off('trade', handleTrade as any);
-      ws.unsubscribe('Trades', marketId);
+      ws.off("trade", handleTrade as any);
+      ws.unsubscribe("Trades", marketId);
     };
   }, [marketId, addTrade]);
 

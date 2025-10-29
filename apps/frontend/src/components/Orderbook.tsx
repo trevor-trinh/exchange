@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useOrderbook } from '@/lib/hooks';
-import { useExchangeStore } from '@/lib/store';
+import { useOrderbook } from "@/lib/hooks";
+import { useExchangeStore } from "@/lib/store";
 
 export function Orderbook() {
   const selectedMarketId = useExchangeStore((state) => state.selectedMarketId);
@@ -28,12 +28,15 @@ export function Orderbook() {
             <span>Size (BTC)</span>
           </div>
           <div className="space-y-1">
-            {asks.slice(0, 15).reverse().map((ask, i) => (
-              <div key={i} className="flex justify-between text-sm text-red-500">
-                <span>{parseFloat(ask.price).toFixed(2)}</span>
-                <span>{(parseFloat(ask.size) / 1e6).toFixed(4)}</span>
-              </div>
-            ))}
+            {asks
+              .slice(0, 15)
+              .reverse()
+              .map((ask, i) => (
+                <div key={i} className="flex justify-between text-sm text-red-500">
+                  <span>{parseFloat(ask.price).toFixed(2)}</span>
+                  <span>{(parseFloat(ask.size) / 1e6).toFixed(4)}</span>
+                </div>
+              ))}
           </div>
         </div>
 

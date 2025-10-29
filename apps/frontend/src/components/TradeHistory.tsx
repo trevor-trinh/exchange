@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useTrades } from '@/lib/hooks';
-import { useExchangeStore } from '@/lib/store';
+import { useTrades } from "@/lib/hooks";
+import { useExchangeStore } from "@/lib/store";
 
 export function TradeHistory() {
   const selectedMarketId = useExchangeStore((state) => state.selectedMarketId);
@@ -33,9 +33,7 @@ export function TradeHistory() {
               <tr key={trade.id} className="border-b">
                 <td className="p-2">{parseFloat(trade.price).toFixed(2)}</td>
                 <td className="p-2">{(parseFloat(trade.size) / 1e6).toFixed(4)}</td>
-                <td className="p-2 text-gray-500">
-                  {new Date(trade.timestamp).toLocaleTimeString()}
-                </td>
+                <td className="p-2 text-gray-500">{new Date(trade.timestamp).toLocaleTimeString()}</td>
               </tr>
             ))}
           </tbody>

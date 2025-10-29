@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
-import { useExchangeStore } from '@/lib/store';
-import { ExchangeDatafeed } from '@/lib/tradingview-datafeed';
+import { useEffect, useRef } from "react";
+import { useExchangeStore } from "@/lib/store";
+import { ExchangeDatafeed } from "@/lib/tradingview-datafeed";
 
 // @ts-ignore - TradingView types
 import type {
   IChartingLibraryWidget,
   ChartingLibraryWidgetOptions,
   ResolutionString,
-} from '../../public/vendor/trading-view/charting_library';
+} from "../../public/vendor/trading-view/charting_library";
 
 export function TradingViewChart() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -20,8 +20,8 @@ export function TradingViewChart() {
     if (!containerRef.current || !selectedMarketId) return;
 
     // Check if TradingView library is loaded
-    if (typeof window === 'undefined' || !(window as any).TradingView) {
-      console.error('TradingView library not loaded');
+    if (typeof window === "undefined" || !(window as any).TradingView) {
+      console.error("TradingView library not loaded");
       return;
     }
 
@@ -30,22 +30,19 @@ export function TradingViewChart() {
     const widgetOptions: ChartingLibraryWidgetOptions = {
       symbol: selectedMarketId,
       datafeed: new ExchangeDatafeed(),
-      interval: '1' as ResolutionString, // 1 minute
+      interval: "1" as ResolutionString, // 1 minute
       container: containerRef.current,
-      library_path: '/vendor/trading-view/',
-      locale: 'en',
-      disabled_features: [
-        'use_localstorage_for_settings',
-        'volume_force_overlay',
-      ],
-      enabled_features: ['study_templates'],
+      library_path: "/vendor/trading-view/",
+      locale: "en",
+      disabled_features: ["use_localstorage_for_settings", "volume_force_overlay"],
+      enabled_features: ["study_templates"],
       fullscreen: false,
       autosize: true,
-      theme: 'dark',
+      theme: "dark",
       custom_css_url: undefined,
       overrides: {
-        'paneProperties.background': '#000000',
-        'paneProperties.backgroundType': 'solid',
+        "paneProperties.background": "#000000",
+        "paneProperties.backgroundType": "solid",
       },
     };
 
@@ -54,10 +51,10 @@ export function TradingViewChart() {
       widgetRef.current = widget;
 
       widget.onChartReady(() => {
-        console.log('TradingView chart is ready');
+        console.log("TradingView chart is ready");
       });
     } catch (error) {
-      console.error('Failed to create TradingView widget:', error);
+      console.error("Failed to create TradingView widget:", error);
     }
 
     // Cleanup
@@ -78,7 +75,7 @@ export function TradingViewChart() {
   }
 
   return (
-    <div className="border rounded overflow-hidden" style={{ height: '500px' }}>
+    <div className="border rounded overflow-hidden" style={{ height: "500px" }}>
       <div ref={containerRef} className="h-full" />
     </div>
   );

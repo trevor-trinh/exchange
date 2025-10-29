@@ -125,8 +125,13 @@ pub enum TradeRequest {
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum TradeResponse {
-    PlaceOrder { order: ApiOrder, trades: Vec<ApiTrade> },
-    CancelOrder { order_id: String },
+    PlaceOrder {
+        order: ApiOrder,
+        trades: Vec<ApiTrade>,
+    },
+    CancelOrder {
+        order_id: String,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -185,9 +190,9 @@ pub enum AdminRequest {
     CreateMarket {
         base_ticker: String,
         quote_ticker: String,
-        tick_size: String,  // u128 as string
-        lot_size: String,   // u128 as string
-        min_size: String,   // u128 as string
+        tick_size: String, // u128 as string
+        lot_size: String,  // u128 as string
+        min_size: String,  // u128 as string
         maker_fee_bps: i32,
         taker_fee_bps: i32,
     },
@@ -340,11 +345,11 @@ pub struct TradeData {
     pub market_id: String,
     pub buyer_address: String,
     pub seller_address: String,
-    pub buyer_order_id: String, // UUID as string
+    pub buyer_order_id: String,  // UUID as string
     pub seller_order_id: String, // UUID as string
-    pub price: String, // u128 as string
-    pub size: String, // u128 as string
-    pub timestamp: i64, // Unix timestamp for WebSocket compatibility
+    pub price: String,           // u128 as string
+    pub size: String,            // u128 as string
+    pub timestamp: i64,          // Unix timestamp for WebSocket compatibility
 }
 
 // ============================================================================
@@ -358,8 +363,8 @@ pub struct ApiMarket {
     pub base_ticker: String,
     pub quote_ticker: String,
     pub tick_size: String, // u128 as string
-    pub lot_size: String, // u128 as string
-    pub min_size: String, // u128 as string
+    pub lot_size: String,  // u128 as string
+    pub min_size: String,  // u128 as string
     pub maker_fee_bps: i32,
     pub taker_fee_bps: i32,
 }
@@ -371,7 +376,7 @@ pub struct ApiOrder {
     pub user_address: String,
     pub market_id: String,
     pub price: String, // u128 as string
-    pub size: String, // u128 as string
+    pub size: String,  // u128 as string
     pub side: Side,
     pub order_type: OrderType,
     pub status: OrderStatus,
@@ -387,10 +392,10 @@ pub struct ApiTrade {
     pub market_id: String,
     pub buyer_address: String,
     pub seller_address: String,
-    pub buyer_order_id: String, // UUID as string
+    pub buyer_order_id: String,  // UUID as string
     pub seller_order_id: String, // UUID as string
-    pub price: String, // u128 as string
-    pub size: String, // u128 as string
+    pub price: String,           // u128 as string
+    pub size: String,            // u128 as string
     pub timestamp: DateTime<Utc>,
 }
 
@@ -399,7 +404,7 @@ pub struct ApiTrade {
 pub struct ApiBalance {
     pub user_address: String,
     pub token_ticker: String,
-    pub amount: String, // u128 as string
+    pub amount: String,        // u128 as string
     pub open_interest: String, // u128 as string
     pub updated_at: DateTime<Utc>,
 }

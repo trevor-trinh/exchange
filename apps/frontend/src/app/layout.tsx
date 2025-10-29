@@ -21,10 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        <Script
-          src="/vendor/trading-view/charting_library.standalone.js"
-          strategy="beforeInteractive"
-        />
+        <Script src="/vendor/trading-view/charting_library.standalone.js" strategy="beforeInteractive" />
       </head>
       <body className={`${geistSans.className} ${geistMono.className} font-sans antialiased`}>{children}</body>
     </html>

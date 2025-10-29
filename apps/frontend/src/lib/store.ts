@@ -2,17 +2,10 @@
  * Global state management with Zustand
  */
 
-import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
-import { immer } from 'zustand/middleware/immer';
-import type {
-  Market,
-  Token,
-  Orderbook,
-  OrderbookLevel,
-  Trade,
-  PricePoint,
-} from './types/exchange';
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
+import type { Market, Token, Orderbook, OrderbookLevel, Trade, PricePoint } from "./types/exchange";
 
 // ============================================================================
 // State Interface
@@ -195,8 +188,8 @@ export const useExchangeStore = create<ExchangeState>()(
       // Reset
       reset: () => set(initialState),
     })),
-    { name: 'ExchangeStore' }
-  )
+    { name: "ExchangeStore" },
+  ),
 );
 
 // ============================================================================
@@ -209,11 +202,9 @@ const EMPTY_ARRAY: OrderbookLevel[] = [];
 export const selectSelectedMarket = (state: ExchangeState) =>
   state.markets.find((m) => m.id === state.selectedMarketId);
 
-export const selectOrderbookBids = (state: ExchangeState) =>
-  state.orderbook?.bids ?? EMPTY_ARRAY;
+export const selectOrderbookBids = (state: ExchangeState) => state.orderbook?.bids ?? EMPTY_ARRAY;
 
-export const selectOrderbookAsks = (state: ExchangeState) =>
-  state.orderbook?.asks ?? EMPTY_ARRAY;
+export const selectOrderbookAsks = (state: ExchangeState) => state.orderbook?.asks ?? EMPTY_ARRAY;
 
 export const selectRecentTrades = (state: ExchangeState) => state.recentTrades;
 

@@ -2,7 +2,7 @@
  * Hook for accessing price history for charts
  */
 
-import { useExchangeStore, selectPriceHistory, selectCurrentPrice } from '../store';
+import { useExchangeStore, selectPriceHistory, selectCurrentPrice } from "../store";
 
 export function usePriceHistory() {
   const priceHistory = useExchangeStore(selectPriceHistory);

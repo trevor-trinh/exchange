@@ -1,14 +1,17 @@
-use axum::{extract::{Query, State}, Json};
+use crate::AppState;
+use axum::{
+    extract::{Query, State},
+    Json,
+};
 use clickhouse::Row;
 use serde::{Deserialize, Serialize};
-use crate::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct CandlesQuery {
     pub market_id: String,
-    pub interval: String,  // 1m, 5m, 15m, 1h, 1d
-    pub from: i64,         // Unix timestamp in seconds
-    pub to: i64,           // Unix timestamp in seconds
+    pub interval: String, // 1m, 5m, 15m, 1h, 1d
+    pub from: i64,        // Unix timestamp in seconds
+    pub to: i64,          // Unix timestamp in seconds
 }
 
 #[derive(Debug, Serialize, Deserialize, Row, utoipa::ToSchema)]

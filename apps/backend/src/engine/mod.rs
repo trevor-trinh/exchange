@@ -124,7 +124,7 @@ impl MatchingEngine {
 
         Ok(OrderPlaced {
             order: order.into(),
-            trades: trades.into_iter().map(|t| t.into()).collect()
+            trades: trades.into_iter().map(|t| t.into()).collect(),
         })
     }
 

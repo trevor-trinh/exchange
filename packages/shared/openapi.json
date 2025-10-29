@@ -47,6 +47,74 @@
         }
       }
     },
+    "/api/candles": {
+      "get": {
+        "tags": [
+          "market-data"
+        ],
+        "summary": "Get OHLCV candles for a market",
+        "description": "GET /api/candles?market_id=BTC/USDC&interval=1m&from=1234567890&to=1234567899",
+        "operationId": "get_candles",
+        "parameters": [
+          {
+            "name": "market_id",
+            "in": "query",
+            "description": "Market ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "description": "Candle interval: 1m, 5m, 15m, 1h, 1d",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Start timestamp (Unix seconds)",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "End timestamp (Unix seconds)",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Candles retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandlesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/api/drip": {
       "post": {
         "tags": [
@@ -396,16 +464,14 @@
                 "type": "string"
               },
               "lot_size": {
-                "type": "integer",
-                "minimum": 0
+                "type": "string"
               },
               "maker_fee_bps": {
                 "type": "integer",
                 "format": "int32"
               },
               "min_size": {
-                "type": "integer",
-                "minimum": 0
+                "type": "string"
               },
               "quote_ticker": {
                 "type": "string"
@@ -415,8 +481,7 @@
                 "format": "int32"
               },
               "tick_size": {
-                "type": "integer",
-                "minimum": 0
+                "type": "string"
               },
               "type": {
                 "type": "string",
@@ -487,7 +552,7 @@
             ],
             "properties": {
               "market": {
-                "$ref": "#/components/schemas/Market"
+                "$ref": "#/components/schemas/ApiMarket"
               },
               "type": {
                 "type": "string",
@@ -530,6 +595,131 @@
         ],
         "description": "Admin response with type discriminator"
       },
+      "ApiBalance": {
+        "type": "object",
+        "description": "API representation of Balance with String fields for JSON compatibility",
+        "required": [
+          "user_address",
+          "token_ticker",
+          "amount",
+          "open_interest",
+          "updated_at"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "open_interest": {
+            "type": "string"
+          },
+          "token_ticker": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user_address": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiMarket": {
+        "type": "object",
+        "description": "API representation of Market with String fields for JSON compatibility",
+        "required": [
+          "id",
+          "base_ticker",
+          "quote_ticker",
+          "tick_size",
+          "lot_size",
+          "min_size",
+          "maker_fee_bps",
+          "taker_fee_bps"
+        ],
+        "properties": {
+          "base_ticker": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lot_size": {
+            "type": "string"
+          },
+          "maker_fee_bps": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "min_size": {
+            "type": "string"
+          },
+          "quote_ticker": {
+            "type": "string"
+          },
+          "taker_fee_bps": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tick_size": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiOrder": {
+        "type": "object",
+        "description": "API representation of Order with String fields for JSON compatibility",
+        "required": [
+          "id",
+          "user_address",
+          "market_id",
+          "price",
+          "size",
+          "side",
+          "order_type",
+          "status",
+          "filled_size",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "filled_size": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "market_id": {
+            "type": "string"
+          },
+          "order_type": {
+            "$ref": "#/components/schemas/OrderType"
+          },
+          "price": {
+            "type": "string"
+          },
+          "side": {
+            "$ref": "#/components/schemas/Side"
+          },
+          "size": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user_address": {
+            "type": "string"
+          }
+        }
+      },
       "ApiResponse": {
         "type": "object",
         "required": [
@@ -547,33 +737,100 @@
           }
         }
       },
-      "Balance": {
+      "ApiTrade": {
         "type": "object",
+        "description": "API representation of Trade with String fields for JSON compatibility",
         "required": [
-          "user_address",
-          "token_ticker",
-          "amount",
-          "open_interest",
-          "updated_at"
+          "id",
+          "market_id",
+          "buyer_address",
+          "seller_address",
+          "buyer_order_id",
+          "seller_order_id",
+          "price",
+          "size",
+          "timestamp"
         ],
         "properties": {
-          "amount": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "open_interest": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "token_ticker": {
+          "buyer_address": {
             "type": "string"
           },
-          "updated_at": {
+          "buyer_order_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "market_id": {
+            "type": "string"
+          },
+          "price": {
+            "type": "string"
+          },
+          "seller_address": {
+            "type": "string"
+          },
+          "seller_order_id": {
+            "type": "string"
+          },
+          "size": {
+            "type": "string"
+          },
+          "timestamp": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "Candle": {
+        "type": "object",
+        "required": [
+          "timestamp",
+          "open",
+          "high",
+          "low",
+          "close",
+          "volume"
+        ],
+        "properties": {
+          "close": {
+            "type": "integer",
+            "minimum": 0
           },
-          "user_address": {
-            "type": "string"
+          "high": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "low": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "open": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "volume": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "CandlesResponse": {
+        "type": "object",
+        "required": [
+          "candles"
+        ],
+        "properties": {
+          "candles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Candle"
+            }
           }
         }
       },
@@ -774,7 +1031,7 @@
             ],
             "properties": {
               "market": {
-                "$ref": "#/components/schemas/Market"
+                "$ref": "#/components/schemas/ApiMarket"
               },
               "type": {
                 "type": "string",
@@ -794,7 +1051,7 @@
               "markets": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/Market"
+                  "$ref": "#/components/schemas/ApiMarket"
                 }
               },
               "type": {
@@ -828,107 +1085,6 @@
           }
         ],
         "description": "Info response with type discriminator"
-      },
-      "Market": {
-        "type": "object",
-        "required": [
-          "id",
-          "base_ticker",
-          "quote_ticker",
-          "tick_size",
-          "lot_size",
-          "min_size",
-          "maker_fee_bps",
-          "taker_fee_bps"
-        ],
-        "properties": {
-          "base_ticker": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string"
-          },
-          "lot_size": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "maker_fee_bps": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "min_size": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "quote_ticker": {
-            "type": "string"
-          },
-          "taker_fee_bps": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "tick_size": {
-            "type": "integer",
-            "minimum": 0
-          }
-        }
-      },
-      "Order": {
-        "type": "object",
-        "required": [
-          "id",
-          "user_address",
-          "market_id",
-          "price",
-          "size",
-          "side",
-          "order_type",
-          "status",
-          "filled_size",
-          "created_at",
-          "updated_at"
-        ],
-        "properties": {
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "filled_size": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "market_id": {
-            "type": "string"
-          },
-          "order_type": {
-            "$ref": "#/components/schemas/OrderType"
-          },
-          "price": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "side": {
-            "$ref": "#/components/schemas/Side"
-          },
-          "size": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "status": {
-            "$ref": "#/components/schemas/OrderStatus"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "user_address": {
-            "type": "string"
-          }
-        }
       },
       "OrderStatus": {
         "type": "string",
@@ -971,55 +1127,6 @@
           },
           "ticker": {
             "type": "string"
-          }
-        }
-      },
-      "Trade": {
-        "type": "object",
-        "required": [
-          "id",
-          "market_id",
-          "buyer_address",
-          "seller_address",
-          "buyer_order_id",
-          "seller_order_id",
-          "price",
-          "size",
-          "timestamp"
-        ],
-        "properties": {
-          "buyer_address": {
-            "type": "string"
-          },
-          "buyer_order_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "market_id": {
-            "type": "string"
-          },
-          "price": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "seller_address": {
-            "type": "string"
-          },
-          "seller_order_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "size": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -1122,12 +1229,12 @@
             ],
             "properties": {
               "order": {
-                "$ref": "#/components/schemas/Order"
+                "$ref": "#/components/schemas/ApiOrder"
               },
               "trades": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/Trade"
+                  "$ref": "#/components/schemas/ApiTrade"
                 }
               },
               "type": {
@@ -1279,7 +1386,7 @@
               "orders": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/Order"
+                  "$ref": "#/components/schemas/ApiOrder"
                 }
               },
               "type": {
@@ -1300,7 +1407,7 @@
               "balances": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/Balance"
+                  "$ref": "#/components/schemas/ApiBalance"
                 }
               },
               "type": {
@@ -1321,7 +1428,7 @@
               "trades": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/Trade"
+                  "$ref": "#/components/schemas/ApiTrade"
                 }
               },
               "type": {
@@ -1361,6 +1468,10 @@
     {
       "name": "admin",
       "description": "Admin operations (test/dev only)"
+    },
+    {
+      "name": "market-data",
+      "description": "Market data and candles"
     }
   ]
 }
