@@ -7,6 +7,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::models::ApiResponse;
 
+pub mod admin;
 pub mod drip;
 pub mod health;
 pub mod info;
@@ -26,6 +27,7 @@ pub mod user;
         user::user,
         trade::trade,
         drip::drip,
+        admin::admin_handler,
     ),
     components(
         schemas(
@@ -46,6 +48,10 @@ pub mod user;
             crate::models::api::DripRequest,
             crate::models::api::DripResponse,
             crate::models::api::DripErrorResponse,
+            // Admin types
+            crate::models::api::AdminRequest,
+            crate::models::api::AdminResponse,
+            crate::models::api::AdminErrorResponse,
             // Domain types
             crate::models::domain::Token,
             crate::models::domain::Market,
@@ -62,7 +68,8 @@ pub mod user;
         (name = "info", description = "Information endpoints"),
         (name = "user", description = "User data endpoints"),
         (name = "trade", description = "Trading endpoints"),
-        (name = "drip", description = "Get free money")
+        (name = "drip", description = "Get free money"),
+        (name = "admin", description = "Admin operations (test/dev only)")
     )
 )]
 pub struct ApiDoc;
@@ -74,5 +81,6 @@ pub fn create_rest() -> Router<crate::AppState> {
         .route("/api/user", post(user::user))
         .route("/api/trade", post(trade::trade))
         .route("/api/drip", post(drip::drip))
+        .route("/api/admin", post(admin::admin_handler))
         .merge(SwaggerUi::new("/api/docs").url("/api/openapi.json", ApiDoc::openapi()))
 }

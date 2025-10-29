@@ -168,6 +168,56 @@ pub struct DripErrorResponse {
 }
 
 // ============================================================================
+// ADMIN API TYPES
+// ============================================================================
+
+/// Admin request with type discriminator
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum AdminRequest {
+    CreateToken {
+        ticker: String,
+        decimals: u8,
+        name: String,
+    },
+    CreateMarket {
+        base_ticker: String,
+        quote_ticker: String,
+        tick_size: u128,
+        lot_size: u128,
+        min_size: u128,
+        maker_fee_bps: i32,
+        taker_fee_bps: i32,
+    },
+    Faucet {
+        user_address: String,
+        token_ticker: String,
+        amount: String,
+        signature: String,
+    },
+}
+
+/// Admin response with type discriminator
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum AdminResponse {
+    CreateToken { token: Token },
+    CreateMarket { market: Market },
+    Faucet {
+        user_address: String,
+        token_ticker: String,
+        amount: String,
+        new_balance: String,
+    },
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct AdminErrorResponse {
+    pub error: String,
+    pub code: String,
+}
+
+// ============================================================================
 // WEBSOCKET MESSAGE TYPES (Client → Server)
 // ============================================================================
 
