@@ -12,6 +12,7 @@
     "generate-openapi": "openapi-typescript ../../packages/shared/openapi.json -o ./src/lib/types/openapi.ts"
   },
   "dependencies": {
+    "@exchange/sdk": "file:../../packages/sdk-typescript",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

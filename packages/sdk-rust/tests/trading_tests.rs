@@ -24,7 +24,7 @@ async fn test_complete_trading_workflow() {
         .await
         .expect("Failed to create alice");
     fixture
-        .create_user_with_balance("bob", 0, 1_000_000_000_000) // 1M USDC
+        .create_user_with_balance("bob", 0, 100_000_000_000_000_000) // 100M USDC (enough for trade + fees)
         .await
         .expect("Failed to create bob");
 
@@ -102,8 +102,8 @@ async fn test_complete_trading_workflow() {
     let usdc_balance = balances.iter().find(|b| b.token_ticker == "USDC");
     assert!(usdc_balance.is_some());
     let usdc = usdc_balance.unwrap();
-    // Alice gets: 50000 USDC - 0.1% maker fee
-    assert!(usdc.amount > 49_990_000_000 && usdc.amount < 50_000_000_000);
+    // Alice gets: 50_000_000_000_000_000 USDC - 0.1% maker fee = ~49_950_000_000_000_000
+    assert!(usdc.amount > 49_900_000_000_000_000 && usdc.amount < 50_000_000_000_000_000);
 
     // 8. Check Bob received BTC (minus fees)
     let balances = fixture
@@ -114,8 +114,8 @@ async fn test_complete_trading_workflow() {
     let btc_balance = balances.iter().find(|b| b.token_ticker == "BTC");
     assert!(btc_balance.is_some());
     let btc = btc_balance.unwrap();
-    // Bob gets: 1 BTC - 0.2% taker fee = 0.998 BTC
-    assert!(btc.amount > 998_000 && btc.amount < 1_000_000);
+    // Bob gets: 1_000_000 atoms - 0.2% taker fee (2_000 atoms) = 998_000 atoms
+    assert_eq!(btc.amount, 998_000);
 
     // 9. Both users can see their trade history
     let alice_trades = fixture
@@ -144,7 +144,7 @@ async fn test_partial_fill() {
         .await
         .expect("Failed to create seller");
     fixture
-        .create_user_with_balance("buyer", 0, 1_000_000_000_000)
+        .create_user_with_balance("buyer", 0, 200_000_000_000_000_000) // 200M USDC (enough for 3 BTC + fees)
         .await
         .expect("Failed to create buyer");
 
@@ -327,7 +327,7 @@ async fn test_multiple_concurrent_orders() {
                     Side::Sell,
                     OrderType::Limit,
                     format!("{}", 50_000_000_000u64 + (i * 1_000_000_000)),
-                    "500000".to_string(), // 0.5 BTC each
+                    "1000000".to_string(), // 1 BTC each (meets min_size requirement)
                     "test_sig".to_string(),
                 )
                 .await

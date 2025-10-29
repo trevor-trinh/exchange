@@ -144,7 +144,15 @@ export class ExchangeDatafeed implements IBasicDataFeed {
     fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/candles?market_id=${symbolInfo.name}&interval=${interval}&from=${from}&to=${to}`,
     )
-      .then((response) => response.json())
+      .then(async (response) => {
+        if (!response.ok) {
+          console.error('Candles API error:', response.status, response.statusText);
+          const text = await response.text();
+          console.error('Error details:', text);
+          throw new Error(`HTTP ${response.status}: ${text}`);
+        }
+        return response.json();
+      })
       .then((data: { candles: Candle[] }) => {
         if (!data.candles || data.candles.length === 0) {
           onResult([], { noData: true });

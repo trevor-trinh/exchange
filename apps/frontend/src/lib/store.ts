@@ -203,14 +203,17 @@ export const useExchangeStore = create<ExchangeState>()(
 // Selectors (for optimized re-renders)
 // ============================================================================
 
+// Stable empty arrays to prevent unnecessary re-renders
+const EMPTY_ARRAY: OrderbookLevel[] = [];
+
 export const selectSelectedMarket = (state: ExchangeState) =>
   state.markets.find((m) => m.id === state.selectedMarketId);
 
 export const selectOrderbookBids = (state: ExchangeState) =>
-  state.orderbook?.bids || [];
+  state.orderbook?.bids ?? EMPTY_ARRAY;
 
 export const selectOrderbookAsks = (state: ExchangeState) =>
-  state.orderbook?.asks || [];
+  state.orderbook?.asks ?? EMPTY_ARRAY;
 
 export const selectRecentTrades = (state: ExchangeState) => state.recentTrades;
 

@@ -10,8 +10,8 @@ import type { OrderbookSnapshotMessage, OrderbookUpdateMessage } from '../types/
 export function useOrderbook(marketId: string | null) {
   const updateOrderbook = useExchangeStore((state) => state.updateOrderbook);
   const setOrderbookLoading = useExchangeStore((state) => state.setOrderbookLoading);
-  const bids = useExchangeStore((state) => selectOrderbookBids(state));
-  const asks = useExchangeStore((state) => selectOrderbookAsks(state));
+  const bids = useExchangeStore(selectOrderbookBids);
+  const asks = useExchangeStore(selectOrderbookAsks);
 
   useEffect(() => {
     if (!marketId) return;
