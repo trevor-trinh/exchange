@@ -11,6 +11,10 @@
 # backend
 /apps/backend/target/
 
+# packages
+/packages/sdk-rust/target/
+/packages/test-utils/target/
+
 # misc
 .DS_Store
 *.pem
