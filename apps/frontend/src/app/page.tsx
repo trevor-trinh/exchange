@@ -19,7 +19,7 @@ export default function Home() {
       if (btcUsdcMarket) {
         selectMarket(btcUsdcMarket.id);
       } else {
-        selectMarket(markets[0].id);
+        selectMarket(markets[0]?.id || "");
       }
     }
   }, [markets, selectedMarketId, selectMarket]);

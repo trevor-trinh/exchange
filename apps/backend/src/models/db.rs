@@ -75,12 +75,12 @@ pub struct BalanceRow {
 // ClickHouse-specific row types (for tick data and candles)
 #[derive(Debug, Clone, Row, Serialize, Deserialize)]
 pub struct ClickHouseTradeRow {
-    pub id: Uuid,
+    pub id: String, // UUID as string
     pub market_id: String,
     pub buyer_address: String,
     pub seller_address: String,
-    pub buyer_order_id: Uuid,
-    pub seller_order_id: Uuid,
+    pub buyer_order_id: String,  // UUID as string
+    pub seller_order_id: String, // UUID as string
     pub price: u128,
     pub size: u128,
     pub timestamp: u32, // Unix timestamp

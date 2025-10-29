@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useExchangeStore } from "@/lib/store";
 import { ExchangeDatafeed } from "@/lib/tradingview-datafeed";
 
-// @ts-ignore - TradingView types
+// @ts-expect-error - TradingView types
 import type {
   IChartingLibraryWidget,
   ChartingLibraryWidgetOptions,
@@ -20,12 +20,12 @@ export function TradingViewChart() {
     if (!containerRef.current || !selectedMarketId) return;
 
     // Check if TradingView library is loaded
-    if (typeof window === "undefined" || !(window as any).TradingView) {
+    if (typeof window === "undefined" || !("TradingView" in window)) {
       console.error("TradingView library not loaded");
       return;
     }
 
-    const TradingView = (window as any).TradingView;
+    const TradingView = (window as { TradingView: { widget: (options: ChartingLibraryWidgetOptions) => IChartingLibraryWidget } }).TradingView;
 
     const widgetOptions: ChartingLibraryWidgetOptions = {
       symbol: selectedMarketId,

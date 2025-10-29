@@ -5,7 +5,7 @@
  * https://www.tradingview.com/charting-library-docs/latest/connecting_data/Datafeed-API
  */
 
-// @ts-ignore - TradingView types
+// @ts-expect-error - TradingView types
 import type {
   IBasicDataFeed,
   LibrarySymbolInfo,
@@ -14,6 +14,7 @@ import type {
   HistoryCallback,
   OnReadyCallback,
   ResolveCallback,
+  // @ts-expect-error - TradingView types
   ErrorCallback,
   SubscribeBarsCallback,
   SearchSymbolsCallback,

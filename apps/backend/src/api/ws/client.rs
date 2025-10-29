@@ -82,7 +82,10 @@ pub(super) async fn handle_client_messages(
                         }
 
                         ClientMessage::Ping => {
-                            log::debug!("Received application ping");
+                            log::debug!("Received application ping, sending pong");
+                            if ack_tx.send(ServerMessage::Pong).is_err() {
+                                log::error!("Failed to send pong response");
+                            }
                         }
                     }
                 }

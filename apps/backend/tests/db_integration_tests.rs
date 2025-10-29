@@ -18,7 +18,12 @@ async fn test_user_crud_operations() {
         .expect("Failed to create user");
 
     assert_eq!(user.address, user_address);
-    assert!(user.created_at <= Utc::now());
+    // Allow small time difference due to timing precision
+    let time_diff = (Utc::now() - user.created_at).num_seconds().abs();
+    assert!(
+        time_diff < 2,
+        "created_at should be within 2 seconds of now"
+    );
 
     // Test getting a user
     let retrieved_user = test_db

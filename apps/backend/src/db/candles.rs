@@ -11,12 +11,12 @@ impl Db {
     /// This will automatically trigger the materialized view to create 1m candles
     pub async fn insert_trade_to_clickhouse(&self, trade: &Trade) -> Result<()> {
         let trade_row = ClickHouseTradeRow {
-            id: trade.id,
+            id: trade.id.to_string(),
             market_id: trade.market_id.clone(),
             buyer_address: trade.buyer_address.clone(),
             seller_address: trade.seller_address.clone(),
-            buyer_order_id: trade.buyer_order_id,
-            seller_order_id: trade.seller_order_id,
+            buyer_order_id: trade.buyer_order_id.to_string(),
+            seller_order_id: trade.seller_order_id.to_string(),
             price: trade.price,
             size: trade.size,
             timestamp: trade.timestamp.timestamp() as u32,
@@ -105,17 +105,19 @@ impl Db {
 
         Ok(trades
             .into_iter()
-            .map(|row| Trade {
-                id: row.id,
-                market_id: row.market_id,
-                buyer_address: row.buyer_address,
-                seller_address: row.seller_address,
-                buyer_order_id: row.buyer_order_id,
-                seller_order_id: row.seller_order_id,
-                price: row.price,
-                size: row.size,
-                timestamp: DateTime::from_timestamp(row.timestamp as i64, 0)
-                    .unwrap_or(DateTime::UNIX_EPOCH),
+            .filter_map(|row| {
+                Some(Trade {
+                    id: uuid::Uuid::parse_str(&row.id).ok()?,
+                    market_id: row.market_id,
+                    buyer_address: row.buyer_address,
+                    seller_address: row.seller_address,
+                    buyer_order_id: uuid::Uuid::parse_str(&row.buyer_order_id).ok()?,
+                    seller_order_id: uuid::Uuid::parse_str(&row.seller_order_id).ok()?,
+                    price: row.price,
+                    size: row.size,
+                    timestamp: DateTime::from_timestamp(row.timestamp as i64, 0)
+                        .unwrap_or(DateTime::UNIX_EPOCH),
+                })
             })
             .collect())
     }

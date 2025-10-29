@@ -50,7 +50,7 @@ bench:
 
 openapi:
   cd apps/backend && cargo run --bin generate_openapi
-  cd apps/frontend && bun run generate-openapi
+  cd packages/sdk-typescript && bun run generate
 
 fmt:
   cd apps/frontend && bun run format

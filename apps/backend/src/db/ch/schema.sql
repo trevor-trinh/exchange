@@ -1,11 +1,11 @@
 -- Trades table for tick data (raw trades from the matching engine)
 CREATE TABLE IF NOT EXISTS exchange.trades (
-    id UUID,
+    id String,
     market_id String,
     buyer_address String,
     seller_address String,
-    buyer_order_id UUID,
-    seller_order_id UUID,
+    buyer_order_id String,
+    seller_order_id String,
     price UInt128,
     size UInt128,
     timestamp DateTime
