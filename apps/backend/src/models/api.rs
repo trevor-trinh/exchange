@@ -14,14 +14,14 @@ pub struct ApiResponse {
 }
 
 /// Response after successfully placing an order
-#[derive(Debug, Clone, Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct OrderPlaced {
     pub order: Order,
     pub trades: Vec<Trade>,
 }
 
 /// Response after successfully cancelling an order
-#[derive(Debug, Clone, Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct OrderCancelled {
     pub order_id: String, // UUID as string for OpenAPI compatibility
 }
@@ -31,7 +31,7 @@ pub struct OrderCancelled {
 // ============================================================================
 
 /// Info request with type discriminator
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum InfoRequest {
     TokenDetails { ticker: String },
@@ -41,7 +41,7 @@ pub enum InfoRequest {
 }
 
 /// Info response with type discriminator
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum InfoResponse {
     TokenDetails { token: Token },
@@ -50,7 +50,7 @@ pub enum InfoResponse {
     AllTokens { tokens: Vec<Token> },
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct InfoErrorResponse {
     pub error: String,
     pub code: String,
@@ -61,7 +61,7 @@ pub struct InfoErrorResponse {
 // ============================================================================
 
 /// User request with type discriminator
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum UserRequest {
     Orders {
@@ -81,7 +81,7 @@ pub enum UserRequest {
 }
 
 /// User response with type discriminator
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum UserResponse {
     Orders { orders: Vec<Order> },
@@ -89,7 +89,7 @@ pub enum UserResponse {
     Trades { trades: Vec<Trade> },
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct UserErrorResponse {
     pub error: String,
     pub code: String,
@@ -100,7 +100,7 @@ pub struct UserErrorResponse {
 // ============================================================================
 
 /// Trade request with type discriminator
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum TradeRequest {
     PlaceOrder {
@@ -120,14 +120,14 @@ pub enum TradeRequest {
 }
 
 /// Trade response with type discriminator
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum TradeResponse {
     PlaceOrder { order: Order, trades: Vec<Trade> },
     CancelOrder { order_id: String },
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TradeErrorResponse {
     pub error: String,
     pub code: String,
@@ -138,7 +138,7 @@ pub struct TradeErrorResponse {
 // ============================================================================
 
 /// Drip request with type discriminator
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum DripRequest {
     Faucet {
@@ -150,7 +150,7 @@ pub enum DripRequest {
 }
 
 /// Drip response with type discriminator
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum DripResponse {
     Faucet {
@@ -161,7 +161,7 @@ pub enum DripResponse {
     },
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DripErrorResponse {
     pub error: String,
     pub code: String,
@@ -204,7 +204,7 @@ pub enum SubscriptionChannel {
 // WEBSOCKET MESSAGE TYPES (Server → Client)
 // ============================================================================
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ServerMessage {
     // Subscription acknowledgments
@@ -270,7 +270,7 @@ pub struct PriceLevel {
     pub size: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct OrderbookData {
     pub market_id: String,
     pub bids: Vec<PriceLevel>,
