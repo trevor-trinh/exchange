@@ -78,16 +78,177 @@ export class ExchangeClient {
   public readonly rest: RestClient;
   public readonly ws: WebSocketClient;
 
-  constructor(config: ExchangeClientConfig) {
+  constructor(config: string | ExchangeClientConfig) {
+    // Support both simple URL string and full config object
+    const cfg = typeof config === 'string'
+      ? {
+          restUrl: config,
+          wsUrl: config.replace(/^http/, 'ws') + '/ws'
+        }
+      : config;
+
     this.rest = new RestClient({
-      baseUrl: config.restUrl,
-      timeout: config.restTimeout,
+      baseUrl: cfg.restUrl,
+      timeout: cfg.restTimeout,
     });
 
     this.ws = new WebSocketClient({
-      url: config.wsUrl,
-      reconnectDelays: config.wsReconnectDelays,
-      pingInterval: config.wsPingInterval,
+      url: cfg.wsUrl,
+      reconnectDelays: cfg.wsReconnectDelays,
+      pingInterval: cfg.wsPingInterval,
+    });
+  }
+
+  // ============================================================================
+  // Convenience Methods - REST API
+  // ============================================================================
+
+  /**
+   * Get all markets
+   */
+  getMarkets() {
+    return this.rest.getMarkets();
+  }
+
+  /**
+   * Get a specific market
+   */
+  getMarket(marketId: string) {
+    return this.rest.getMarket(marketId);
+  }
+
+  /**
+   * Get all tokens
+   */
+  getTokens() {
+    return this.rest.getTokens();
+  }
+
+  /**
+   * Get a specific token
+   */
+  getToken(ticker: string) {
+    return this.rest.getToken(ticker);
+  }
+
+  /**
+   * Get user balances
+   */
+  getBalances(userAddress: string) {
+    return this.rest.getBalances(userAddress);
+  }
+
+  /**
+   * Get user orders
+   */
+  getOrders(userAddress: string, marketId?: string) {
+    return this.rest.getOrders({ userAddress, marketId });
+  }
+
+  /**
+   * Get user trades
+   */
+  getTrades(userAddress: string, marketId?: string) {
+    return this.rest.getTrades({ userAddress, marketId });
+  }
+
+  /**
+   * Place an order
+   */
+  placeOrder(params: {
+    userAddress: string;
+    marketId: string;
+    side: 'Buy' | 'Sell';
+    orderType: 'Limit' | 'Market';
+    price: string;
+    size: string;
+    signature: string;
+  }) {
+    return this.rest.placeOrder(params);
+  }
+
+  /**
+   * Cancel an order
+   */
+  cancelOrder(params: {
+    userAddress: string;
+    orderId: string;
+    signature: string;
+  }) {
+    return this.rest.cancelOrder(params);
+  }
+
+  // ============================================================================
+  // Type-Safe WebSocket Stream Helpers
+  // ============================================================================
+
+  /**
+   * Stream trades for a market
+   * @returns Unsubscribe function
+   */
+  onTrades(marketId: string, handler: (trade: Trade) => void): () => void {
+    this.ws.connect();
+    this.ws.subscribe('Trades', { marketId });
+    return this.ws.on('trade', (msg) => {
+      if (msg.type === 'trade') {
+        handler(msg.trade);
+      }
+    });
+  }
+
+  /**
+   * Stream orderbook updates for a market
+   * @returns Unsubscribe function
+   */
+  onOrderbook(marketId: string, handler: (update: { levels: OrderbookLevel[] }) => void): () => void {
+    this.ws.connect();
+    this.ws.subscribe('Orderbook', { marketId });
+    return this.ws.on('orderbook_update', (msg) => {
+      if (msg.type === 'orderbook_update') {
+        handler({ levels: msg.levels });
+      }
+    });
+  }
+
+  /**
+   * Stream order updates for a user
+   * @returns Unsubscribe function
+   */
+  onUserOrders(userAddress: string, handler: (order: Order) => void): () => void {
+    this.ws.connect();
+    this.ws.subscribe('User', { userAddress });
+    return this.ws.on('order_update', (msg) => {
+      if (msg.type === 'order_update') {
+        handler(msg.order);
+      }
+    });
+  }
+
+  /**
+   * Stream trade updates for a user
+   * @returns Unsubscribe function
+   */
+  onUserTrades(userAddress: string, handler: (trade: Trade) => void): () => void {
+    this.ws.connect();
+    this.ws.subscribe('User', { userAddress });
+    return this.ws.on('trade', (msg) => {
+      if (msg.type === 'trade') {
+        handler(msg.trade);
+      }
+    });
+  }
+
+  /**
+   * Stream balance updates for a user
+   * @returns Unsubscribe function
+   */
+  onUserBalances(userAddress: string, handler: (balance: Balance) => void): () => void {
+    this.ws.connect();
+    this.ws.subscribe('User', { userAddress });
+    return this.ws.on('balance_update', (msg) => {
+      if (msg.type === 'balance_update') {
+        handler(msg.balance);
+      }
     });
   }
 

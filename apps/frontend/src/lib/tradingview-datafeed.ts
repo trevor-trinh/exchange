@@ -20,7 +20,7 @@ import type {
   SearchSymbolsCallback,
 } from "../../public/vendor/trading-view/charting_library";
 
-import { getAPI } from "./api";
+import { exchange } from "./api";
 
 // Resolution mapping from TradingView to our backend
 const resolutionMap: Record<string, string> = {
@@ -42,7 +42,6 @@ interface Candle {
 }
 
 export class ExchangeDatafeed implements IBasicDataFeed {
-  private api = getAPI();
   private configurationData = {
     supported_resolutions: ["1", "5", "15", "60", "D"] as ResolutionString[],
     exchanges: [{ value: "Exchange", name: "Exchange", desc: "Exchange" }],
@@ -61,8 +60,8 @@ export class ExchangeDatafeed implements IBasicDataFeed {
   /**
    * Search for symbols (markets)
    */
-  searchSymbols(userInput: string, exchange: string, symbolType: string, onResult: SearchSymbolsCallback): void {
-    this.api
+  searchSymbols(userInput: string, _exchange: string, _symbolType: string, onResult: SearchSymbolsCallback): void {
+    exchange
       .getMarkets()
       .then((markets) => {
         const symbols = markets
@@ -86,7 +85,7 @@ export class ExchangeDatafeed implements IBasicDataFeed {
    * Resolve symbol info
    */
   resolveSymbol(symbolName: string, onResolve: ResolveCallback, onError: ErrorCallback): void {
-    this.api
+    exchange
       .getMarkets()
       .then((markets) => {
         const market = markets.find((m) => m.id === symbolName);

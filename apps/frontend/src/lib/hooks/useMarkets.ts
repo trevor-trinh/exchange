@@ -4,18 +4,20 @@
 
 import { useEffect } from "react";
 import { useExchangeStore } from "../store";
-import { getAPI } from "../api";
+import { exchange } from "../api";
 
 export function useMarkets() {
   const { markets, tokens, setMarkets, setTokens, isLoadingMarkets } = useExchangeStore();
-  const api = getAPI();
 
   useEffect(() => {
     let mounted = true;
 
     async function fetchData() {
       try {
-        const [marketsData, tokensData] = await Promise.all([api.getMarkets(), api.getTokens()]);
+        const [marketsData, tokensData] = await Promise.all([
+          exchange.getMarkets(),
+          exchange.getTokens()
+        ]);
 
         if (mounted) {
           setMarkets(marketsData);
@@ -31,7 +33,7 @@ export function useMarkets() {
     return () => {
       mounted = false;
     };
-  }, [api, setMarkets, setTokens]);
+  }, [setMarkets, setTokens]);
 
   return {
     markets,
