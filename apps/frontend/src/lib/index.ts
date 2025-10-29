@@ -4,18 +4,6 @@
 
 // API
 export { exchange, ApiError } from "./api";
-export type {
-  Market,
-  Token,
-  Balance,
-  Order,
-  Trade,
-  Side,
-  OrderType,
-  OrderStatus,
-  SubscriptionChannel,
-  OrderbookLevel,
-} from "./api";
 
 // WebSocket
 export { getWebSocketManager, resetWebSocketManager } from "./websocket";
