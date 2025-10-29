@@ -1,5 +1,5 @@
 [package]
-name = "bots"
+name = "exchange-bots"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.90"
@@ -8,3 +8,40 @@ default-run = "bots"
 [[bin]]
 name = "bots"
 path = "src/main.rs"
+
+[dependencies]
+# Exchange SDK
+exchange-sdk = { path = "../../packages/sdk-rust" }
+backend = { path = "../backend" }
+
+# Async runtime
+tokio = { version = "1.42", features = ["full"] }
+tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
+futures-util = "0.3"
+
+# HTTP client
+reqwest = { version = "0.12", features = ["json"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+thiserror = "2.0"
+anyhow = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Configuration
+config = "0.14"
+toml = "0.8"
+
+# Utilities
+uuid = { version = "1.11", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+rust_decimal = "1.37"
+
+[dev-dependencies]
+exchange-test-utils = { path = "../../packages/test-utils" }

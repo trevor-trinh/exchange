@@ -9,8 +9,6 @@
 
 ### todo
 
-db -> me -> api -> web / bot
-
 frontend
 
 - [ ] websockets
@@ -18,11 +16,7 @@ frontend
 
 backend
 
-- [ ] make db schema
-- [ ] make api endpoints
-- [ ] db migrations
-- [ ] env logger vs tracing
-- [ ] socketio consideration?
+- [ ] review benches/tests/sdk
 
 infra
 
@@ -56,7 +50,7 @@ missing production
 - scaling / k8s
 - mm channel prioritization
 - cancel prioritization
-- nice rust/python/typescript sdks
+- cleaner sdks
 
 # process
 
@@ -123,6 +117,8 @@ missing production
 - add benchmarks
 - add rust and python sdk with backend as source of truth
 - refactor e2e tests
+- add mm bot. copy entire orderbook. other taker on trade.
+- add frontend api layer (ws and rest), zustand
 
 - add trading signatures
 - add benchmarks

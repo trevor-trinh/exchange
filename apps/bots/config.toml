@@ -1,0 +1,21 @@
+# Exchange Bots Configuration
+
+[exchange]
+url = "http://localhost:8001"
+
+[hyperliquid]
+coin = "BTC"  # Coin to mirror from Hyperliquid
+
+[market]
+id = "BTC/USDC"
+
+[orderbook_bot]
+user_address = "maker_bot"
+depth_levels = 5
+update_interval_ms = 1000
+size_multiplier = "0.1"  # 10% of Hyperliquid sizes
+
+[trade_bot]
+user_address = "taker_bot"
+size_multiplier = "0.1"  # 10% of Hyperliquid trade sizes
+min_trade_size = "0.001"  # Minimum 0.001 BTC

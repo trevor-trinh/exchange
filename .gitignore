@@ -11,6 +11,9 @@
 # backend
 /apps/backend/target/
 
+# bots
+/apps/bots/target/
+
 # packages
 /packages/sdk-rust/target/
 /packages/sdk-python/.venv/
