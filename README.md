@@ -140,6 +140,8 @@ missing production
 - tried mprocs but wanted to be clean.
 - add cli but didn't like it so removed
 - add cancel_all for better bot management
+- started using dbeaver
+- lots of twiddling with types, candles, configs
 
 - add trading signatures
 - add full-fledged frontend
