@@ -271,6 +271,34 @@ impl ExchangeClient {
         }
     }
 
+    /// Cancel all orders for a user, optionally filtered by market
+    pub async fn cancel_all_orders(
+        &self,
+        user_address: String,
+        market_id: Option<String>,
+        signature: String,
+    ) -> SdkResult<OrdersCancelled> {
+        let request = TradeRequest::CancelAllOrders {
+            user_address,
+            market_id,
+            signature,
+        };
+        let response = self.post_trade(request).await?;
+
+        match response {
+            TradeResponse::CancelAllOrders {
+                cancelled_order_ids,
+                count,
+            } => Ok(OrdersCancelled {
+                cancelled_order_ids,
+                count,
+            }),
+            _ => Err(SdkError::InvalidResponse(
+                "Expected CancelAllOrders".to_string(),
+            )),
+        }
+    }
+
     // ===== Drip/Faucet Endpoint =====
 
     /// Request testnet tokens from faucet

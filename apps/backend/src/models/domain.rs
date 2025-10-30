@@ -7,7 +7,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::errors::ExchangeError;
-use crate::models::api::{OrderCancelled, OrderPlaced};
+use crate::models::api::{OrderCancelled, OrderPlaced, OrdersCancelled};
 // ============================================================================
 // ENUMS
 // ============================================================================
@@ -242,6 +242,11 @@ pub enum EngineRequest {
         order_id: Uuid,
         user_address: String,
         response_tx: oneshot::Sender<Result<OrderCancelled, ExchangeError>>,
+    },
+    CancelAllOrders {
+        user_address: String,
+        market_id: Option<String>,
+        response_tx: oneshot::Sender<Result<OrdersCancelled, ExchangeError>>,
     },
 }
 

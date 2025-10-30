@@ -28,6 +28,13 @@ pub struct OrderCancelled {
     pub order_id: String, // UUID as string for OpenAPI compatibility
 }
 
+/// Response after successfully cancelling all orders
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct OrdersCancelled {
+    pub cancelled_order_ids: Vec<String>, // UUIDs as strings for OpenAPI compatibility
+    pub count: usize,
+}
+
 // ============================================================================
 // INFO API TYPES
 // ============================================================================
@@ -119,6 +126,11 @@ pub enum TradeRequest {
         order_id: String,  // UUID as string
         signature: String, // Cryptographic signature for authentication
     },
+    CancelAllOrders {
+        user_address: String,
+        market_id: Option<String>, // Optional: cancel only for specific market
+        signature: String,         // Cryptographic signature for authentication
+    },
 }
 
 /// Trade response with type discriminator
@@ -131,6 +143,10 @@ pub enum TradeResponse {
     },
     CancelOrder {
         order_id: String,
+    },
+    CancelAllOrders {
+        cancelled_order_ids: Vec<String>,
+        count: usize,
     },
 }
 

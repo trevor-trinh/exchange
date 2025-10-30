@@ -48,6 +48,30 @@ impl Orderbooks {
         Err(ExchangeError::OrderNotFound)
     }
 
+    /// Cancel all orders for a user, optionally filtered by market
+    /// Returns a vector of all cancelled orders
+    pub fn cancel_all_orders(
+        &mut self,
+        user_address: &str,
+        market_id: Option<&str>,
+    ) -> Vec<Order> {
+        let mut cancelled_orders = Vec::new();
+
+        // If market_id is specified, only cancel orders in that market
+        if let Some(market) = market_id {
+            if let Some(orderbook) = self.orderbooks.get_mut(market) {
+                cancelled_orders.extend(orderbook.remove_all_user_orders(user_address));
+            }
+        } else {
+            // Cancel orders across all markets
+            for orderbook in self.orderbooks.values_mut() {
+                cancelled_orders.extend(orderbook.remove_all_user_orders(user_address));
+            }
+        }
+
+        cancelled_orders
+    }
+
     /// Generate snapshots for all markets
     pub fn snapshots(&self) -> Vec<OrderbookSnapshot> {
         self.orderbooks
@@ -160,6 +184,42 @@ impl Orderbook {
         }
 
         None
+    }
+
+    /// Remove all orders for a specific user from this orderbook
+    /// Returns a vector of all removed orders
+    pub fn remove_all_user_orders(&mut self, user_address: &str) -> Vec<Order> {
+        let mut removed_orders = Vec::new();
+
+        // Remove from bids
+        for (_, orders) in self.bids.iter_mut() {
+            let mut i = 0;
+            while i < orders.len() {
+                if orders[i].user_address == user_address {
+                    if let Some(order) = orders.remove(i) {
+                        removed_orders.push(order);
+                    }
+                } else {
+                    i += 1;
+                }
+            }
+        }
+
+        // Remove from asks
+        for (_, orders) in self.asks.iter_mut() {
+            let mut i = 0;
+            while i < orders.len() {
+                if orders[i].user_address == user_address {
+                    if let Some(order) = orders.remove(i) {
+                        removed_orders.push(order);
+                    }
+                } else {
+                    i += 1;
+                }
+            }
+        }
+
+        removed_orders
     }
 
     /// Generate a snapshot of the current orderbook state

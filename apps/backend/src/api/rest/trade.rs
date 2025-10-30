@@ -239,6 +239,59 @@ pub async fn trade(
                 order_id: cancelled.order_id,
             }))
         }
+
+        TradeRequest::CancelAllOrders {
+            user_address,
+            market_id,
+            signature: _,
+        } => {
+            // TODO: Verify signature
+
+            // Create engine request
+            let (response_tx, response_rx) = tokio::sync::oneshot::channel();
+            let engine_request = EngineRequest::CancelAllOrders {
+                user_address: user_address.clone(),
+                market_id: market_id.clone(),
+                response_tx,
+            };
+
+            // Send to engine
+            state.engine_tx.send(engine_request).await.map_err(|_| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(TradeErrorResponse {
+                        error: "Failed to send request to engine".to_string(),
+                        code: "ENGINE_ERROR".to_string(),
+                    }),
+                )
+            })?;
+
+            // Wait for response
+            let result = response_rx.await.map_err(|_| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(TradeErrorResponse {
+                        error: "Failed to receive response from engine".to_string(),
+                        code: "ENGINE_ERROR".to_string(),
+                    }),
+                )
+            })?;
+
+            let cancelled = result.map_err(|e| {
+                (
+                    StatusCode::BAD_REQUEST,
+                    Json(TradeErrorResponse {
+                        error: e.to_string(),
+                        code: "CANCEL_ALL_ORDERS_ERROR".to_string(),
+                    }),
+                )
+            })?;
+
+            Ok(Json(TradeResponse::CancelAllOrders {
+                cancelled_order_ids: cancelled.cancelled_order_ids,
+                count: cancelled.count,
+            }))
+        }
     }
 }
 
