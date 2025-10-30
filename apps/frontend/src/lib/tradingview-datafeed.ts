@@ -5,7 +5,6 @@
  * https://www.tradingview.com/charting-library-docs/latest/connecting_data/Datafeed-API
  */
 
-// @ts-expect-error - TradingView types
 import type {
   IBasicDataFeed,
   LibrarySymbolInfo,
@@ -14,10 +13,12 @@ import type {
   HistoryCallback,
   OnReadyCallback,
   ResolveCallback,
-  ErrorCallback,
   SubscribeBarsCallback,
   SearchSymbolsCallback,
 } from "../../public/vendor/trading-view/charting_library";
+
+// ErrorCallback is not exported from TradingView types, so we define it here
+type ErrorCallback = (reason: string) => void;
 
 import { exchange } from "./api";
 import { getWebSocketManager } from "./websocket";
@@ -42,15 +43,6 @@ const resolutionToSeconds: Record<string, number> = {
   D: 86400, // 1 day
   "1D": 86400,
 };
-
-interface Candle {
-  timestamp: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
 
 interface BarSubscription {
   symbolInfo: LibrarySymbolInfo;
@@ -162,32 +154,27 @@ export class ExchangeDatafeed implements IBasicDataFeed {
     const { from, to } = periodParams;
     const interval = resolutionMap[resolution] || "1m";
 
-    // Fetch candles from our API
-    fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/candles?market_id=${symbolInfo.name}&interval=${interval}&from=${from}&to=${to}`,
-    )
-      .then(async (response) => {
-        if (!response.ok) {
-          console.error("Candles API error:", response.status, response.statusText);
-          const text = await response.text();
-          console.error("Error details:", text);
-          throw new Error(`HTTP ${response.status}: ${text}`);
-        }
-        return response.json();
+    // Fetch candles using the SDK
+    exchange
+      .getCandles({
+        marketId: symbolInfo.name,
+        interval,
+        from,
+        to,
       })
-      .then((data: { candles: Candle[] }) => {
-        if (!data.candles || data.candles.length === 0) {
+      .then((candles) => {
+        if (!candles || candles.length === 0) {
           onResult([], { noData: true });
           return;
         }
 
-        const bars: Bar[] = data.candles.map((candle) => ({
+        const bars: Bar[] = candles.map((candle) => ({
           time: candle.timestamp * 1000, // TradingView expects milliseconds
-          open: Number(candle.open) / 1e18, // Convert from fixed-point
-          high: Number(candle.high) / 1e18,
-          low: Number(candle.low) / 1e18,
-          close: Number(candle.close) / 1e18,
-          volume: Number(candle.volume) / 1e18,
+          open: candle.open / 1e18, // Convert from fixed-point
+          high: candle.high / 1e18,
+          low: candle.low / 1e18,
+          close: candle.close / 1e18,
+          volume: candle.volume / 1e18,
         }));
 
         onResult(bars, { noData: false });

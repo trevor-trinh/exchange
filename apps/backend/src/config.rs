@@ -27,9 +27,18 @@ pub struct TokenConfig {
 }
 
 impl Config {
-    /// Load backend configuration from config.toml
     pub fn load() -> Result<Self> {
-        let contents = std::fs::read_to_string("config.toml")?;
+        // Try local config first (when running from apps/backend)
+        let config_path = if std::path::Path::new("config.toml").exists() {
+            "config.toml"
+        } else if std::path::Path::new("apps/backend/config.toml").exists() {
+            // When running from project root
+            "apps/backend/config.toml"
+        } else {
+            anyhow::bail!("Could not find config.toml")
+        };
+
+        let contents = std::fs::read_to_string(config_path)?;
         let config: Config = toml::from_str(&contents)?;
         Ok(config)
     }

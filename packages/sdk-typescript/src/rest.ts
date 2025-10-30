@@ -26,6 +26,8 @@ export type Balance = components['schemas']['ApiBalance'];
 export type Side = components['schemas']['Side'];
 export type OrderType = components['schemas']['OrderType'];
 export type OrderStatus = components['schemas']['OrderStatus'];
+export type Candle = components['schemas']['Candle'];
+export type CandlesResponse = components['schemas']['CandlesResponse'];
 
 export interface RestClientConfig {
   baseUrl: string;
@@ -269,7 +271,59 @@ export class RestClient {
     return { newBalance: response.new_balance };
   }
 
-  // ===== HTTP Helper =====
+  // ===== Candles Endpoints =====
+
+  async getCandles(params: {
+    marketId: string;
+    interval: string;
+    from: number;
+    to: number;
+  }): Promise<Candle[]> {
+    const queryParams = new URLSearchParams({
+      market_id: params.marketId,
+      interval: params.interval,
+      from: params.from.toString(),
+      to: params.to.toString(),
+    });
+    const response = await this.get<CandlesResponse>(`/api/candles?${queryParams}`);
+    return response.candles;
+  }
+
+  // ===== HTTP Helpers =====
+
+  private async get<T>(path: string): Promise<T> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      const response = await fetch(`${this.baseUrl}${path}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: response.statusText }));
+        throw new ApiError(
+          error.error || 'Request failed',
+          response.status,
+          error.code
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Network error', 0, undefined, error);
+    }
+  }
 
   private async post<T>(path: string, body: unknown): Promise<T> {
     const controller = new AbortController();

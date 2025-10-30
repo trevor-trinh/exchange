@@ -13,7 +13,7 @@ bots:
   cargo run -p exchange-bots
 
 init:
-  cargo run --bin init_exchange
+  cd apps/backend && cargo run --bin init_exchange
 
 compose:
   docker compose up --build

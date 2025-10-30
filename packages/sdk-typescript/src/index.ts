@@ -51,6 +51,8 @@ export type {
   Side,
   OrderType,
   OrderStatus,
+  Candle,
+  CandlesResponse,
 } from './rest';
 
 export type {
@@ -151,6 +153,18 @@ export class ExchangeClient {
    */
   getTrades(userAddress: string, marketId?: string) {
     return this.rest.getTrades({ userAddress, marketId });
+  }
+
+  /**
+   * Get candles (OHLCV data) for a market
+   */
+  getCandles(params: {
+    marketId: string;
+    interval: string;
+    from: number;
+    to: number;
+  }) {
+    return this.rest.getCandles(params);
   }
 
   /**
