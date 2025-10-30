@@ -1,1 +1,33 @@
-name: "Setup"
+name: "Setup Development Environment"
+description: "Install Rust, Bun, Just, and setup caching"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+
+    - name: Install Just
+      uses: extractions/setup-just@v2
+
+    - name: Cache Rust dependencies
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: |
+          apps/backend
+          packages/sdk-rust
+
+    - name: Cache Bun dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.bun/install/cache
+          apps/frontend/node_modules
+        key: ${{ runner.os }}-bun-${{ hashFiles('apps/frontend/bun.lockb') }}
+        restore-keys: |
+          ${{ runner.os }}-bun-

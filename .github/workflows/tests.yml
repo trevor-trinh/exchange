@@ -1,1 +1,37 @@
-name: Tests
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup development environment
+        uses: ./.github/actions/setup
+
+      - name: Install dependencies
+        run: just install
+
+      - name: Format check
+        run: just fmt
+
+      - name: Lint
+        run: just lint
+
+      - name: Type check
+        run: just typecheck
+
+      - name: Test
+        run: just test
