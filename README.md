@@ -125,6 +125,7 @@ missing production
 - cleanup frontend sdk
 - setup devcontainer. docker in docker and memory issues.
 - setup github actions.
+- cargo cleanup. use root cargo.toml. sort. machete.
 
 - add trading signatures
 - add full-fledged frontend

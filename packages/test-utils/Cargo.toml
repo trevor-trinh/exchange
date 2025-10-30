@@ -3,11 +3,15 @@ name = "exchange-test-utils"
 version.workspace = true
 edition.workspace = true
 
+[package.metadata.cargo-machete]
+ignored = ["reqwest"]  # Used in doctests
+
 [dependencies]
 anyhow.workspace = true
 axum.workspace = true
 backend.workspace = true
 clickhouse.workspace = true
+reqwest.workspace = true
 sqlx.workspace = true
 testcontainers.workspace = true
 testcontainers-modules.workspace = true

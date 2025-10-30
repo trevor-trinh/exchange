@@ -12,8 +12,8 @@ env:
   SQLX_OFFLINE: true
 
 jobs:
-  ci:
-    name: CI
+  frontend-backend:
+    name: Frontend & Backend
     runs-on: ubuntu-latest
 
     steps:

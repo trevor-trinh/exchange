@@ -1128,6 +1128,7 @@ dependencies = [
  "axum",
  "backend",
  "clickhouse",
+ "reqwest",
  "sqlx",
  "testcontainers",
  "testcontainers-modules",
