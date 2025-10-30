@@ -1,0 +1,76 @@
+services:
+  # PostgreSQL
+  postgres:
+    image: postgres:17
+    container_name: exchange-postgres
+    environment:
+      POSTGRES_DB: exchange
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - exchange-network
+
+  # ClickHouse
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: exchange-clickhouse
+    environment:
+      CLICKHOUSE_DB: exchange
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: password
+    ports:
+      - "8123:8123" # HTTP
+      - "9000:9000" # Native
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - exchange-network
+
+  # Dev Container
+  devcontainer:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    container_name: exchange-devcontainer
+    volumes:
+      - ..:/workspace:cached
+      - cargo-cache:/usr/local/cargo/registry
+      - rustup-cache:/usr/local/rustup
+    networks:
+      - exchange-network
+    command: sleep infinity
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    privileged: true
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/exchange
+      - CLICKHOUSE_URL=http://clickhouse:8123
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=password
+
+volumes:
+  postgres_data:
+  clickhouse_data:
+  cargo-cache:
+  rustup-cache:
+
+networks:
+  exchange-network:
+    driver: bridge

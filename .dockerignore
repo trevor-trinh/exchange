@@ -9,7 +9,6 @@ docker-compose.yaml
 
 # CI/CD
 .github
-.devcontainer
 
 # Rust
 **/target

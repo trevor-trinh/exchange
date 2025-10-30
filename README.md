@@ -126,7 +126,8 @@ missing production
 - setup devcontainer
 
 - add trading signatures
-- add benchmarks
+- add full-fledged frontend
+- add admin page
 
 ### frontend dev
 

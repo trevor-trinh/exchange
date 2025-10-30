@@ -1,15 +1,20 @@
 {
   "name": "Cryptocurrency Exchange",
-  "dockerComposeFile": [
-    "../docker-compose.yaml",
-    "docker-compose.devcontainer.yml"
-  ],
+  "dockerComposeFile": "docker-compose.yml",
+
   "service": "devcontainer",
   "workspaceFolder": "/workspace",
 
   "features": {
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "username": "vscode",
+      "userUid": "automatic",
+      "userGid": "automatic",
+      "upgradePackages": true
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
   "customizations": {
@@ -52,51 +57,22 @@
         },
         "[json]": {
           "editor.defaultFormatter": "esbenp.prettier-vscode"
-        },
-        "sqltools.connections": [
-          {
-            "name": "Exchange PostgreSQL",
-            "driver": "PostgreSQL",
-            "server": "postgres",
-            "port": 5432,
-            "database": "exchange",
-            "username": "postgres",
-            "password": "password"
-          }
-        ]
+        }
+        // "sqltools.connections": [
+        //   {
+        //     "name": "Exchange PostgreSQL",
+        //     "driver": "PostgreSQL",
+        //     "server": "postgres",
+        //     "port": 5432,
+        //     "database": "exchange",
+        //     "username": "postgres",
+        //     "password": "password"
+        //   }
+        // ]
       }
     }
   },
-
   "postCreateCommand": "bash .devcontainer/post-create.sh",
-
-  "remoteEnv": {
-    "DATABASE_URL": "postgresql://postgres:password@postgres:5432/exchange",
-    "CLICKHOUSE_URL": "http://clickhouse:8123",
-    "CLICKHOUSE_USER": "default",
-    "CLICKHOUSE_PASSWORD": "password"
-  },
-
-  "forwardPorts": [3000, 8888, 5432, 8123, 9000],
-  "portsAttributes": {
-    "3000": {
-      "label": "Frontend",
-      "onAutoForward": "notify"
-    },
-    "8888": {
-      "label": "Backend API",
-      "onAutoForward": "notify"
-    },
-    "5432": {
-      "label": "PostgreSQL"
-    },
-    "8123": {
-      "label": "ClickHouse HTTP"
-    },
-    "9000": {
-      "label": "ClickHouse Native"
-    }
-  },
 
   "remoteUser": "vscode"
 }
