@@ -27,6 +27,8 @@ export class WebSocketClient {
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private pingInterval: number;
   private pingTimer: ReturnType<typeof setInterval> | null = null;
+  private lastPongTime: number = Date.now();
+  private pongTimeout: number = 60000; // 60 seconds
 
   private messageQueue: ClientMessage[] = [];
   private handlers = new Map<MessageType, Set<MessageHandler>>();
@@ -51,6 +53,7 @@ export class WebSocketClient {
       this.ws.onopen = () => {
         this.isConnected = true;
         this.reconnectAttempt = 0;
+        this.lastPongTime = Date.now();
 
         // Send queued messages
         while (this.messageQueue.length > 0) {
@@ -203,6 +206,11 @@ export class WebSocketClient {
   }
 
   private handleMessage(message: ServerMessage): void {
+    // Handle pong messages automatically
+    if (message.type === 'pong') {
+      this.lastPongTime = Date.now();
+    }
+
     const handlers = this.handlers.get(message.type);
     if (handlers) {
       handlers.forEach((handler) => {
@@ -235,6 +243,15 @@ export class WebSocketClient {
     this.stopPingTimer();
     this.pingTimer = setInterval(() => {
       if (this.isConnected) {
+        // Check if we've received a pong recently
+        const timeSinceLastPong = Date.now() - this.lastPongTime;
+        if (timeSinceLastPong > this.pongTimeout) {
+          console.warn('[WebSocket] No pong received, reconnecting...');
+          this.ws?.close();
+          return;
+        }
+
+        // Send ping
         this.send({ type: 'ping' });
       }
     }, this.pingInterval);
