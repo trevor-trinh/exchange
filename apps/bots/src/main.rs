@@ -6,7 +6,7 @@ use bots::{OrderbookMirrorBot, OrderbookMirrorConfig, TradeMirrorBot, TradeMirro
 use exchange_sdk::ExchangeClient;
 use rust_decimal::Decimal;
 use std::str::FromStr;
-use tracing::{info, Level};
+use tracing::{info, warn, Level};
 use tracing_subscriber::FmtSubscriber;
 
 #[tokio::main]
@@ -38,6 +38,33 @@ async fn main() -> Result<()> {
     // Create exchange clients
     let maker_client = ExchangeClient::new(&exchange_url);
     let taker_client = ExchangeClient::new(&exchange_url);
+
+    // Fund both bots via admin faucet
+    info!("Funding maker bot: {}", maker_address);
+    let btc_amount = "100000000000"; // 100,000 BTC (with 6 decimals)
+    let usdc_amount = "10000000000000"; // 10,000,000 USDC (with 6 decimals)
+
+    match maker_client.admin_faucet(maker_address.clone(), "BTC".to_string(), btc_amount.to_string()).await {
+        Ok(balance) => info!("Maker funded with BTC, balance: {}", balance),
+        Err(e) => warn!("Failed to fund maker with BTC: {}", e),
+    }
+
+    match maker_client.admin_faucet(maker_address.clone(), "USDC".to_string(), usdc_amount.to_string()).await {
+        Ok(balance) => info!("Maker funded with USDC, balance: {}", balance),
+        Err(e) => warn!("Failed to fund maker with USDC: {}", e),
+    }
+
+    info!("Funding taker bot: {}", taker_address);
+
+    match taker_client.admin_faucet(taker_address.clone(), "BTC".to_string(), btc_amount.to_string()).await {
+        Ok(balance) => info!("Taker funded with BTC, balance: {}", balance),
+        Err(e) => warn!("Failed to fund taker with BTC: {}", e),
+    }
+
+    match taker_client.admin_faucet(taker_address.clone(), "USDC".to_string(), usdc_amount.to_string()).await {
+        Ok(balance) => info!("Taker funded with USDC, balance: {}", balance),
+        Err(e) => warn!("Failed to fund taker with USDC: {}", e),
+    }
 
     // Configure orderbook mirror bot
     let orderbook_config = OrderbookMirrorConfig {

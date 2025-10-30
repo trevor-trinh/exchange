@@ -1214,6 +1214,34 @@
                 "type": "string"
               }
             }
+          },
+          {
+            "type": "object",
+            "required": [
+              "user_address",
+              "signature",
+              "type"
+            ],
+            "properties": {
+              "market_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "signature": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cancel_all_orders"
+                ]
+              },
+              "user_address": {
+                "type": "string"
+              }
+            }
           }
         ],
         "description": "Trade request with type discriminator"
@@ -1259,6 +1287,32 @@
                 "type": "string",
                 "enum": [
                   "cancel_order"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "cancelled_order_ids",
+              "count",
+              "type"
+            ],
+            "properties": {
+              "cancelled_order_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cancel_all_orders"
                 ]
               }
             }

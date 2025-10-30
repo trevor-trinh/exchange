@@ -9,6 +9,9 @@ backend:
 frontend:
   cd apps/frontend && bun run dev
 
+bots:
+  cd apps/bots && cargo run
+
 compose:
   docker compose up --build
 

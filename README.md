@@ -67,6 +67,16 @@ missing production
 - using channels for engine input and websocket broadcast.
 - after general structure, most anoying is types. finagiling different systems to work together. refactoring types , ensuring things lined up correctly when testing, etc. claude is great helping with this.
 
+### what's covered
+
+- bots
+- sdk
+- testing
+- devx
+- railway
+- openapi
+- postgres/clickhouse
+
 ### log
 
 - want to build exchange
@@ -127,6 +137,8 @@ missing production
 - setup github actions.
 - cargo cleanup. use root cargo.toml. sort. machete.
 - tried mprocs but wanted to be clean.
+- add cli but didn't like it so removed
+- add cancel_all for better bot management
 
 - add trading signatures
 - add full-fledged frontend

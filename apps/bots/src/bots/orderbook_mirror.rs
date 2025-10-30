@@ -144,22 +144,24 @@ impl OrderbookMirrorBot {
 
     /// Cancel all active orders
     async fn cancel_all_orders(&mut self) -> Result<()> {
-        let order_ids: Vec<Uuid> = self.active_orders.values().copied().collect();
-
-        for order_id in order_ids {
-            match self
-                .exchange_client
-                .cancel_order(
-                    self.config.user_address.clone(),
-                    order_id.to_string(),
-                    "orderbook_mirror".to_string(),
-                )
-                .await
-            {
-                Ok(_) => {}
-                Err(e) => {
-                    warn!("Failed to cancel order {}: {}", order_id, e);
-                }
+        // Use the new cancel_all_orders endpoint for efficient bulk cancellation
+        match self
+            .exchange_client
+            .cancel_all_orders(
+                self.config.user_address.clone(),
+                Some(self.config.market_id.clone()),
+                "orderbook_mirror".to_string(),
+            )
+            .await
+        {
+            Ok(result) => {
+                info!(
+                    "Cancelled {} orders for market {}",
+                    result.count, self.config.market_id
+                );
+            }
+            Err(e) => {
+                warn!("Failed to cancel all orders: {}", e);
             }
         }
 
