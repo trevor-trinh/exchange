@@ -10,38 +10,17 @@ name = "bots"
 path = "src/main.rs"
 
 [dependencies]
+anyhow.workspace = true
 backend.workspace = true
-# Exchange SDK
 exchange-sdk.workspace = true
 futures-util.workspace = true
-
-# Async runtime
-tokio.workspace = true
-tokio-tungstenite.workspace = true
-
-# HTTP client
-reqwest.workspace = true
-anyhow.workspace = true
-
-# Serialization
+rust_decimal.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-
-# Error handling
-thiserror.workspace = true
-
-# Logging
+tokio.workspace = true
+tokio-tungstenite.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
-chrono.workspace = true
-
-# Configuration
-config.workspace = true
-rust_decimal.workspace = true
-toml.workspace = true
-
-# Utilities
 uuid.workspace = true
 
 [dev-dependencies]
-exchange-test-utils.workspace = true

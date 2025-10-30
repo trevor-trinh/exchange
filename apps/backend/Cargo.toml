@@ -24,7 +24,6 @@ serde_json.workspace = true
 sqlx.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
-tower.workspace = true
 tower-http.workspace = true
 utoipa.workspace = true
 utoipa-swagger-ui.workspace = true
@@ -36,7 +35,6 @@ exchange-test-utils.workspace = true
 futures.workspace = true
 reqwest.workspace = true
 testcontainers.workspace = true
-testcontainers-modules.workspace = true
 tokio-tungstenite.workspace = true
 
 [[bench]]
