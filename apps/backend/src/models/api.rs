@@ -249,7 +249,7 @@ pub struct AdminErrorResponse {
 // ============================================================================
 
 /// Request for OHLCV candles
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CandlesRequest {
     pub market_id: String,
     pub interval: String, // 1m, 5m, 15m, 1h, 1d
@@ -270,7 +270,7 @@ pub struct ApiCandle {
 }
 
 /// Response containing candles
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CandlesResponse {
     pub candles: Vec<ApiCandle>,
 }

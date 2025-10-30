@@ -342,6 +342,29 @@ impl ExchangeClient {
         }
     }
 
+    // ===== Candles Endpoints =====
+
+    /// Get OHLCV candles for a market
+    pub async fn get_candles(
+        &self,
+        market_id: &str,
+        interval: &str,
+        from: i64,
+        to: i64,
+    ) -> SdkResult<Vec<ApiCandle>> {
+        let request = CandlesRequest {
+            market_id: market_id.to_string(),
+            interval: interval.to_string(),
+            from,
+            to,
+        };
+        let response = self.post_candles(request).await?;
+
+        // Return raw ApiCandles since domain Candle has DateTime which requires conversion
+        // Users can convert as needed
+        Ok(response.candles)
+    }
+
     // ===== Admin Endpoints (Test/Dev Only) =====
 
     /// Create a token (admin)
@@ -522,6 +545,30 @@ impl ExchangeClient {
         request: backend::models::api::AdminRequest,
     ) -> SdkResult<backend::models::api::AdminResponse> {
         let url = format!("{}/api/admin", self.base_url);
+        let response = self.client.post(&url).json(&request).send().await?;
+
+        if response.status().is_success() {
+            Ok(response.json().await?)
+        } else {
+            let error: serde_json::Value = response.json().await?;
+            Err(SdkError::ApiError {
+                status: error
+                    .get("code")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("500")
+                    .parse()
+                    .unwrap_or(500),
+                message: error
+                    .get("error")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Unknown error")
+                    .to_string(),
+            })
+        }
+    }
+
+    async fn post_candles(&self, request: CandlesRequest) -> SdkResult<CandlesResponse> {
+        let url = format!("{}/api/candles", self.base_url);
         let response = self.client.post(&url).json(&request).send().await?;
 
         if response.status().is_success() {

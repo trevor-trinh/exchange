@@ -29,7 +29,10 @@ pub use error::{SdkError, SdkResult};
 pub use websocket::{WebSocketClient, WebSocketHandle};
 
 // Re-export backend types for convenience
-pub use backend::models::api::{ClientMessage, OrderCancelled, SubscriptionChannel};
+pub use backend::models::api::{
+    ApiCandle, CandlesRequest, CandlesResponse, ClientMessage, OrderCancelled,
+    SubscriptionChannel,
+};
 pub use backend::models::domain::*;
 
 /// SDK-specific OrderPlaced with domain types (pure u128)
