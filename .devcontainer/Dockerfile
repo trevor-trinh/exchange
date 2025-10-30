@@ -7,6 +7,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Update packages and install build tools needed for compiling Rust crates.
 RUN apt-get update && apt-get install -y \
     build-essential \
+    clang \
     libssl-dev \
     pkg-config \
     curl \
@@ -30,6 +31,9 @@ ENV RUSTUP_HOME=/usr/local/rustup \
 # Install rustup and the default stable Rust toolchain.
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.90 \
     && chmod -R a+w $RUSTUP_HOME $CARGO_HOME
+
+# Install mold linker for faster, less memory-intensive linking
+RUN curl -fsSL https://github.com/rui314/mold/releases/download/v2.4.0/mold-2.4.0-aarch64-linux.tar.gz | tar -xz -C /usr/local --strip-components=1
 
 # Install Rust tools (separately to avoid build failures affecting each other)
 RUN cargo install sqlx-cli --no-default-features --features rustls,postgres

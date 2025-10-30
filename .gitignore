@@ -14,6 +14,7 @@
 
 # rust
 **/target/
+.cargo/
 
 # misc
 .DS_Store

@@ -123,7 +123,7 @@ missing production
 - fix bots. try to run backend + bots + frontend.
 - streamline backend types
 - cleanup frontend sdk
-- setup devcontainer
+- setup devcontainer. docker in docker and memory issues.
 
 - add trading signatures
 - add full-fledged frontend

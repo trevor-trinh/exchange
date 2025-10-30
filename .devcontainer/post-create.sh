@@ -2,6 +2,33 @@
 
 echo "🚀 Setting up development environment..."
 
+# Configure Cargo for container (reduce memory usage)
+echo "⚙️  Configuring Cargo for container environment..."
+mkdir -p /workspace/.cargo
+cat > /workspace/.cargo/config.toml << 'EOF'
+[build]
+# Reduce parallel jobs to save memory in container
+jobs = 2
+
+[profile.dev]
+# Reduce debuginfo to save memory during linking
+debug = 1
+incremental = true
+
+[profile.test]
+# Reduce debuginfo in tests
+debug = 1
+
+# Use mold linker for faster, less memory-intensive linking
+[target.aarch64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+EOF
+
 # Wait for docker daemon to be ready
 echo "⏳ Waiting for Docker daemon..."
 max_attempts=30
