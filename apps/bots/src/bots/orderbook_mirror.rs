@@ -1,9 +1,9 @@
-use crate::hyperliquid::{HyperliquidClient, HlMessage, Orderbook};
+use crate::hyperliquid::{HlMessage, HyperliquidClient, Orderbook};
 use anyhow::Result;
 use backend::models::domain::{OrderType, Side};
 use exchange_sdk::ExchangeClient;
-use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 use std::collections::HashMap;
 use std::str::FromStr;
 use tracing::{error, info, warn};
@@ -12,15 +12,15 @@ use uuid::Uuid;
 /// Configuration for the orderbook mirror bot
 #[derive(Clone)]
 pub struct OrderbookMirrorConfig {
-    pub coin: String,                   // e.g., "BTC"
-    pub market_id: String,              // e.g., "BTC/USDC"
-    pub user_address: String,           // Bot's wallet address
-    pub depth_levels: usize,            // How many levels to mirror (e.g., 5)
-    pub update_interval_ms: u64,        // Min time between order updates
-    pub size_multiplier: Decimal,       // Scale order sizes (e.g., 0.1 for 10% of Hyperliquid)
+    pub coin: String,             // e.g., "BTC"
+    pub market_id: String,        // e.g., "BTC/USDC"
+    pub user_address: String,     // Bot's wallet address
+    pub depth_levels: usize,      // How many levels to mirror (e.g., 5)
+    pub update_interval_ms: u64,  // Min time between order updates
+    pub size_multiplier: Decimal, // Scale order sizes (e.g., 0.1 for 10% of Hyperliquid)
 }
 
-/// Orderbook mirror bot - maintains liquidity by copying Binance's orderbook
+/// Orderbook mirror bot - maintains liquidity by copying Hyperliquid's orderbook
 pub struct OrderbookMirrorBot {
     config: OrderbookMirrorConfig,
     exchange_client: ExchangeClient,
@@ -42,9 +42,12 @@ impl OrderbookMirrorBot {
 
     /// Start the bot
     pub async fn start(&mut self) -> Result<()> {
-        info!("Starting orderbook mirror bot for {}", self.config.coin);
+        info!(
+            "Starting orderbook mirror bot for {} PERP -> {} market",
+            self.config.coin, self.config.market_id
+        );
 
-        // Connect to Hyperliquid
+        // Connect to Hyperliquid (perps by default)
         let hl_client = HyperliquidClient::new(self.config.coin.clone());
 
         let (mut rx, _handle) = hl_client.start().await?;
@@ -74,7 +77,7 @@ impl OrderbookMirrorBot {
         Ok(())
     }
 
-    /// Sync our exchange's orderbook with Binance
+    /// Sync our exchange's orderbook with Hyperliquid
     async fn sync_orderbook(&mut self) -> Result<()> {
         let (bids, asks) = self.orderbook.get_top_levels(self.config.depth_levels);
 
@@ -169,14 +172,14 @@ impl OrderbookMirrorBot {
         Ok(())
     }
 
-    /// Convert Binance price to our exchange format (u128 as string)
+    /// Convert Hyperliquid price to our exchange format (u128 as string)
     fn convert_price(&self, price: Decimal) -> String {
         // Assuming 6 decimals for price precision
         let scaled = price * Decimal::from(1_000_000);
         scaled.to_u128().unwrap_or(0).to_string()
     }
 
-    /// Convert Binance size to our exchange format, applying multiplier
+    /// Convert Hyperliquid size to our exchange format, applying multiplier
     fn convert_size(&self, size: Decimal) -> String {
         let adjusted = size * self.config.size_multiplier;
         // Assuming 6 decimals for size precision

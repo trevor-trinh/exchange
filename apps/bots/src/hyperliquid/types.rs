@@ -11,7 +11,7 @@ pub struct SubscriptionRequest {
 pub struct Subscription {
     #[serde(rename = "type")]
     pub sub_type: String, // "l2Book" or "trades"
-    pub coin: String,
+    pub coin: String,     // e.g., "BTC" for BTC-PERP (perpetual futures by default)
 }
 
 /// Hyperliquid L2 book snapshot/update

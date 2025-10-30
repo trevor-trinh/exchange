@@ -1,0 +1,41 @@
+# Backend Configuration
+# Database URLs are in .env files (not here!)
+
+[server]
+host = "0.0.0.0"
+port = 8888
+
+# Default tokens to create on startup
+[[tokens]]
+ticker = "BTC"
+decimals = 6
+name = "Bitcoin"
+
+[[tokens]]
+ticker = "ETH"
+decimals = 6
+name = "Ethereum"
+
+[[tokens]]
+ticker = "USDC"
+decimals = 6
+name = "USD Coin"
+
+# Default markets to create on startup
+[[markets]]
+base_ticker = "BTC"
+quote_ticker = "USDC"
+tick_size = "1000000"        # 1 USDC (6 decimals)
+lot_size = "1000"            # 0.001 BTC (6 decimals)
+min_size = "1000"            # 0.001 BTC minimum order
+maker_fee_bps = 5            # 0.05% maker fee
+taker_fee_bps = 10           # 0.10% taker fee
+
+[[markets]]
+base_ticker = "ETH"
+quote_ticker = "USDC"
+tick_size = "1000000"        # 1 USDC
+lot_size = "10000"           # 0.01 ETH
+min_size = "10000"           # 0.01 ETH minimum
+maker_fee_bps = 5
+taker_fee_bps = 10

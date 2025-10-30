@@ -1,21 +1,35 @@
-# Exchange Bots Configuration
+# Bots Configuration
 
 [exchange]
+# Override with EXCHANGE_URL env var for different environments
 url = "http://localhost:8888"
 
+[accounts]
+maker_address = "maker_bot"
+taker_address = "taker_bot"
+
+# Initial funding amounts (only used by init script)
+[funding]
+btc_amount = "100000000000"     # 100,000 BTC (6 decimals)
+usdc_amount = "10000000000000"  # 10,000,000 USDC (6 decimals)
+
+# Orderbook mirror bot - copies Hyperliquid's orderbook
+[orderbook_mirror]
+enabled = true
+coin = "BTC"                    # Hyperliquid PERP (perpetual futures) - just use coin symbol
+market_id = "BTC/USDC"          # Your exchange market to mirror to
+depth_levels = 5                # Number of price levels to mirror
+update_interval_ms = 1000       # Update frequency
+size_multiplier = "0.1"         # Scale orders to 10% of Hyperliquid size
+
+# Trade mirror bot - executes trades based on Hyperliquid
+[trade_mirror]
+enabled = true
+coin = "BTC"                    # Hyperliquid PERP - tracks perpetual futures
+market_id = "BTC/USDC"          # Your exchange market
+size_multiplier = "0.1"         # Scale trades to 10% of Hyperliquid size
+min_trade_size = "0.001"        # Minimum trade size
+
+# Hyperliquid connection
 [hyperliquid]
-coin = "BTC"  # Coin to mirror from Hyperliquid
-
-[market]
-id = "BTC/USDC"
-
-[orderbook_bot]
-user_address = "maker_bot"
-depth_levels = 5
-update_interval_ms = 1000
-size_multiplier = "0.1"  # 10% of Hyperliquid sizes
-
-[trade_bot]
-user_address = "taker_bot"
-size_multiplier = "0.1"  # 10% of Hyperliquid trade sizes
-min_trade_size = "0.001"  # Minimum 0.001 BTC
+ws_url = "wss://api.hyperliquid.xyz/ws"

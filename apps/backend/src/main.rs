@@ -2,6 +2,7 @@ use anyhow::Context;
 use axum::Router;
 use backend::api::rest;
 use backend::api::ws;
+use backend::config::Config;
 use backend::db::Db;
 use backend::engine::MatchingEngine;
 use backend::models::domain::{EngineEvent, EngineRequest};
@@ -11,18 +12,22 @@ use tower_http::cors::CorsLayer;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Load environment variables
+    // Load environment variables (for secrets/overrides)
     let _ = dotenvy::from_path(".env.defaults");
     let _ = dotenvy::from_path_override(".env");
 
     env_logger::init();
 
     // ===============================
-    // Server configuration
+    // Load configuration
     // ===============================
-    let host = std::env::var("HOST").unwrap_or_else(|_| "localhost".to_string());
-    let port = std::env::var("PORT").unwrap_or_else(|_| "8888".to_string());
-    let addr = format!("{}:{}", host, port);
+    let config = Config::load().context("Failed to load configuration")?;
+    let addr = config.server_addr();
+
+    log::info!("Starting exchange with configuration:");
+    log::info!("  Server: {}", addr);
+    log::info!("  Markets: {}", config.markets.len());
+    log::info!("  Tokens: {}", config.tokens.len());
 
     // ===============================
     // Connect to databases
@@ -71,9 +76,10 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context(format!("Failed to bind to {}", addr))?;
 
-    println!("🚀 Backend server running on http://{}", addr);
+    println!("\n🚀 Backend server running on http://{}", addr);
     println!("📖 OpenAPI docs: http://{}/api/docs", addr);
     println!("📋 OpenAPI spec: http://{}/api/openapi.json", addr);
+    println!("\n💡 Tip: Run 'just init' to initialize markets and tokens\n");
 
     axum::serve(listener, app).await.context("Server error")?;
 

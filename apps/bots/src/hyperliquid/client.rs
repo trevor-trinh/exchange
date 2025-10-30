@@ -35,13 +35,15 @@ impl HyperliquidClient {
     }
 
     /// Stream orderbook and trades from Hyperliquid
+    /// Note: Using just the coin symbol (e.g., "BTC") automatically connects to perpetual futures,
+    /// which are much more active than spot markets
     async fn stream(coin: String, tx: mpsc::Sender<HlMessage>) -> Result<()> {
-        info!("Connecting to Hyperliquid WebSocket for {}", coin);
+        info!("Connecting to Hyperliquid WebSocket for {} PERP", coin);
 
         let (ws_stream, _) = connect_async(HYPERLIQUID_WS).await?;
         let (mut write, mut read) = ws_stream.split();
 
-        // Subscribe to L2 orderbook
+        // Subscribe to L2 orderbook (perps by default)
         let l2_sub = SubscriptionRequest {
             method: "subscribe".to_string(),
             subscription: Subscription {
@@ -52,9 +54,9 @@ impl HyperliquidClient {
 
         let l2_msg = serde_json::to_string(&l2_sub)?;
         write.send(Message::Text(l2_msg.into())).await?;
-        info!("Subscribed to L2 book for {}", coin);
+        info!("Subscribed to L2 book for {} PERP", coin);
 
-        // Subscribe to trades
+        // Subscribe to trades (perps by default)
         let trade_sub = SubscriptionRequest {
             method: "subscribe".to_string(),
             subscription: Subscription {
@@ -65,7 +67,7 @@ impl HyperliquidClient {
 
         let trade_msg = serde_json::to_string(&trade_sub)?;
         write.send(Message::Text(trade_msg.into())).await?;
-        info!("Subscribed to trades for {}", coin);
+        info!("Subscribed to trades for {} PERP", coin);
 
         // Process messages
         while let Some(msg) = read.next().await {

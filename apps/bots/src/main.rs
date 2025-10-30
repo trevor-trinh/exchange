@@ -1,12 +1,14 @@
 mod hyperliquid;
 mod bots;
+mod config;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use bots::{OrderbookMirrorBot, OrderbookMirrorConfig, TradeMirrorBot, TradeMirrorConfig};
+use config::Config;
 use exchange_sdk::ExchangeClient;
 use rust_decimal::Decimal;
 use std::str::FromStr;
-use tracing::{info, warn, Level};
+use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
 #[tokio::main]
@@ -17,98 +19,127 @@ async fn main() -> Result<()> {
         .finish();
     tracing::subscriber::set_global_default(subscriber)?;
 
-    info!("Starting Exchange Bots");
+    info!("🤖 Starting Exchange Bots");
 
-    // Configuration
-    let exchange_url = std::env::var("EXCHANGE_URL")
-        .unwrap_or_else(|_| "http://localhost:8001".to_string());
-    let coin = std::env::var("COIN")
-        .unwrap_or_else(|_| "BTC".to_string());
-    let market_id = std::env::var("MARKET_ID")
-        .unwrap_or_else(|_| "BTC/USDC".to_string());
-    let maker_address = std::env::var("MAKER_ADDRESS")
-        .unwrap_or_else(|_| "maker_bot".to_string());
-    let taker_address = std::env::var("TAKER_ADDRESS")
-        .unwrap_or_else(|_| "taker_bot".to_string());
+    // Load configuration
+    let config = Config::load().context("Failed to load apps/bots/config.toml")?;
 
-    info!("Exchange URL: {}", exchange_url);
-    info!("Hyperliquid Coin: {}", coin);
-    info!("Market ID: {}", market_id);
+    // Exchange URL - can be overridden by env var
+    let exchange_url = std::env::var("EXCHANGE_URL").unwrap_or_else(|_| config.exchange.url.clone());
+
+    info!("📡 Exchange URL: {}", exchange_url);
+    info!("👤 Maker address: {}", config.accounts.maker_address);
+    info!("👤 Taker address: {}", config.accounts.taker_address);
 
     // Create exchange clients
     let maker_client = ExchangeClient::new(&exchange_url);
     let taker_client = ExchangeClient::new(&exchange_url);
 
-    // Fund both bots via admin faucet
-    info!("Funding maker bot: {}", maker_address);
-    let btc_amount = "100000000000"; // 100,000 BTC (with 6 decimals)
-    let usdc_amount = "10000000000000"; // 10,000,000 USDC (with 6 decimals)
+    // Fund bot accounts if needed
+    info!("💰 Funding bot accounts...");
+    for token in ["BTC", "USDC"] {
+        let amount = if token == "BTC" {
+            &config.funding.btc_amount
+        } else {
+            &config.funding.usdc_amount
+        };
 
-    match maker_client.admin_faucet(maker_address.clone(), "BTC".to_string(), btc_amount.to_string()).await {
-        Ok(balance) => info!("Maker funded with BTC, balance: {}", balance),
-        Err(e) => warn!("Failed to fund maker with BTC: {}", e),
+        // Try to fund maker bot
+        if let Err(e) = maker_client
+            .admin_faucet(
+                config.accounts.maker_address.clone(),
+                token.to_string(),
+                amount.clone(),
+            )
+            .await
+        {
+            // Ignore errors - account might already be funded
+            tracing::debug!("Maker funding for {} (ignoring if already funded): {}", token, e);
+        }
+
+        // Try to fund taker bot
+        if let Err(e) = taker_client
+            .admin_faucet(
+                config.accounts.taker_address.clone(),
+                token.to_string(),
+                amount.clone(),
+            )
+            .await
+        {
+            tracing::debug!("Taker funding for {} (ignoring if already funded): {}", token, e);
+        }
     }
+    info!("✓ Bot accounts funded");
 
-    match maker_client.admin_faucet(maker_address.clone(), "USDC".to_string(), usdc_amount.to_string()).await {
-        Ok(balance) => info!("Maker funded with USDC, balance: {}", balance),
-        Err(e) => warn!("Failed to fund maker with USDC: {}", e),
-    }
-
-    info!("Funding taker bot: {}", taker_address);
-
-    match taker_client.admin_faucet(taker_address.clone(), "BTC".to_string(), btc_amount.to_string()).await {
-        Ok(balance) => info!("Taker funded with BTC, balance: {}", balance),
-        Err(e) => warn!("Failed to fund taker with BTC: {}", e),
-    }
-
-    match taker_client.admin_faucet(taker_address.clone(), "USDC".to_string(), usdc_amount.to_string()).await {
-        Ok(balance) => info!("Taker funded with USDC, balance: {}", balance),
-        Err(e) => warn!("Failed to fund taker with USDC: {}", e),
-    }
-
-    // Configure orderbook mirror bot
-    let orderbook_config = OrderbookMirrorConfig {
-        coin: coin.clone(),
-        market_id: market_id.clone(),
-        user_address: maker_address,
-        depth_levels: 5, // Mirror top 5 levels
-        update_interval_ms: 1000,
-        size_multiplier: Decimal::from_str("0.1").unwrap(), // 10% of Hyperliquid size
+    // Configure orderbook mirror bot (if enabled)
+    let orderbook_config = if config.orderbook_mirror.enabled {
+        Some(OrderbookMirrorConfig {
+            coin: config.orderbook_mirror.coin.clone(),
+            market_id: config.orderbook_mirror.market_id.clone(),
+            user_address: config.accounts.maker_address.clone(),
+            depth_levels: config.orderbook_mirror.depth_levels,
+            update_interval_ms: config.orderbook_mirror.update_interval_ms,
+            size_multiplier: Decimal::from_str(&config.orderbook_mirror.size_multiplier)
+                .context("Invalid size_multiplier")?,
+        })
+    } else {
+        None
     };
 
-    // Configure trade mirror bot
-    let trade_config = TradeMirrorConfig {
-        coin: coin.clone(),
-        market_id: market_id.clone(),
-        user_address: taker_address,
-        size_multiplier: Decimal::from_str("0.1").unwrap(), // 10% of Hyperliquid size
-        min_trade_size: Decimal::from_str("0.001").unwrap(), // Minimum 0.001 BTC
+    // Configure trade mirror bot (if enabled)
+    let trade_config = if config.trade_mirror.enabled {
+        Some(TradeMirrorConfig {
+            coin: config.trade_mirror.coin.clone(),
+            market_id: config.trade_mirror.market_id.clone(),
+            user_address: config.accounts.taker_address.clone(),
+            size_multiplier: Decimal::from_str(&config.trade_mirror.size_multiplier)
+                .context("Invalid size_multiplier")?,
+            min_trade_size: Decimal::from_str(&config.trade_mirror.min_trade_size)
+                .context("Invalid min_trade_size")?,
+        })
+    } else {
+        None
     };
 
     // Start bots in parallel
-    let mut orderbook_bot = OrderbookMirrorBot::new(orderbook_config, maker_client);
-    let mut trade_bot = TradeMirrorBot::new(trade_config, taker_client);
+    let mut handles = vec![];
 
-    let orderbook_handle = tokio::spawn(async move {
-        if let Err(e) = orderbook_bot.start().await {
-            tracing::error!("Orderbook bot error: {}", e);
-        }
-    });
+    // Start orderbook mirror bot if enabled
+    if let Some(config) = orderbook_config {
+        info!("📖 Starting orderbook mirror bot for {}", config.market_id);
+        let mut orderbook_bot = OrderbookMirrorBot::new(config, maker_client);
 
-    let trade_handle = tokio::spawn(async move {
-        if let Err(e) = trade_bot.start().await {
-            tracing::error!("Trade bot error: {}", e);
-        }
-    });
+        let handle = tokio::spawn(async move {
+            if let Err(e) = orderbook_bot.start().await {
+                tracing::error!("❌ Orderbook bot error: {}", e);
+            }
+        });
+        handles.push(handle);
+    }
 
-    // Wait for both bots
-    tokio::select! {
-        _ = orderbook_handle => {
-            info!("Orderbook bot stopped");
-        }
-        _ = trade_handle => {
-            info!("Trade bot stopped");
-        }
+    // Start trade mirror bot if enabled
+    if let Some(config) = trade_config {
+        info!("💱 Starting trade mirror bot for {}", config.market_id);
+        let mut trade_bot = TradeMirrorBot::new(config, taker_client);
+
+        let handle = tokio::spawn(async move {
+            if let Err(e) = trade_bot.start().await {
+                tracing::error!("❌ Trade bot error: {}", e);
+            }
+        });
+        handles.push(handle);
+    }
+
+    if handles.is_empty() {
+        info!("❌ No bots enabled in config.toml");
+        return Ok(());
+    }
+
+    info!("✅ All enabled bots are running");
+
+    // Wait for any bot to finish
+    for handle in handles {
+        let _ = handle.await;
     }
 
     Ok(())

@@ -15,6 +15,7 @@ axum.workspace = true
 bigdecimal.workspace = true
 chrono.workspace = true
 clickhouse.workspace = true
+config = { workspace = true, features = ["toml"] }
 dotenvy.workspace = true
 env_logger.workspace = true
 futures.workspace = true

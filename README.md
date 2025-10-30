@@ -31,7 +31,7 @@ devx
 
 bots
 
-- [ ] copy binance book. one maker copy entire orderbook. other taker on trade.
+- [ ] copy hyperliquid book. one maker copy entire orderbook. other taker on trade.
 - [ ] ai bot. similar to nof1 or krafer nueral net trading.
 
 missing features

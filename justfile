@@ -4,13 +4,16 @@ default:
   just --list
 
 backend:
-  cd apps/backend && cargo run --release
+  cargo run --release -p backend
 
 frontend:
   cd apps/frontend && bun run dev
 
 bots:
-  cd apps/bots && cargo run
+  cargo run -p exchange-bots
+
+init:
+  cargo run --bin init_exchange
 
 compose:
   docker compose up --build

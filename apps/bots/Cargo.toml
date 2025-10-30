@@ -12,6 +12,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow.workspace = true
 backend.workspace = true
+config = { workspace = true, features = ["toml"] }
 exchange-sdk.workspace = true
 futures-util.workspace = true
 rust_decimal.workspace = true
