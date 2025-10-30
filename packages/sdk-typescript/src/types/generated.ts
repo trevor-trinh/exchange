@@ -193,6 +193,16 @@ export interface components {
             updated_at: string;
             user_address: string;
         };
+        /** @description OHLCV candle data */
+        ApiCandle: {
+            close: number;
+            high: number;
+            low: number;
+            open: number;
+            /** Format: int32 */
+            timestamp: number;
+            volume: number;
+        };
         /** @description API representation of Market with String fields for JSON compatibility */
         ApiMarket: {
             base_ticker: string;
@@ -240,15 +250,7 @@ export interface components {
             /** Format: date-time */
             timestamp: string;
         };
-        Candle: {
-            close: number;
-            high: number;
-            low: number;
-            open: number;
-            /** Format: int32 */
-            timestamp: number;
-            volume: number;
-        };
+        /** @description Request for OHLCV candles */
         CandlesRequest: {
             /** Format: int64 */
             from: number;
@@ -257,8 +259,9 @@ export interface components {
             /** Format: int64 */
             to: number;
         };
+        /** @description Response containing candles */
         CandlesResponse: {
-            candles: components["schemas"]["Candle"][];
+            candles: components["schemas"]["ApiCandle"][];
         };
         DripErrorResponse: {
             code: string;

@@ -594,6 +594,45 @@
           }
         }
       },
+      "ApiCandle": {
+        "type": "object",
+        "description": "OHLCV candle data",
+        "required": [
+          "timestamp",
+          "open",
+          "high",
+          "low",
+          "close",
+          "volume"
+        ],
+        "properties": {
+          "close": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "high": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "low": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "open": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "volume": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
       "ApiMarket": {
         "type": "object",
         "description": "API representation of Market with String fields for JSON compatibility",
@@ -752,46 +791,9 @@
           }
         }
       },
-      "Candle": {
-        "type": "object",
-        "required": [
-          "timestamp",
-          "open",
-          "high",
-          "low",
-          "close",
-          "volume"
-        ],
-        "properties": {
-          "close": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "high": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "low": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "open": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "timestamp": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "volume": {
-            "type": "integer",
-            "minimum": 0
-          }
-        }
-      },
       "CandlesRequest": {
         "type": "object",
+        "description": "Request for OHLCV candles",
         "required": [
           "market_id",
           "interval",
@@ -817,6 +819,7 @@
       },
       "CandlesResponse": {
         "type": "object",
+        "description": "Response containing candles",
         "required": [
           "candles"
         ],
@@ -824,7 +827,7 @@
           "candles": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Candle"
+              "$ref": "#/components/schemas/ApiCandle"
             }
           }
         }

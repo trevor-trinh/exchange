@@ -1,31 +1,6 @@
+use crate::models::api::{ApiCandle, CandlesRequest, CandlesResponse};
 use crate::AppState;
 use axum::{extract::State, Json};
-use clickhouse::Row;
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Deserialize, utoipa::ToSchema)]
-pub struct CandlesRequest {
-    pub market_id: String,
-    pub interval: String, // 1m, 5m, 15m, 1h, 1d
-    pub from: i64,        // Unix timestamp in seconds
-    pub to: i64,          // Unix timestamp in seconds
-}
-
-#[derive(Debug, Serialize, Deserialize, Row, utoipa::ToSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct Candle {
-    pub timestamp: u32,
-    pub open: u128,
-    pub high: u128,
-    pub low: u128,
-    pub close: u128,
-    pub volume: u128,
-}
-
-#[derive(Debug, Serialize, utoipa::ToSchema)]
-pub struct CandlesResponse {
-    pub candles: Vec<Candle>,
-}
 
 /// Get OHLCV candles for a market
 ///
@@ -68,7 +43,7 @@ pub async fn get_candles(
         params.market_id, params.interval, params.from, params.to
     );
 
-    let candles: Vec<Candle> = state
+    let candles: Vec<ApiCandle> = state
         .db
         .clickhouse
         .query(&query)

@@ -245,6 +245,37 @@ pub struct AdminErrorResponse {
 }
 
 // ============================================================================
+// CANDLES API TYPES
+// ============================================================================
+
+/// Request for OHLCV candles
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CandlesRequest {
+    pub market_id: String,
+    pub interval: String, // 1m, 5m, 15m, 1h, 1d
+    pub from: i64,        // Unix timestamp in seconds
+    pub to: i64,          // Unix timestamp in seconds
+}
+
+/// OHLCV candle data
+#[derive(Debug, Serialize, Deserialize, clickhouse::Row, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiCandle {
+    pub timestamp: u32,
+    pub open: u128,
+    pub high: u128,
+    pub low: u128,
+    pub close: u128,
+    pub volume: u128,
+}
+
+/// Response containing candles
+#[derive(Debug, Serialize, ToSchema)]
+pub struct CandlesResponse {
+    pub candles: Vec<ApiCandle>,
+}
+
+// ============================================================================
 // WEBSOCKET MESSAGE TYPES (Client → Server)
 // ============================================================================
 

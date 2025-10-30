@@ -60,12 +60,7 @@ impl Config {
             .unwrap_or_else(|_| format!("{}/config.toml", env!("CARGO_MANIFEST_DIR")));
 
         let builder = config::Config::builder()
-            .add_source(config::File::with_name(&config_path).required(true))
-            .add_source(
-                config::Environment::with_prefix("BOTS")
-                    .separator("_")
-                    .try_parsing(true),
-            );
+            .add_source(config::File::with_name(&config_path).required(true));
 
         let settings = builder.build()?;
         settings.try_deserialize()

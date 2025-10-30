@@ -55,9 +55,9 @@ pub mod user;
             crate::models::api::AdminResponse,
             crate::models::api::AdminErrorResponse,
             // Candles types
-            candles::CandlesRequest,
-            candles::Candle,
-            candles::CandlesResponse,
+            crate::models::api::CandlesRequest,
+            crate::models::api::ApiCandle,
+            crate::models::api::CandlesResponse,
             // API types (only expose API layer in OpenAPI, not domain)
             crate::models::domain::Token,
             crate::models::api::ApiMarket,

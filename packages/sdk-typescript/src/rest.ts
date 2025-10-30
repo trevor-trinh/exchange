@@ -27,7 +27,7 @@ export type Balance = components['schemas']['ApiBalance'];
 export type Side = components['schemas']['Side'];
 export type OrderType = components['schemas']['OrderType'];
 export type OrderStatus = components['schemas']['OrderStatus'];
-export type Candle = components['schemas']['Candle'];
+export type Candle = components['schemas']['ApiCandle'];
 export type CandlesResponse = components['schemas']['CandlesResponse'];
 
 export interface RestClientConfig {
