@@ -203,7 +203,7 @@ export class ExchangeClient {
    */
   onTrades(marketId: string, handler: (trade: Trade) => void): () => void {
     this.ws.connect();
-    this.ws.subscribe('Trades', { marketId });
+    this.ws.subscribe('trades', { marketId });
     return this.ws.on('trade', (msg) => {
       if (msg.type === 'trade') {
         handler(msg.trade);
@@ -217,7 +217,7 @@ export class ExchangeClient {
    */
   onOrderbook(marketId: string, handler: (update: { bids: OrderbookLevel[], asks: OrderbookLevel[] }) => void): () => void {
     this.ws.connect();
-    this.ws.subscribe('Orderbook', { marketId });
+    this.ws.subscribe('orderbook', { marketId });
     return this.ws.on('orderbook_update', (msg) => {
       if (msg.type === 'orderbook_update') {
         handler({ bids: msg.bids, asks: msg.asks });
@@ -231,7 +231,7 @@ export class ExchangeClient {
    */
   onUserOrders(userAddress: string, handler: (order: Order) => void): () => void {
     this.ws.connect();
-    this.ws.subscribe('User', { userAddress });
+    this.ws.subscribe('user', { userAddress });
     return this.ws.on('order_update', (msg) => {
       if (msg.type === 'order_update') {
         handler(msg.order);
@@ -245,7 +245,7 @@ export class ExchangeClient {
    */
   onUserTrades(userAddress: string, handler: (trade: Trade) => void): () => void {
     this.ws.connect();
-    this.ws.subscribe('User', { userAddress });
+    this.ws.subscribe('user', { userAddress });
     return this.ws.on('trade', (msg) => {
       if (msg.type === 'trade') {
         handler(msg.trade);
@@ -259,7 +259,7 @@ export class ExchangeClient {
    */
   onUserBalances(userAddress: string, handler: (balance: Balance) => void): () => void {
     this.ws.connect();
-    this.ws.subscribe('User', { userAddress });
+    this.ws.subscribe('user', { userAddress });
     return this.ws.on('balance_update', (msg) => {
       if (msg.type === 'balance_update') {
         handler(msg.balance);

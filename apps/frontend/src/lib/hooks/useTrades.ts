@@ -37,12 +37,12 @@ export function useTrades(marketId: string | null) {
     ws.on("trade", handleTrade as (message: ServerMessage) => void);
 
     // Subscribe to trades
-    ws.subscribe("Trades", marketId);
+    ws.subscribe("trades", marketId);
 
     // Cleanup
     return () => {
       ws.off("trade", handleTrade as (message: ServerMessage) => void);
-      ws.unsubscribe("Trades", marketId);
+      ws.unsubscribe("trades", marketId);
     };
   }, [marketId, addTrade]);
 

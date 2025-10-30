@@ -10,8 +10,8 @@ export type Trade = components['schemas']['ApiTrade'];
 export type Order = components['schemas']['ApiOrder'];
 export type Balance = components['schemas']['ApiBalance'];
 
-// Subscription channels
-export type SubscriptionChannel = 'Trades' | 'Orderbook' | 'User';
+// Subscription channels (must match backend snake_case serialization)
+export type SubscriptionChannel = 'trades' | 'orderbook' | 'user';
 
 // Client -> Server messages
 export type ClientMessage =

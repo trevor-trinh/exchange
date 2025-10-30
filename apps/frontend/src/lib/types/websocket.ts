@@ -23,7 +23,7 @@ export type ClientMessage =
       type: "ping";
     };
 
-export type SubscriptionChannel = "Trades" | "Orderbook" | "User";
+export type SubscriptionChannel = "trades" | "orderbook" | "user";
 
 // ============================================================================
 // Server → Client Messages

@@ -38,13 +38,13 @@ export function useOrderbook(marketId: string | null) {
     ws.on("orderbook_update", handleOrderbookUpdate as (message: ServerMessage) => void);
 
     // Subscribe to orderbook
-    ws.subscribe("Orderbook", marketId);
+    ws.subscribe("orderbook", marketId);
 
     // Cleanup
     return () => {
       ws.off("orderbook_snapshot", handleOrderbookSnapshot as (message: ServerMessage) => void);
       ws.off("orderbook_update", handleOrderbookUpdate as (message: ServerMessage) => void);
-      ws.unsubscribe("Orderbook", marketId);
+      ws.unsubscribe("orderbook", marketId);
     };
   }, [marketId, updateOrderbook, setOrderbookLoading]);
 

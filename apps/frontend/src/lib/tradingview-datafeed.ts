@@ -219,7 +219,7 @@ export class ExchangeDatafeed implements IBasicDataFeed {
 
     if (isFirstSubscription) {
       console.log(`[TradingView] Subscribing to trades for ${marketId}`);
-      this.wsManager.subscribe("Trades", marketId);
+      this.wsManager.subscribe("trades", marketId);
 
       // Setup trade handler if not already done
       if (!this.tradeHandler) {
@@ -250,7 +250,7 @@ export class ExchangeDatafeed implements IBasicDataFeed {
 
     if (!hasOtherSubscriptions) {
       console.log(`[TradingView] Unsubscribing from trades for ${marketId}`);
-      this.wsManager.unsubscribe("Trades", marketId);
+      this.wsManager.unsubscribe("trades", marketId);
     }
 
     console.log(`[TradingView] Unsubscribed from bars: ${listenerGuid}`);
