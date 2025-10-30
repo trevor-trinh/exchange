@@ -22,10 +22,7 @@ export function InfoPanel() {
     setError(null);
     try {
       const client = getExchangeClient();
-      const [tokenList, marketList] = await Promise.all([
-        client.rest.getTokens(),
-        client.rest.getMarkets(),
-      ]);
+      const [tokenList, marketList] = await Promise.all([client.rest.getTokens(), client.rest.getMarkets()]);
       setTokens(tokenList);
       setMarkets(marketList);
     } catch (err: any) {
@@ -57,26 +54,19 @@ export function InfoPanel() {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4">Exchange Information</h2>
-      <p className="text-gray-400 mb-6">
-        View all tokens, markets, and user balances
-      </p>
+      <p className="text-gray-400 mb-6">View all tokens, markets, and user balances</p>
 
       {loadingInfo ? (
         <p className="text-gray-400">Loading...</p>
       ) : error ? (
-        <div className="p-4 bg-red-900/20 border border-red-500 rounded-lg text-red-400">
-          {error}
-        </div>
+        <div className="p-4 bg-red-900/20 border border-red-500 rounded-lg text-red-400">{error}</div>
       ) : (
         <div className="space-y-6">
           {/* Tokens Section */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold">Tokens ({tokens.length})</h3>
-              <button
-                onClick={loadInfo}
-                className="text-sm text-blue-400 hover:text-blue-300"
-              >
+              <button onClick={loadInfo} className="text-sm text-blue-400 hover:text-blue-300">
                 Refresh
               </button>
             </div>
@@ -185,13 +175,9 @@ export function InfoPanel() {
                         <tr key={balance.ticker} className="border-b border-gray-800">
                           <td className="py-2 px-4 font-mono">{balance.ticker}</td>
                           <td className="py-2 px-4 font-mono text-sm">{balance.available}</td>
-                          <td className="py-2 px-4">
-                            {formatBalance(balance.available, decimals)}
-                          </td>
+                          <td className="py-2 px-4">{formatBalance(balance.available, decimals)}</td>
                           <td className="py-2 px-4 font-mono text-sm">{balance.locked}</td>
-                          <td className="py-2 px-4">
-                            {formatBalance(balance.locked, decimals)}
-                          </td>
+                          <td className="py-2 px-4">{formatBalance(balance.locked, decimals)}</td>
                         </tr>
                       );
                     })}

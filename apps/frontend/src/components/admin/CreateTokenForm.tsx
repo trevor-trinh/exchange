@@ -40,15 +40,11 @@ export function CreateTokenForm() {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4">Create New Token</h2>
-      <p className="text-gray-400 mb-6">
-        Create a new token that can be used in trading pairs
-      </p>
+      <p className="text-gray-400 mb-6">Create a new token that can be used in trading pairs</p>
 
       <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
         <div>
-          <label className="block text-sm font-medium mb-2">
-            Ticker Symbol *
-          </label>
+          <label className="block text-sm font-medium mb-2">Ticker Symbol *</label>
           <input
             type="text"
             value={ticker}
@@ -57,9 +53,7 @@ export function CreateTokenForm() {
             placeholder="BTC"
             required
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Uppercase abbreviation (e.g., BTC, ETH, USDC)
-          </p>
+          <p className="text-xs text-gray-500 mt-1">Uppercase abbreviation (e.g., BTC, ETH, USDC)</p>
         </div>
 
         <div>
@@ -85,16 +79,10 @@ export function CreateTokenForm() {
             className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
             required
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Number of decimal places (typically 6-18)
-          </p>
+          <p className="text-xs text-gray-500 mt-1">Number of decimal places (typically 6-18)</p>
         </div>
 
-        {error && (
-          <div className="p-4 bg-red-900/20 border border-red-500 rounded-lg text-red-400">
-            {error}
-          </div>
-        )}
+        {error && <div className="p-4 bg-red-900/20 border border-red-500 rounded-lg text-red-400">{error}</div>}
 
         {success && (
           <div className="p-4 bg-green-900/20 border border-green-500 rounded-lg">

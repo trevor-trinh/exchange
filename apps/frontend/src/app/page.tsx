@@ -31,10 +31,7 @@ export default function Home() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-4xl font-bold">Exchange Monitor</h1>
-            <Link
-              href="/admin"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-            >
+            <Link href="/admin" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
               Admin Dashboard →
             </Link>
           </div>

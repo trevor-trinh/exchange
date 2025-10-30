@@ -55,8 +55,8 @@ pub struct HyperliquidConfig {
 impl Config {
     /// Load bots configuration from apps/bots/config.toml
     pub fn load() -> Result<Self, config::ConfigError> {
-        let config_path = std::env::var("BOTS_CONFIG")
-            .unwrap_or_else(|_| "apps/bots/config.toml".to_string());
+        let config_path =
+            std::env::var("BOTS_CONFIG").unwrap_or_else(|_| "apps/bots/config.toml".to_string());
 
         let builder = config::Config::builder()
             .add_source(config::File::with_name(&config_path).required(true))

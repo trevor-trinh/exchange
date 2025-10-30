@@ -1,6 +1,6 @@
-mod hyperliquid;
 mod bots;
 mod config;
+mod hyperliquid;
 
 use anyhow::{Context, Result};
 use bots::{OrderbookMirrorBot, OrderbookMirrorConfig, TradeMirrorBot, TradeMirrorConfig};
@@ -25,7 +25,8 @@ async fn main() -> Result<()> {
     let config = Config::load().context("Failed to load apps/bots/config.toml")?;
 
     // Exchange URL - can be overridden by env var
-    let exchange_url = std::env::var("EXCHANGE_URL").unwrap_or_else(|_| config.exchange.url.clone());
+    let exchange_url =
+        std::env::var("EXCHANGE_URL").unwrap_or_else(|_| config.exchange.url.clone());
 
     info!("📡 Exchange URL: {}", exchange_url);
     info!("👤 Maker address: {}", config.accounts.maker_address);
@@ -54,7 +55,11 @@ async fn main() -> Result<()> {
             .await
         {
             // Ignore errors - account might already be funded
-            tracing::debug!("Maker funding for {} (ignoring if already funded): {}", token, e);
+            tracing::debug!(
+                "Maker funding for {} (ignoring if already funded): {}",
+                token,
+                e
+            );
         }
 
         // Try to fund taker bot
@@ -66,7 +71,11 @@ async fn main() -> Result<()> {
             )
             .await
         {
-            tracing::debug!("Taker funding for {} (ignoring if already funded): {}", token, e);
+            tracing::debug!(
+                "Taker funding for {} (ignoring if already funded): {}",
+                token,
+                e
+            );
         }
     }
     info!("✓ Bot accounts funded");

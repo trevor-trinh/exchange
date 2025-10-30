@@ -1,4 +1,4 @@
-use super::types::{HlMessage, L2BookData, SubscriptionRequest, Subscription, TradeData};
+use super::types::{HlMessage, L2BookData, Subscription, SubscriptionRequest, TradeData};
 use anyhow::{Context, Result};
 use futures_util::{SinkExt, StreamExt};
 use tokio::sync::mpsc;
@@ -17,9 +17,7 @@ impl HyperliquidClient {
     }
 
     /// Start streaming orderbook and trades
-    pub async fn start(
-        &self,
-    ) -> Result<(mpsc::Receiver<HlMessage>, tokio::task::JoinHandle<()>)> {
+    pub async fn start(&self) -> Result<(mpsc::Receiver<HlMessage>, tokio::task::JoinHandle<()>)> {
         let (tx, rx) = mpsc::channel(1000);
 
         let coin = self.coin.clone();

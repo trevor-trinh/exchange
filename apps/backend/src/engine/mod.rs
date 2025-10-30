@@ -64,9 +64,7 @@ impl MatchingEngine {
                     market_id,
                     response_tx,
                 } => {
-                    let result = self
-                        .handle_cancel_all_orders(user_address, market_id)
-                        .await;
+                    let result = self.handle_cancel_all_orders(user_address, market_id).await;
                     let _ = response_tx.send(result);
                 }
             }
@@ -252,7 +250,11 @@ impl MatchingEngine {
 
             // Update order status in database
             self.db
-                .update_order_fill(order_id, cancelled_order.filled_size, OrderStatus::Cancelled)
+                .update_order_fill(
+                    order_id,
+                    cancelled_order.filled_size,
+                    OrderStatus::Cancelled,
+                )
                 .await?;
 
             // Broadcast cancellation event

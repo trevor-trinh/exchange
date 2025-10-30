@@ -16,7 +16,7 @@ pub struct TestServer {
 
 impl TestServer {
     /// Start a test HTTP server on a random available port
-    /// 
+    ///
     /// Mimics the production server setup main.rs
     ///
     /// This spawns:

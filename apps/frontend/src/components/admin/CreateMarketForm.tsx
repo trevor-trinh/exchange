@@ -70,9 +70,7 @@ export function CreateMarketForm() {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4">Create New Market</h2>
-      <p className="text-gray-400 mb-6">
-        Create a new trading pair from existing tokens
-      </p>
+      <p className="text-gray-400 mb-6">Create a new trading pair from existing tokens</p>
 
       {loadingTokens ? (
         <p className="text-gray-400">Loading available tokens...</p>
@@ -84,9 +82,7 @@ export function CreateMarketForm() {
         <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Base Token *
-              </label>
+              <label className="block text-sm font-medium mb-2">Base Token *</label>
               <select
                 value={baseTicker}
                 onChange={(e) => setBaseTicker(e.target.value)}
@@ -100,15 +96,11 @@ export function CreateMarketForm() {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">
-                The asset being traded (e.g., BTC)
-              </p>
+              <p className="text-xs text-gray-500 mt-1">The asset being traded (e.g., BTC)</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Quote Token *
-              </label>
+              <label className="block text-sm font-medium mb-2">Quote Token *</label>
               <select
                 value={quoteTicker}
                 onChange={(e) => setQuoteTicker(e.target.value)}
@@ -122,9 +114,7 @@ export function CreateMarketForm() {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">
-                The pricing currency (e.g., USDC)
-              </p>
+              <p className="text-xs text-gray-500 mt-1">The pricing currency (e.g., USDC)</p>
             </div>
           </div>
 
@@ -133,9 +123,7 @@ export function CreateMarketForm() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Tick Size (raw) *
-                </label>
+                <label className="block text-sm font-medium mb-2">Tick Size (raw) *</label>
                 <input
                   type="text"
                   value={tickSize}
@@ -144,15 +132,11 @@ export function CreateMarketForm() {
                   placeholder="1000000"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Minimum price increment (1000000 = 0.01)
-                </p>
+                <p className="text-xs text-gray-500 mt-1">Minimum price increment (1000000 = 0.01)</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Lot Size (raw) *
-                </label>
+                <label className="block text-sm font-medium mb-2">Lot Size (raw) *</label>
                 <input
                   type="text"
                   value={lotSize}
@@ -161,16 +145,12 @@ export function CreateMarketForm() {
                   placeholder="1000000"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Minimum size increment (1000000 = 0.01)
-                </p>
+                <p className="text-xs text-gray-500 mt-1">Minimum size increment (1000000 = 0.01)</p>
               </div>
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium mb-2">
-                Minimum Order Size (raw) *
-              </label>
+              <label className="block text-sm font-medium mb-2">Minimum Order Size (raw) *</label>
               <input
                 type="text"
                 value={minSize}
@@ -179,9 +159,7 @@ export function CreateMarketForm() {
                 placeholder="10000000"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Minimum order size (10000000 = 0.1)
-              </p>
+              <p className="text-xs text-gray-500 mt-1">Minimum order size (10000000 = 0.1)</p>
             </div>
           </div>
 
@@ -190,9 +168,7 @@ export function CreateMarketForm() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Maker Fee (bps) *
-                </label>
+                <label className="block text-sm font-medium mb-2">Maker Fee (bps) *</label>
                 <input
                   type="number"
                   value={makerFeeBps}
@@ -201,15 +177,11 @@ export function CreateMarketForm() {
                   placeholder="10"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  In basis points (10 = 0.1%, 100 = 1%)
-                </p>
+                <p className="text-xs text-gray-500 mt-1">In basis points (10 = 0.1%, 100 = 1%)</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Taker Fee (bps) *
-                </label>
+                <label className="block text-sm font-medium mb-2">Taker Fee (bps) *</label>
                 <input
                   type="number"
                   value={takerFeeBps}
@@ -218,25 +190,21 @@ export function CreateMarketForm() {
                   placeholder="20"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  In basis points (20 = 0.2%, 100 = 1%)
-                </p>
+                <p className="text-xs text-gray-500 mt-1">In basis points (20 = 0.2%, 100 = 1%)</p>
               </div>
             </div>
           </div>
 
-          {error && (
-            <div className="p-4 bg-red-900/20 border border-red-500 rounded-lg text-red-400">
-              {error}
-            </div>
-          )}
+          {error && <div className="p-4 bg-red-900/20 border border-red-500 rounded-lg text-red-400">{error}</div>}
 
           {success && (
             <div className="p-4 bg-green-900/20 border border-green-500 rounded-lg">
               <p className="text-green-400 font-medium">Market created successfully!</p>
               <div className="mt-2 text-sm text-gray-300">
                 <p>Market ID: {success.id}</p>
-                <p>Pair: {success.base_ticker}/{success.quote_ticker}</p>
+                <p>
+                  Pair: {success.base_ticker}/{success.quote_ticker}
+                </p>
               </div>
             </div>
           )}

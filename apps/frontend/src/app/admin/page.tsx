@@ -21,10 +21,7 @@ export default function AdminDashboard() {
             <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
             <p className="text-gray-400">Manage exchange configuration and operations</p>
           </div>
-          <Link
-            href="/"
-            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
-          >
+          <Link href="/" className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
             ← Back to Exchange
           </Link>
         </div>
@@ -34,9 +31,7 @@ export default function AdminDashboard() {
           <button
             onClick={() => setActiveTab("tokens")}
             className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === "tokens"
-                ? "text-white border-b-2 border-blue-500"
-                : "text-gray-400 hover:text-gray-300"
+              activeTab === "tokens" ? "text-white border-b-2 border-blue-500" : "text-gray-400 hover:text-gray-300"
             }`}
           >
             Create Token
@@ -44,9 +39,7 @@ export default function AdminDashboard() {
           <button
             onClick={() => setActiveTab("markets")}
             className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === "markets"
-                ? "text-white border-b-2 border-blue-500"
-                : "text-gray-400 hover:text-gray-300"
+              activeTab === "markets" ? "text-white border-b-2 border-blue-500" : "text-gray-400 hover:text-gray-300"
             }`}
           >
             Create Market
@@ -54,9 +47,7 @@ export default function AdminDashboard() {
           <button
             onClick={() => setActiveTab("faucet")}
             className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === "faucet"
-                ? "text-white border-b-2 border-blue-500"
-                : "text-gray-400 hover:text-gray-300"
+              activeTab === "faucet" ? "text-white border-b-2 border-blue-500" : "text-gray-400 hover:text-gray-300"
             }`}
           >
             Faucet
@@ -64,9 +55,7 @@ export default function AdminDashboard() {
           <button
             onClick={() => setActiveTab("info")}
             className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === "info"
-                ? "text-white border-b-2 border-blue-500"
-                : "text-gray-400 hover:text-gray-300"
+              activeTab === "info" ? "text-white border-b-2 border-blue-500" : "text-gray-400 hover:text-gray-300"
             }`}
           >
             Info

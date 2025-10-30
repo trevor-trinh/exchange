@@ -1,7 +1,6 @@
 /// SDK error handling and validation tests
 ///
 /// These tests verify that the SDK properly handles errors and edge cases.
-
 mod helpers;
 
 use backend::models::domain::{OrderType, Side};
@@ -38,7 +37,10 @@ async fn test_order_insufficient_balance() {
         .await;
 
     // Should fail
-    assert!(result.is_err(), "Order should fail with insufficient balance");
+    assert!(
+        result.is_err(),
+        "Order should fail with insufficient balance"
+    );
 }
 
 #[tokio::test]
@@ -371,9 +373,7 @@ async fn test_concurrent_balance_queries() {
     let mut handles = vec![];
     for _ in 0..10 {
         let client = fixture.client.clone();
-        let handle = tokio::spawn(async move {
-            client.get_balances("user").await
-        });
+        let handle = tokio::spawn(async move { client.get_balances("user").await });
         handles.push(handle);
     }
 

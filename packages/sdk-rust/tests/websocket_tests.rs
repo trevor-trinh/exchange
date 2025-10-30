@@ -1,7 +1,6 @@
 /// Comprehensive SDK WebSocket tests
 ///
 /// These tests verify real-time event streams using only the WebSocket API.
-
 mod helpers;
 
 use backend::models::domain::{OrderType, Side};
@@ -46,13 +45,11 @@ async fn test_websocket_trade_events() {
     // Wait for subscription confirmation
     let mut subscribed = false;
     for _ in 0..10 {
-        if let Some(msg) = tokio::time::timeout(
-            tokio::time::Duration::from_secs(1),
-            ws_handle.recv(),
-        )
-        .await
-        .ok()
-        .flatten()
+        if let Some(msg) =
+            tokio::time::timeout(tokio::time::Duration::from_secs(1), ws_handle.recv())
+                .await
+                .ok()
+                .flatten()
         {
             if msg["type"] == "subscribed" {
                 subscribed = true;
@@ -94,13 +91,11 @@ async fn test_websocket_trade_events() {
     // Receive trade event
     let mut trade_received = false;
     for _ in 0..20 {
-        if let Some(msg) = tokio::time::timeout(
-            tokio::time::Duration::from_millis(500),
-            ws_handle.recv(),
-        )
-        .await
-        .ok()
-        .flatten()
+        if let Some(msg) =
+            tokio::time::timeout(tokio::time::Duration::from_millis(500), ws_handle.recv())
+                .await
+                .ok()
+                .flatten()
         {
             if msg["type"] == "trade_executed" {
                 // Verify trade details
@@ -164,13 +159,11 @@ async fn test_websocket_orderbook_events() {
     // Receive orderbook event
     let mut orderbook_received = false;
     for _ in 0..20 {
-        if let Some(msg) = tokio::time::timeout(
-            tokio::time::Duration::from_millis(500),
-            ws_handle.recv(),
-        )
-        .await
-        .ok()
-        .flatten()
+        if let Some(msg) =
+            tokio::time::timeout(tokio::time::Duration::from_millis(500), ws_handle.recv())
+                .await
+                .ok()
+                .flatten()
         {
             if msg["type"] == "orderbook_snapshot" {
                 assert_eq!(msg["orderbook"]["market_id"], fixture.market_id);
@@ -209,11 +202,7 @@ async fn test_websocket_user_events() {
         .expect("Failed to connect to WebSocket");
 
     alice_ws
-        .subscribe(
-            SubscriptionChannel::User,
-            None,
-            Some("alice".to_string()),
-        )
+        .subscribe(SubscriptionChannel::User, None, Some("alice".to_string()))
         .expect("Failed to subscribe to user updates");
 
     // Wait for subscription confirmation
@@ -237,13 +226,11 @@ async fn test_websocket_user_events() {
     // Alice should receive order update event (order placed means status="pending")
     let mut order_placed_received = false;
     for _ in 0..20 {
-        if let Some(msg) = tokio::time::timeout(
-            tokio::time::Duration::from_millis(500),
-            alice_ws.recv(),
-        )
-        .await
-        .ok()
-        .flatten()
+        if let Some(msg) =
+            tokio::time::timeout(tokio::time::Duration::from_millis(500), alice_ws.recv())
+                .await
+                .ok()
+                .flatten()
         {
             if msg["type"] == "order_update" && msg["status"] == "pending" {
                 order_placed_received = true;
@@ -274,18 +261,18 @@ async fn test_websocket_user_events() {
     // Alice should receive trade executed event (which indicates order is filled)
     let mut trade_event_received = false;
     for _ in 0..20 {
-        if let Some(msg) = tokio::time::timeout(
-            tokio::time::Duration::from_millis(500),
-            alice_ws.recv(),
-        )
-        .await
-        .ok()
-        .flatten()
+        if let Some(msg) =
+            tokio::time::timeout(tokio::time::Duration::from_millis(500), alice_ws.recv())
+                .await
+                .ok()
+                .flatten()
         {
             // Trade events indicate an order was filled
             if msg["type"] == "trade_executed" {
                 // Verify it's Alice's trade
-                if msg["trade"]["seller_address"] == "alice" || msg["trade"]["buyer_address"] == "alice" {
+                if msg["trade"]["seller_address"] == "alice"
+                    || msg["trade"]["buyer_address"] == "alice"
+                {
                     trade_event_received = true;
                     break;
                 }
@@ -333,23 +320,17 @@ async fn test_websocket_multiple_subscriptions() {
         .expect("Failed to subscribe to orderbook");
 
     ws_handle
-        .subscribe(
-            SubscriptionChannel::User,
-            None,
-            Some("trader".to_string()),
-        )
+        .subscribe(SubscriptionChannel::User, None, Some("trader".to_string()))
         .expect("Failed to subscribe to user updates");
 
     // Wait for subscription confirmations
     let mut subscriptions = 0;
     for _ in 0..30 {
-        if let Some(msg) = tokio::time::timeout(
-            tokio::time::Duration::from_millis(500),
-            ws_handle.recv(),
-        )
-        .await
-        .ok()
-        .flatten()
+        if let Some(msg) =
+            tokio::time::timeout(tokio::time::Duration::from_millis(500), ws_handle.recv())
+                .await
+                .ok()
+                .flatten()
         {
             if msg["type"] == "subscribed" {
                 subscriptions += 1;
@@ -359,7 +340,10 @@ async fn test_websocket_multiple_subscriptions() {
             }
         }
     }
-    assert_eq!(subscriptions, 3, "Did not receive all subscription confirmations");
+    assert_eq!(
+        subscriptions, 3,
+        "Did not receive all subscription confirmations"
+    );
 }
 
 #[tokio::test]
@@ -397,13 +381,11 @@ async fn test_websocket_unsubscribe() {
     // Wait for unsubscribe confirmation
     let mut unsubscribed = false;
     for _ in 0..10 {
-        if let Some(msg) = tokio::time::timeout(
-            tokio::time::Duration::from_millis(500),
-            ws_handle.recv(),
-        )
-        .await
-        .ok()
-        .flatten()
+        if let Some(msg) =
+            tokio::time::timeout(tokio::time::Duration::from_millis(500), ws_handle.recv())
+                .await
+                .ok()
+                .flatten()
         {
             if msg["type"] == "unsubscribed" {
                 unsubscribed = true;
@@ -432,13 +414,11 @@ async fn test_websocket_ping_pong() {
     // Wait for pong
     let mut pong_received = false;
     for _ in 0..10 {
-        if let Some(msg) = tokio::time::timeout(
-            tokio::time::Duration::from_secs(2),
-            ws_handle.recv(),
-        )
-        .await
-        .ok()
-        .flatten()
+        if let Some(msg) =
+            tokio::time::timeout(tokio::time::Duration::from_secs(2), ws_handle.recv())
+                .await
+                .ok()
+                .flatten()
         {
             if msg["type"] == "pong" {
                 pong_received = true;

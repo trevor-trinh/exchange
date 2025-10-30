@@ -29,7 +29,11 @@ impl Orderbook {
     }
 
     /// Update from Hyperliquid L2 data
-    pub fn update_from_l2(&mut self, bids: Vec<super::types::L2Level>, asks: Vec<super::types::L2Level>) {
+    pub fn update_from_l2(
+        &mut self,
+        bids: Vec<super::types::L2Level>,
+        asks: Vec<super::types::L2Level>,
+    ) {
         self.bids.clear();
         self.asks.clear();
 

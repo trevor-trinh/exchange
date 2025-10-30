@@ -345,6 +345,12 @@ export interface components {
             /** @enum {string} */
             type: "cancel_order";
             user_address: string;
+        } | {
+            market_id?: string | null;
+            signature: string;
+            /** @enum {string} */
+            type: "cancel_all_orders";
+            user_address: string;
         };
         /** @description Trade response with type discriminator */
         TradeResponse: {
@@ -356,6 +362,11 @@ export interface components {
             order_id: string;
             /** @enum {string} */
             type: "cancel_order";
+        } | {
+            cancelled_order_ids: string[];
+            count: number;
+            /** @enum {string} */
+            type: "cancel_all_orders";
         };
         UserErrorResponse: {
             code: string;

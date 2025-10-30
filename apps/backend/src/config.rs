@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 
 /// Backend configuration (from apps/backend/config.toml)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,35 +33,11 @@ pub struct TokenConfig {
 }
 
 impl Config {
-    /// Load backend configuration from apps/backend/config.toml
-    pub fn load() -> Result<Self, config::ConfigError> {
-        let config_path = std::env::var("BACKEND_CONFIG")
-            .unwrap_or_else(|_| "apps/backend/config.toml".to_string());
-
-        let builder = config::Config::builder()
-            .add_source(config::File::with_name(&config_path).required(true))
-            .add_source(
-                config::Environment::with_prefix("BACKEND")
-                    .separator("_")
-                    .try_parsing(true),
-            );
-
-        let settings = builder.build()?;
-        settings.try_deserialize()
-    }
-
-    /// Load from a specific path
-    pub fn load_from_path<P: AsRef<Path>>(path: P) -> Result<Self, config::ConfigError> {
-        let builder = config::Config::builder()
-            .add_source(config::File::from(path.as_ref()))
-            .add_source(
-                config::Environment::with_prefix("EXCHANGE")
-                    .separator("_")
-                    .try_parsing(true),
-            );
-
-        let settings = builder.build()?;
-        settings.try_deserialize()
+    /// Load backend configuration from config.toml
+    pub fn load() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        let contents = std::fs::read_to_string("config.toml")?;
+        let config: Config = toml::from_str(&contents)?;
+        Ok(config)
     }
 
     /// Get server address

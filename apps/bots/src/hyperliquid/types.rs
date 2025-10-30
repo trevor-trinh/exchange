@@ -11,7 +11,7 @@ pub struct SubscriptionRequest {
 pub struct Subscription {
     #[serde(rename = "type")]
     pub sub_type: String, // "l2Book" or "trades"
-    pub coin: String,     // e.g., "BTC" for BTC-PERP (perpetual futures by default)
+    pub coin: String, // e.g., "BTC" for BTC-PERP (perpetual futures by default)
 }
 
 /// Hyperliquid L2 book snapshot/update
@@ -24,18 +24,18 @@ pub struct L2BookData {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct L2Level {
-    pub px: String,  // price
-    pub sz: String,  // size
-    pub n: u32,      // number of orders
+    pub px: String, // price
+    pub sz: String, // size
+    pub n: u32,     // number of orders
 }
 
 /// Hyperliquid trade data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TradeData {
     pub coin: String,
-    pub side: String,     // "A" (ask/sell) or "B" (bid/buy)
-    pub px: String,       // price
-    pub sz: String,       // size
+    pub side: String, // "A" (ask/sell) or "B" (bid/buy)
+    pub px: String,   // price
+    pub sz: String,   // size
     pub time: u64,
     pub hash: String,
 }

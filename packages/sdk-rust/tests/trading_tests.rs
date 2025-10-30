@@ -2,7 +2,6 @@
 ///
 /// These tests verify the SDK through realistic trading scenarios,
 /// using ONLY the public REST and WebSocket APIs (no direct DB access for verification).
-
 mod helpers;
 
 use backend::models::domain::{OrderType, Side};
@@ -47,13 +46,16 @@ async fn test_complete_trading_workflow() {
             Side::Sell,
             OrderType::Limit,
             "50000000000".to_string(), // $50,000
-            "1000000".to_string(),      // 1 BTC
+            "1000000".to_string(),     // 1 BTC
             "test_sig".to_string(),
         )
         .await
         .expect("Failed to place alice's order");
 
-    assert_eq!(alice_order.order.status, backend::models::domain::OrderStatus::Pending);
+    assert_eq!(
+        alice_order.order.status,
+        backend::models::domain::OrderStatus::Pending
+    );
     assert_eq!(alice_order.trades.len(), 0); // No match yet
 
     // 3. Alice's order is now pending
@@ -77,13 +79,16 @@ async fn test_complete_trading_workflow() {
             Side::Buy,
             OrderType::Limit,
             "50000000000".to_string(), // Willing to pay $50,000
-            "1000000".to_string(),      // 1 BTC
+            "1000000".to_string(),     // 1 BTC
             "test_sig".to_string(),
         )
         .await
         .expect("Failed to place bob's order");
 
-    assert_eq!(bob_order.order.status, backend::models::domain::OrderStatus::Filled);
+    assert_eq!(
+        bob_order.order.status,
+        backend::models::domain::OrderStatus::Filled
+    );
     assert_eq!(bob_order.trades.len(), 1); // Matched!
 
     // 6. Verify trade details
@@ -163,7 +168,10 @@ async fn test_partial_fill() {
         .await
         .expect("Failed to place sell order");
 
-    assert_eq!(sell_order.order.status, backend::models::domain::OrderStatus::Pending);
+    assert_eq!(
+        sell_order.order.status,
+        backend::models::domain::OrderStatus::Pending
+    );
 
     // Buyer only wants 3 BTC
     let buy_order = fixture
@@ -181,7 +189,10 @@ async fn test_partial_fill() {
         .expect("Failed to place buy order");
 
     // Buyer order should be fully filled
-    assert_eq!(buy_order.order.status, backend::models::domain::OrderStatus::Filled);
+    assert_eq!(
+        buy_order.order.status,
+        backend::models::domain::OrderStatus::Filled
+    );
     assert_eq!(buy_order.order.filled_size, 3_000_000);
 
     // Seller should have a partially filled order remaining
@@ -195,7 +206,10 @@ async fn test_partial_fill() {
     let remaining_order = &seller_orders[0];
     assert_eq!(remaining_order.filled_size, 3_000_000); // 3 filled
     assert_eq!(remaining_order.size, 10_000_000); // Original 10
-    assert_eq!(remaining_order.status, backend::models::domain::OrderStatus::PartiallyFilled);
+    assert_eq!(
+        remaining_order.status,
+        backend::models::domain::OrderStatus::PartiallyFilled
+    );
 }
 
 #[tokio::test]

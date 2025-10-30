@@ -13,10 +13,12 @@ async fn main() -> Result<()> {
     println!("🚀 Initializing Exchange...\n");
 
     // Load backend configuration
-    let config = Config::load().context("Failed to load apps/backend/config.toml")?;
+    let config = Config::load().context("Failed to load config.toml")?;
 
     // Connect to database
-    let db = Db::connect().await.context("Failed to connect to database")?;
+    let db = Db::connect()
+        .await
+        .context("Failed to connect to database")?;
     log::info!("✅ Connected to databases");
 
     // Create tokens
@@ -36,7 +38,11 @@ async fn main() -> Result<()> {
             ),
             Err(e) => {
                 // Token might already exist, that's ok
-                log::debug!("Token {} already exists or error: {}", token_config.ticker, e);
+                log::debug!(
+                    "Token {} already exists or error: {}",
+                    token_config.ticker,
+                    e
+                );
                 println!("  ⊙ Token {} already exists", token_config.ticker);
             }
         }
@@ -45,7 +51,10 @@ async fn main() -> Result<()> {
     // Create markets
     println!("\n🏪 Creating markets...");
     for market_config in &config.markets {
-        let market_id = format!("{}/{}", market_config.base_ticker, market_config.quote_ticker);
+        let market_id = format!(
+            "{}/{}",
+            market_config.base_ticker, market_config.quote_ticker
+        );
 
         // Parse string values to u128
         let tick_size = market_config

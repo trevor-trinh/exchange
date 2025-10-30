@@ -1,8 +1,5 @@
 use crate::error::{SdkError, SdkResult};
-use backend::models::{
-    api::*,
-    domain::*,
-};
+use backend::models::{api::*, domain::*};
 use reqwest::Client;
 
 /// REST API client for the exchange
@@ -47,7 +44,9 @@ impl ExchangeClient {
 
         match response {
             InfoResponse::TokenDetails { token } => Ok(token),
-            _ => Err(SdkError::InvalidResponse("Expected TokenDetails".to_string())),
+            _ => Err(SdkError::InvalidResponse(
+                "Expected TokenDetails".to_string(),
+            )),
         }
     }
 
@@ -59,9 +58,12 @@ impl ExchangeClient {
         let response = self.post_info(request).await?;
 
         match response {
-            InfoResponse::MarketDetails { market } => market.try_into()
+            InfoResponse::MarketDetails { market } => market
+                .try_into()
                 .map_err(|e| SdkError::InvalidResponse(format!("Failed to parse market: {}", e))),
-            _ => Err(SdkError::InvalidResponse("Expected MarketDetails".to_string())),
+            _ => Err(SdkError::InvalidResponse(
+                "Expected MarketDetails".to_string(),
+            )),
         }
     }
 
@@ -71,12 +73,11 @@ impl ExchangeClient {
         let response = self.post_info(request).await?;
 
         match response {
-            InfoResponse::AllMarkets { markets } => {
-                markets.into_iter()
-                    .map(|m| m.try_into())
-                    .collect::<Result<Vec<_>, _>>()
-                    .map_err(|e| SdkError::InvalidResponse(format!("Failed to parse markets: {}", e)))
-            },
+            InfoResponse::AllMarkets { markets } => markets
+                .into_iter()
+                .map(|m| m.try_into())
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| SdkError::InvalidResponse(format!("Failed to parse markets: {}", e))),
             _ => Err(SdkError::InvalidResponse("Expected AllMarkets".to_string())),
         }
     }
@@ -95,7 +96,11 @@ impl ExchangeClient {
     // ===== User Endpoints =====
 
     /// Get user orders
-    pub async fn get_orders(&self, user_address: &str, market_id: Option<String>) -> SdkResult<Vec<Order>> {
+    pub async fn get_orders(
+        &self,
+        user_address: &str,
+        market_id: Option<String>,
+    ) -> SdkResult<Vec<Order>> {
         let request = UserRequest::Orders {
             user_address: user_address.to_string(),
             market_id,
@@ -105,12 +110,11 @@ impl ExchangeClient {
         let response = self.post_user(request).await?;
 
         match response {
-            UserResponse::Orders { orders } => {
-                orders.into_iter()
-                    .map(|o| o.try_into())
-                    .collect::<Result<Vec<_>, _>>()
-                    .map_err(|e| SdkError::InvalidResponse(format!("Failed to parse orders: {}", e)))
-            },
+            UserResponse::Orders { orders } => orders
+                .into_iter()
+                .map(|o| o.try_into())
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| SdkError::InvalidResponse(format!("Failed to parse orders: {}", e))),
             _ => Err(SdkError::InvalidResponse("Expected Orders".to_string())),
         }
     }
@@ -123,18 +127,21 @@ impl ExchangeClient {
         let response = self.post_user(request).await?;
 
         match response {
-            UserResponse::Balances { balances } => {
-                balances.into_iter()
-                    .map(|b| b.try_into())
-                    .collect::<Result<Vec<_>, _>>()
-                    .map_err(|e| SdkError::InvalidResponse(format!("Failed to parse balances: {}", e)))
-            },
+            UserResponse::Balances { balances } => balances
+                .into_iter()
+                .map(|b| b.try_into())
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| SdkError::InvalidResponse(format!("Failed to parse balances: {}", e))),
             _ => Err(SdkError::InvalidResponse("Expected Balances".to_string())),
         }
     }
 
     /// Get user trades
-    pub async fn get_trades(&self, user_address: &str, market_id: Option<String>) -> SdkResult<Vec<Trade>> {
+    pub async fn get_trades(
+        &self,
+        user_address: &str,
+        market_id: Option<String>,
+    ) -> SdkResult<Vec<Trade>> {
         let request = UserRequest::Trades {
             user_address: user_address.to_string(),
             market_id,
@@ -143,12 +150,11 @@ impl ExchangeClient {
         let response = self.post_user(request).await?;
 
         match response {
-            UserResponse::Trades { trades } => {
-                trades.into_iter()
-                    .map(|t| t.try_into())
-                    .collect::<Result<Vec<_>, _>>()
-                    .map_err(|e| SdkError::InvalidResponse(format!("Failed to parse trades: {}", e)))
-            },
+            UserResponse::Trades { trades } => trades
+                .into_iter()
+                .map(|t| t.try_into())
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| SdkError::InvalidResponse(format!("Failed to parse trades: {}", e))),
             _ => Err(SdkError::InvalidResponse("Expected Trades".to_string())),
         }
     }
@@ -165,9 +171,11 @@ impl ExchangeClient {
 
     /// Round a size string to the nearest multiple of lot_size (rounds down)
     pub fn round_size_to_lot_str(size: &str, lot_size: &str) -> SdkResult<String> {
-        let size_val = size.parse::<u128>()
+        let size_val = size
+            .parse::<u128>()
             .map_err(|e| SdkError::InvalidResponse(format!("Invalid size: {}", e)))?;
-        let lot_size_val = lot_size.parse::<u128>()
+        let lot_size_val = lot_size
+            .parse::<u128>()
             .map_err(|e| SdkError::InvalidResponse(format!("Invalid lot_size: {}", e)))?;
 
         let rounded = Self::round_size_to_lot(size_val, lot_size_val);
@@ -197,16 +205,18 @@ impl ExchangeClient {
         let response = self.post_trade(request).await?;
 
         match response {
-            TradeResponse::PlaceOrder { order, trades } => {
-                Ok(crate::OrderPlaced {
-                    order: order.try_into()
-                        .map_err(|e| SdkError::InvalidResponse(format!("Failed to parse order: {}", e)))?,
-                    trades: trades.into_iter()
-                        .map(|t| t.try_into())
-                        .collect::<Result<Vec<_>, _>>()
-                        .map_err(|e| SdkError::InvalidResponse(format!("Failed to parse trades: {}", e)))?,
-                })
-            },
+            TradeResponse::PlaceOrder { order, trades } => Ok(crate::OrderPlaced {
+                order: order.try_into().map_err(|e| {
+                    SdkError::InvalidResponse(format!("Failed to parse order: {}", e))
+                })?,
+                trades: trades
+                    .into_iter()
+                    .map(|t| t.try_into())
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|e| {
+                        SdkError::InvalidResponse(format!("Failed to parse trades: {}", e))
+                    })?,
+            }),
             _ => Err(SdkError::InvalidResponse("Expected PlaceOrder".to_string())),
         }
     }
@@ -226,7 +236,8 @@ impl ExchangeClient {
         let market = self.get_market(&market_id).await?;
 
         // Parse size
-        let size_val = size.parse::<u128>()
+        let size_val = size
+            .parse::<u128>()
             .map_err(|e| SdkError::InvalidResponse(format!("Invalid size: {}", e)))?;
 
         // Round size to lot_size
@@ -234,9 +245,10 @@ impl ExchangeClient {
 
         // Skip if rounded size is 0
         if rounded_size == 0 {
-            return Err(SdkError::InvalidResponse(
-                format!("Size {} is too small for lot_size {} (rounded to 0)", size, market.lot_size)
-            ));
+            return Err(SdkError::InvalidResponse(format!(
+                "Size {} is too small for lot_size {} (rounded to 0)",
+                size, market.lot_size
+            )));
         }
 
         // Place order with rounded size
@@ -248,7 +260,8 @@ impl ExchangeClient {
             price,
             rounded_size.to_string(),
             signature,
-        ).await
+        )
+        .await
     }
 
     /// Cancel an order
@@ -267,7 +280,9 @@ impl ExchangeClient {
 
         match response {
             TradeResponse::CancelOrder { order_id } => Ok(OrderCancelled { order_id }),
-            _ => Err(SdkError::InvalidResponse("Expected CancelOrder".to_string())),
+            _ => Err(SdkError::InvalidResponse(
+                "Expected CancelOrder".to_string(),
+            )),
         }
     }
 
@@ -302,7 +317,13 @@ impl ExchangeClient {
     // ===== Drip/Faucet Endpoint =====
 
     /// Request testnet tokens from faucet
-    pub async fn faucet(&self, user_address: String, token_ticker: String, amount: String, signature: String) -> SdkResult<(String, String, String, String)> {
+    pub async fn faucet(
+        &self,
+        user_address: String,
+        token_ticker: String,
+        amount: String,
+        signature: String,
+    ) -> SdkResult<(String, String, String, String)> {
         let request = DripRequest::Faucet {
             user_address,
             token_ticker,
@@ -312,16 +333,24 @@ impl ExchangeClient {
         let response = self.post_drip(request).await?;
 
         match response {
-            DripResponse::Faucet { user_address, token_ticker, amount, new_balance } => {
-                Ok((user_address, token_ticker, amount, new_balance))
-            }
+            DripResponse::Faucet {
+                user_address,
+                token_ticker,
+                amount,
+                new_balance,
+            } => Ok((user_address, token_ticker, amount, new_balance)),
         }
     }
 
     // ===== Admin Endpoints (Test/Dev Only) =====
 
     /// Create a token (admin)
-    pub async fn admin_create_token(&self, ticker: String, decimals: u8, name: String) -> SdkResult<Token> {
+    pub async fn admin_create_token(
+        &self,
+        ticker: String,
+        decimals: u8,
+        name: String,
+    ) -> SdkResult<Token> {
         let request = backend::models::api::AdminRequest::CreateToken {
             ticker,
             decimals,
@@ -331,7 +360,9 @@ impl ExchangeClient {
 
         match response {
             backend::models::api::AdminResponse::CreateToken { token } => Ok(token),
-            _ => Err(SdkError::InvalidResponse("Expected CreateToken".to_string())),
+            _ => Err(SdkError::InvalidResponse(
+                "Expected CreateToken".to_string(),
+            )),
         }
     }
 
@@ -358,14 +389,22 @@ impl ExchangeClient {
         let response = self.post_admin(request).await?;
 
         match response {
-            backend::models::api::AdminResponse::CreateMarket { market } => market.try_into()
+            backend::models::api::AdminResponse::CreateMarket { market } => market
+                .try_into()
                 .map_err(|e| SdkError::InvalidResponse(format!("Failed to parse market: {}", e))),
-            _ => Err(SdkError::InvalidResponse("Expected CreateMarket".to_string())),
+            _ => Err(SdkError::InvalidResponse(
+                "Expected CreateMarket".to_string(),
+            )),
         }
     }
 
     /// Faucet via admin endpoint
-    pub async fn admin_faucet(&self, user_address: String, token_ticker: String, amount: String) -> SdkResult<String> {
+    pub async fn admin_faucet(
+        &self,
+        user_address: String,
+        token_ticker: String,
+        amount: String,
+    ) -> SdkResult<String> {
         let request = backend::models::api::AdminRequest::Faucet {
             user_address,
             token_ticker,
@@ -391,8 +430,17 @@ impl ExchangeClient {
         } else {
             let error: serde_json::Value = response.json().await?;
             Err(SdkError::ApiError {
-                status: error.get("code").and_then(|v| v.as_str()).unwrap_or("500").parse().unwrap_or(500),
-                message: error.get("error").and_then(|v| v.as_str()).unwrap_or("Unknown error").to_string(),
+                status: error
+                    .get("code")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("500")
+                    .parse()
+                    .unwrap_or(500),
+                message: error
+                    .get("error")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Unknown error")
+                    .to_string(),
             })
         }
     }
@@ -406,8 +454,17 @@ impl ExchangeClient {
         } else {
             let error: serde_json::Value = response.json().await?;
             Err(SdkError::ApiError {
-                status: error.get("code").and_then(|v| v.as_str()).unwrap_or("500").parse().unwrap_or(500),
-                message: error.get("error").and_then(|v| v.as_str()).unwrap_or("Unknown error").to_string(),
+                status: error
+                    .get("code")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("500")
+                    .parse()
+                    .unwrap_or(500),
+                message: error
+                    .get("error")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Unknown error")
+                    .to_string(),
             })
         }
     }
@@ -421,8 +478,17 @@ impl ExchangeClient {
         } else {
             let error: serde_json::Value = response.json().await?;
             Err(SdkError::ApiError {
-                status: error.get("code").and_then(|v| v.as_str()).unwrap_or("500").parse().unwrap_or(500),
-                message: error.get("error").and_then(|v| v.as_str()).unwrap_or("Unknown error").to_string(),
+                status: error
+                    .get("code")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("500")
+                    .parse()
+                    .unwrap_or(500),
+                message: error
+                    .get("error")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Unknown error")
+                    .to_string(),
             })
         }
     }
@@ -436,13 +502,25 @@ impl ExchangeClient {
         } else {
             let error: serde_json::Value = response.json().await?;
             Err(SdkError::ApiError {
-                status: error.get("code").and_then(|v| v.as_str()).unwrap_or("500").parse().unwrap_or(500),
-                message: error.get("error").and_then(|v| v.as_str()).unwrap_or("Unknown error").to_string(),
+                status: error
+                    .get("code")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("500")
+                    .parse()
+                    .unwrap_or(500),
+                message: error
+                    .get("error")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Unknown error")
+                    .to_string(),
             })
         }
     }
 
-    async fn post_admin(&self, request: backend::models::api::AdminRequest) -> SdkResult<backend::models::api::AdminResponse> {
+    async fn post_admin(
+        &self,
+        request: backend::models::api::AdminRequest,
+    ) -> SdkResult<backend::models::api::AdminResponse> {
         let url = format!("{}/api/admin", self.base_url);
         let response = self.client.post(&url).json(&request).send().await?;
 
@@ -451,8 +529,17 @@ impl ExchangeClient {
         } else {
             let error: serde_json::Value = response.json().await?;
             Err(SdkError::ApiError {
-                status: error.get("code").and_then(|v| v.as_str()).unwrap_or("500").parse().unwrap_or(500),
-                message: error.get("error").and_then(|v| v.as_str()).unwrap_or("Unknown error").to_string(),
+                status: error
+                    .get("code")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("500")
+                    .parse()
+                    .unwrap_or(500),
+                message: error
+                    .get("error")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Unknown error")
+                    .to_string(),
             })
         }
     }

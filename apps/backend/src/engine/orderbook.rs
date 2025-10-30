@@ -50,11 +50,7 @@ impl Orderbooks {
 
     /// Cancel all orders for a user, optionally filtered by market
     /// Returns a vector of all cancelled orders
-    pub fn cancel_all_orders(
-        &mut self,
-        user_address: &str,
-        market_id: Option<&str>,
-    ) -> Vec<Order> {
+    pub fn cancel_all_orders(&mut self, user_address: &str, market_id: Option<&str>) -> Vec<Order> {
         let mut cancelled_orders = Vec::new();
 
         // If market_id is specified, only cancel orders in that market

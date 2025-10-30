@@ -67,9 +67,7 @@ export function FaucetForm() {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4">Faucet (Admin)</h2>
-      <p className="text-gray-400 mb-6">
-        Grant tokens to any user address for testing purposes
-      </p>
+      <p className="text-gray-400 mb-6">Grant tokens to any user address for testing purposes</p>
 
       {loadingTokens ? (
         <p className="text-gray-400">Loading available tokens...</p>
@@ -80,9 +78,7 @@ export function FaucetForm() {
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
           <div>
-            <label className="block text-sm font-medium mb-2">
-              User Address *
-            </label>
+            <label className="block text-sm font-medium mb-2">User Address *</label>
             <input
               type="text"
               value={userAddress}
@@ -91,9 +87,7 @@ export function FaucetForm() {
               placeholder="user123"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
-              The address/identifier of the user to receive tokens
-            </p>
+            <p className="text-xs text-gray-500 mt-1">The address/identifier of the user to receive tokens</p>
           </div>
 
           <div>
@@ -114,9 +108,7 @@ export function FaucetForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">
-              Amount (raw value) *
-            </label>
+            <label className="block text-sm font-medium mb-2">Amount (raw value) *</label>
             <input
               type="text"
               value={amount}
@@ -125,12 +117,12 @@ export function FaucetForm() {
               placeholder="1000000000"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Raw amount (e.g., 1000000000 = 1000 with 6 decimals)
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Raw amount (e.g., 1000000000 = 1000 with 6 decimals)</p>
             {tokenTicker && amount && (
               <p className="text-xs text-blue-400 mt-1">
-                Human-readable: {(parseFloat(amount) / Math.pow(10, getSelectedTokenDecimals())).toFixed(getSelectedTokenDecimals())} {tokenTicker}
+                Human-readable:{" "}
+                {(parseFloat(amount) / Math.pow(10, getSelectedTokenDecimals())).toFixed(getSelectedTokenDecimals())}{" "}
+                {tokenTicker}
               </p>
             )}
           </div>
@@ -138,9 +130,7 @@ export function FaucetForm() {
           {/* Quick amount buttons */}
           {tokenTicker && (
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Quick Amounts
-              </label>
+              <label className="block text-sm font-medium mb-2">Quick Amounts</label>
               <div className="flex gap-2 flex-wrap">
                 {[100, 1000, 10000, 100000].map((humanAmount) => (
                   <button
@@ -156,11 +146,7 @@ export function FaucetForm() {
             </div>
           )}
 
-          {error && (
-            <div className="p-4 bg-red-900/20 border border-red-500 rounded-lg text-red-400">
-              {error}
-            </div>
-          )}
+          {error && <div className="p-4 bg-red-900/20 border border-red-500 rounded-lg text-red-400">{error}</div>}
 
           {success && (
             <div className="p-4 bg-green-900/20 border border-green-500 rounded-lg">
@@ -169,7 +155,11 @@ export function FaucetForm() {
                 <p>New Balance (raw): {success.newBalance}</p>
                 {tokenTicker && (
                   <p>
-                    New Balance (human): {(parseFloat(success.newBalance) / Math.pow(10, getSelectedTokenDecimals())).toFixed(getSelectedTokenDecimals())} {tokenTicker}
+                    New Balance (human):{" "}
+                    {(parseFloat(success.newBalance) / Math.pow(10, getSelectedTokenDecimals())).toFixed(
+                      getSelectedTokenDecimals(),
+                    )}{" "}
+                    {tokenTicker}
                   </p>
                 )}
               </div>
