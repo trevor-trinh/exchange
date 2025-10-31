@@ -126,17 +126,24 @@ export const useExchangeStore = create<ExchangeState>()(
               state.recentTrades = state.recentTrades.slice(0, 100);
             }
 
-            // Add to price history
-            const price = parseFloat(trade.price);
-            if (!isNaN(price)) {
-              state.priceHistory.push({
-                timestamp: Date.now(),
-                price,
-              });
+            // Add to price history - convert using token decimals
+            const market = state.markets.find((m) => m.id === trade.market_id);
+            if (market) {
+              const quoteToken = state.tokens.find((t) => t.ticker === market.quote_ticker);
+              if (quoteToken) {
+                const raw = parseFloat(trade.price);
+                const price = raw / Math.pow(10, quoteToken.decimals);
+                if (!isNaN(price)) {
+                  state.priceHistory.push({
+                    timestamp: Date.now(),
+                    price,
+                  });
 
-              // Keep only last 200 price points
-              if (state.priceHistory.length > 200) {
-                state.priceHistory = state.priceHistory.slice(-200);
+                  // Keep only last 200 price points
+                  if (state.priceHistory.length > 200) {
+                    state.priceHistory = state.priceHistory.slice(-200);
+                  }
+                }
               }
             }
           }
@@ -149,13 +156,20 @@ export const useExchangeStore = create<ExchangeState>()(
             if (state.selectedMarketId === trade.market_id) {
               state.recentTrades.unshift(trade);
 
-              // Add to price history
-              const price = parseFloat(trade.price);
-              if (!isNaN(price)) {
-                state.priceHistory.push({
-                  timestamp: Date.now(),
-                  price,
-                });
+              // Add to price history - convert using token decimals
+              const market = state.markets.find((m) => m.id === trade.market_id);
+              if (market) {
+                const quoteToken = state.tokens.find((t) => t.ticker === market.quote_ticker);
+                if (quoteToken) {
+                  const raw = parseFloat(trade.price);
+                  const price = raw / Math.pow(10, quoteToken.decimals);
+                  if (!isNaN(price)) {
+                    state.priceHistory.push({
+                      timestamp: Date.now(),
+                      price,
+                    });
+                  }
+                }
               }
             }
           });

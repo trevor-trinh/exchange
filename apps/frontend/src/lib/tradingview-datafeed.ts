@@ -23,6 +23,7 @@ type ErrorCallback = (reason: string) => void;
 import { exchange } from "./api";
 import { getWebSocketManager } from "./websocket";
 import type { ServerMessage } from "@exchange/sdk";
+import type { Market, Token } from "./types/exchange";
 
 // Resolution mapping from TradingView to our backend
 const resolutionMap: Record<string, string> = {
@@ -61,6 +62,8 @@ export class ExchangeDatafeed implements IBasicDataFeed {
   };
   private subscriptions = new Map<string, BarSubscription>();
   private wsManager = getWebSocketManager();
+  private marketsCache: Market[] = [];
+  private tokensCache: Token[] = [];
 
   /**
    * Called when the library is initialized
@@ -99,15 +102,29 @@ export class ExchangeDatafeed implements IBasicDataFeed {
    * Resolve symbol info
    */
   resolveSymbol(symbolName: string, onResolve: ResolveCallback, onError: ErrorCallback): void {
-    exchange
-      .getMarkets()
-      .then((markets) => {
+    Promise.all([exchange.getMarkets(), exchange.getTokens()])
+      .then(([markets, tokens]) => {
+        this.marketsCache = markets; // Cache markets for later use
+        this.tokensCache = tokens; // Cache tokens for later use
         const market = markets.find((m) => m.id === symbolName);
 
         if (!market) {
           onError("Symbol not found");
           return;
         }
+
+        // Look up token decimals
+        const quoteToken = tokens.find((t) => t.ticker === market.quote_ticker);
+        const baseToken = tokens.find((t) => t.ticker === market.base_ticker);
+
+        if (!quoteToken || !baseToken) {
+          onError("Token not found");
+          return;
+        }
+
+        // Calculate pricescale based on quote decimals
+        // pricescale is 10^decimals (e.g., 6 decimals = 1000000)
+        const pricescale = Math.pow(10, Math.min(quoteToken.decimals, 8));
 
         const symbolInfo: LibrarySymbolInfo = {
           name: market.id,
@@ -118,12 +135,12 @@ export class ExchangeDatafeed implements IBasicDataFeed {
           timezone: "Etc/UTC",
           exchange: "Exchange",
           minmov: 1,
-          pricescale: 100, // 2 decimal places
+          pricescale: pricescale,
           has_intraday: true,
           listed_exchange: "Exchange",
           has_weekly_and_monthly: false,
           supported_resolutions: this.configurationData.supported_resolutions,
-          volume_precision: 8,
+          volume_precision: Math.min(baseToken.decimals, 8),
           data_status: "streaming",
           format: "price",
         };
@@ -154,6 +171,25 @@ export class ExchangeDatafeed implements IBasicDataFeed {
     const { from, to } = periodParams;
     const interval = resolutionMap[resolution] || "1m";
 
+    // Get market config
+    const market = this.marketsCache.find((m) => m.id === symbolInfo.name);
+    if (!market) {
+      onError("Market not found in cache");
+      return;
+    }
+
+    // Look up token decimals
+    const quoteToken = this.tokensCache.find((t) => t.ticker === market.quote_ticker);
+    const baseToken = this.tokensCache.find((t) => t.ticker === market.base_ticker);
+
+    if (!quoteToken || !baseToken) {
+      onError("Token not found in cache");
+      return;
+    }
+
+    const priceScale = Math.pow(10, quoteToken.decimals);
+    const sizeScale = Math.pow(10, baseToken.decimals);
+
     // Fetch candles using the SDK
     exchange
       .getCandles({
@@ -170,11 +206,11 @@ export class ExchangeDatafeed implements IBasicDataFeed {
 
         const bars: Bar[] = candles.map((candle) => ({
           time: candle.timestamp * 1000, // TradingView expects milliseconds
-          open: candle.open / 1e18, // Convert from fixed-point
-          high: candle.high / 1e18,
-          low: candle.low / 1e18,
-          close: candle.close / 1e18,
-          volume: candle.volume / 1e18,
+          open: candle.open / priceScale, // Convert from fixed-point using token decimals
+          high: candle.high / priceScale,
+          low: candle.low / priceScale,
+          close: candle.close / priceScale,
+          volume: candle.volume / sizeScale,
         }));
 
         onResult(bars, { noData: false });
@@ -267,8 +303,28 @@ export class ExchangeDatafeed implements IBasicDataFeed {
     }
 
     const trade = message.trade;
-    const price = Number(trade.price) / 1e18;
-    const size = Number(trade.size) / 1e18;
+
+    // Get market config
+    const market = this.marketsCache.find((m) => m.id === trade.market_id);
+    if (!market) {
+      console.warn(`Market ${trade.market_id} not found in cache`);
+      return;
+    }
+
+    // Look up token decimals
+    const quoteToken = this.tokensCache.find((t) => t.ticker === market.quote_ticker);
+    const baseToken = this.tokensCache.find((t) => t.ticker === market.base_ticker);
+
+    if (!quoteToken || !baseToken) {
+      console.warn(`Token not found in cache for market ${trade.market_id}`);
+      return;
+    }
+
+    const priceScale = Math.pow(10, quoteToken.decimals);
+    const sizeScale = Math.pow(10, baseToken.decimals);
+
+    const price = Number(trade.price) / priceScale;
+    const size = Number(trade.size) / sizeScale;
     const timestamp = Number(trade.timestamp) * 1000; // Convert to milliseconds
 
     // Update all subscriptions for this market
