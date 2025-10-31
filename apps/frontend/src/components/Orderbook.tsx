@@ -69,16 +69,10 @@ export function Orderbook() {
     <Card className="flex flex-col h-full gap-0 py-0 overflow-hidden">
       <Tabs defaultValue="orderbook" className="flex-1 flex flex-col gap-0 min-h-0">
         <TabsList className="w-full justify-start rounded-none border-b border-border h-auto p-0 bg-card/50 backdrop-blur-sm shrink-0 z-10">
-          <TabsTrigger
-            value="orderbook"
-            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/5 transition-all duration-200 py-2 text-sm"
-          >
+          <TabsTrigger value="orderbook" className="flex-1 rounded-none">
             Orderbook
           </TabsTrigger>
-          <TabsTrigger
-            value="trades"
-            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/5 transition-all duration-200 py-2 text-sm"
-          >
+          <TabsTrigger value="trades" className="flex-1 rounded-none">
             Trades
           </TabsTrigger>
         </TabsList>

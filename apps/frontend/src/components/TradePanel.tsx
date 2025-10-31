@@ -254,13 +254,13 @@ export function TradePanel() {
         <TabsList className="w-full justify-start rounded-none border-b border-border h-auto p-0 bg-card/50 backdrop-blur-sm shrink-0">
           <TabsTrigger
             value="limit"
-            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/5 transition-all duration-200 py-2 text-sm"
+            className="flex-1 rounded-none"
           >
             Limit
           </TabsTrigger>
           <TabsTrigger
             value="market"
-            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/5 transition-all duration-200 py-2 text-sm"
+            className="flex-1 rounded-none"
           >
             Market
           </TabsTrigger>
@@ -398,7 +398,7 @@ export function TradePanel() {
 
             {/* Estimated total and fees */}
             {estimatedSize > 0 && estimatedPrice > 0 && (
-              <div className="space-y-1 bg-muted/50 border border-border/50 rounded-lg p-3 text-xs">
+              <div className="space-y-1 bg-muted/50 border border-border rounded-lg p-3 text-xs">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total</span>
                   <span className="font-mono font-medium">
@@ -411,7 +411,7 @@ export function TradePanel() {
                     {formatNumberWithCommas(estimatedFee, Math.min(priceDecimals, 4))} {quoteToken.ticker}
                   </span>
                 </div>
-                <div className="flex justify-between pt-1 border-t border-border/50">
+                <div className="flex justify-between pt-1 border-t border-border">
                   <span className="text-muted-foreground font-medium">
                     {side === "buy" ? "Total Cost" : "You Receive"}
                   </span>

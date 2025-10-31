@@ -163,7 +163,11 @@ export function AuthButton() {
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="default" className="backdrop-blur-md bg-primary/80 hover:bg-primary/90">
+        <Button
+          size="sm"
+          variant="default"
+          className="backdrop-blur-md bg-primary/80 hover:bg-primary/90 border-b-[3px] border-b-primary shadow-[0_2px_1px_0px_rgba(180,150,255,0.6),0_1px_2px_0px_rgba(255,255,255,0.5)] cursor-pointer"
+        >
           Connect Wallet
         </Button>
       </DialogTrigger>

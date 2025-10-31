@@ -108,6 +108,34 @@
     position: relative;
   }
 
+  /* Cursor styles for interactive elements */
+  button,
+  a,
+  [role="button"],
+  [role="link"],
+  [role="tab"],
+  select,
+  [type="button"],
+  [type="submit"],
+  [type="reset"],
+  input[type="checkbox"],
+  input[type="radio"],
+  label[for],
+  summary,
+  [data-slot="tabs-trigger"],
+  [data-slot="dropdown-trigger"],
+  [aria-haspopup],
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  /* Disabled elements should not show pointer cursor */
+  button:disabled,
+  [disabled],
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
   /* Ensure all borders use the purple color */
   *[class*="border"] {
     border-color: hsl(var(--border)) !important;
