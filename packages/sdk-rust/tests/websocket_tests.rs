@@ -95,7 +95,7 @@ async fn test_websocket_trade_events() {
                 .ok()
                 .flatten()
         {
-            if msg["type"] == "trade_executed" {
+            if msg["type"] == "trade" {
                 // Verify trade details
                 assert_eq!(msg["trade"]["market_id"], fixture.market_id);
                 assert_eq!(msg["trade"]["buyer_address"], "bob");
@@ -163,7 +163,7 @@ async fn test_websocket_orderbook_events() {
                 .ok()
                 .flatten()
         {
-            if msg["type"] == "orderbook_snapshot" {
+            if msg["type"] == "orderbook" {
                 assert_eq!(msg["orderbook"]["market_id"], fixture.market_id);
 
                 // Should have asks (sell orders)
@@ -230,7 +230,7 @@ async fn test_websocket_user_events() {
                 .ok()
                 .flatten()
         {
-            if msg["type"] == "order_update" && msg["status"] == "pending" {
+            if msg["type"] == "order" && msg["status"] == "pending" {
                 order_placed_received = true;
                 break;
             }
@@ -266,7 +266,7 @@ async fn test_websocket_user_events() {
                 .flatten()
         {
             // Trade events indicate an order was filled
-            if msg["type"] == "trade_executed" {
+            if msg["type"] == "trade" {
                 // Verify it's Alice's trade
                 if msg["trade"]["seller_address"] == "alice"
                     || msg["trade"]["buyer_address"] == "alice"

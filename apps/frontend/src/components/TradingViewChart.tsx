@@ -50,9 +50,34 @@ export function TradingViewChart() {
       autosize: true,
       theme: "dark",
       custom_css_url: undefined,
-      overrides: {
+      settings_overrides: {
+        // Background
         "paneProperties.background": "#000000",
         "paneProperties.backgroundType": "solid",
+        "paneProperties.backgroundGradientStartColor": "#000000",
+        "paneProperties.backgroundGradientEndColor": "#000000",
+
+        // Chart style - 1 for candles
+        "mainSeriesProperties.style": 1,
+
+        // Candle colors
+        "mainSeriesProperties.candleStyle.upColor": "#02B36B",
+        "mainSeriesProperties.candleStyle.downColor": "#E23659",
+        "mainSeriesProperties.candleStyle.wickUpColor": "#02B36B",
+        "mainSeriesProperties.candleStyle.wickDownColor": "#E23659",
+        "mainSeriesProperties.candleStyle.borderUpColor": "#02B36B",
+        "mainSeriesProperties.candleStyle.borderDownColor": "#E23659",
+        "mainSeriesProperties.candleStyle.drawWick": true,
+        "mainSeriesProperties.candleStyle.drawBorder": true,
+
+        // Line chart colors (fallback)
+        "mainSeriesProperties.lineStyle.color": "#807ADB",
+        "mainSeriesProperties.lineStyle.linewidth": 1.5,
+      },
+      studies_overrides: {
+        "volume.volume.color.0": "#E23659",
+        "volume.volume.color.1": "#02B36B",
+        "volume.volume.transparency": 65,
       },
     };
 

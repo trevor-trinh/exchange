@@ -26,7 +26,7 @@ import { RestClient } from './rest';
 import type { RestClientConfig, Trade, Order, Balance } from './rest';
 import { WebSocketClient } from './websocket';
 import type { WebSocketClientConfig } from './websocket';
-import type { OrderbookLevel } from './types/websocket';
+import type { OrderbookLevel, TradeData } from './types/websocket';
 
 export { RestClient } from './rest';
 export type { RestClientConfig } from './rest';
@@ -61,6 +61,8 @@ export type {
   SubscriptionChannel,
   MessageHandler,
   OrderbookLevel,
+  TradeData,
+  OrderbookData,
 } from './types/websocket';
 
 // Re-export generated types for advanced usage
@@ -201,7 +203,7 @@ export class ExchangeClient {
    * Stream trades for a market
    * @returns Unsubscribe function
    */
-  onTrades(marketId: string, handler: (trade: Trade) => void): () => void {
+  onTrades(marketId: string, handler: (trade: TradeData) => void): () => void {
     this.ws.connect();
     this.ws.subscribe('trades', { marketId });
     return this.ws.on('trade', (msg) => {
@@ -218,9 +220,9 @@ export class ExchangeClient {
   onOrderbook(marketId: string, handler: (update: { bids: OrderbookLevel[], asks: OrderbookLevel[] }) => void): () => void {
     this.ws.connect();
     this.ws.subscribe('orderbook', { marketId });
-    return this.ws.on('orderbook_update', (msg) => {
-      if (msg.type === 'orderbook_update') {
-        handler({ bids: msg.bids, asks: msg.asks });
+    return this.ws.on('orderbook', (msg) => {
+      if (msg.type === 'orderbook') {
+        handler({ bids: msg.orderbook.bids, asks: msg.orderbook.asks });
       }
     });
   }
@@ -229,12 +231,12 @@ export class ExchangeClient {
    * Stream order updates for a user
    * @returns Unsubscribe function
    */
-  onUserOrders(userAddress: string, handler: (order: Order) => void): () => void {
+  onUserOrders(userAddress: string, handler: (order: { order_id: string; status: string; filled_size: string }) => void): () => void {
     this.ws.connect();
     this.ws.subscribe('user', { userAddress });
-    return this.ws.on('order_update', (msg) => {
-      if (msg.type === 'order_update') {
-        handler(msg.order);
+    return this.ws.on('order', (msg) => {
+      if (msg.type === 'order') {
+        handler({ order_id: msg.order_id, status: msg.status, filled_size: msg.filled_size });
       }
     });
   }
@@ -243,7 +245,7 @@ export class ExchangeClient {
    * Stream trade updates for a user
    * @returns Unsubscribe function
    */
-  onUserTrades(userAddress: string, handler: (trade: Trade) => void): () => void {
+  onUserTrades(userAddress: string, handler: (trade: TradeData) => void): () => void {
     this.ws.connect();
     this.ws.subscribe('user', { userAddress });
     return this.ws.on('trade', (msg) => {
@@ -257,12 +259,12 @@ export class ExchangeClient {
    * Stream balance updates for a user
    * @returns Unsubscribe function
    */
-  onUserBalances(userAddress: string, handler: (balance: Balance) => void): () => void {
+  onUserBalances(userAddress: string, handler: (balance: { token_ticker: string; available: string; locked: string }) => void): () => void {
     this.ws.connect();
     this.ws.subscribe('user', { userAddress });
-    return this.ws.on('balance_update', (msg) => {
-      if (msg.type === 'balance_update') {
-        handler(msg.balance);
+    return this.ws.on('balance', (msg) => {
+      if (msg.type === 'balance') {
+        handler({ token_ticker: msg.token_ticker, available: msg.available, locked: msg.locked });
       }
     });
   }

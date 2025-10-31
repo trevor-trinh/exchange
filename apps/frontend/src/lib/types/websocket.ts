@@ -34,11 +34,10 @@ export type ServerMessage =
   | UnsubscribedMessage
   | PongMessage
   | TradeMessage
-  | OrderbookSnapshotMessage
-  | OrderbookUpdateMessage
-  | OrderPlacedMessage
-  | OrderCancelledMessage
-  | OrderFilledMessage
+  | OrderbookMessage
+  | OrderMessage
+  | BalanceMessage
+  | CandleMessage
   | ErrorMessage;
 
 export interface SubscribedMessage {
@@ -62,68 +61,51 @@ export interface PongMessage {
 
 export interface TradeMessage {
   type: "trade";
-  channel: "trades";
-  data: {
+  trade: {
     id: string;
     market_id: string;
     buyer_address: string;
     seller_address: string;
+    buyer_order_id: string;
+    seller_order_id: string;
     price: string;
     size: string;
-    timestamp: string;
+    timestamp: number;
   };
 }
 
-export interface OrderbookSnapshotMessage {
-  type: "orderbook_snapshot";
-  channel: "orderbook";
-  data: {
+export interface OrderbookMessage {
+  type: "orderbook";
+  orderbook: {
     market_id: string;
     bids: Array<{ price: string; size: string }>;
     asks: Array<{ price: string; size: string }>;
   };
 }
 
-export interface OrderbookUpdateMessage {
-  type: "orderbook_update";
-  channel: "orderbook";
-  data: {
-    market_id: string;
-    bids: Array<{ price: string; size: string }>;
-    asks: Array<{ price: string; size: string }>;
-  };
+export interface OrderMessage {
+  type: "order";
+  order_id: string;
+  status: string;
+  filled_size: string;
 }
 
-export interface OrderPlacedMessage {
-  type: "order_placed";
-  channel: "user";
-  data: {
-    user_address: string;
-    market_id: string;
-    order_id: string;
-    side: "Buy" | "Sell";
-    price: string;
-    size: string;
-  };
+export interface BalanceMessage {
+  type: "balance";
+  token_ticker: string;
+  available: string;
+  locked: string;
 }
 
-export interface OrderCancelledMessage {
-  type: "order_cancelled";
-  channel: "user";
-  data: {
-    user_address: string;
-    order_id: string;
-  };
-}
-
-export interface OrderFilledMessage {
-  type: "order_filled";
-  channel: "user";
-  data: {
-    user_address: string;
-    order_id: string;
-    filled_size: string;
-  };
+export interface CandleMessage {
+  type: "candle";
+  market_id: string;
+  timestamp: number;
+  open: string;
+  high: string;
+  low: string;
+  close: string;
+  volume: string;
 }
 
 export interface ErrorMessage {

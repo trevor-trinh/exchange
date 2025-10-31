@@ -333,24 +333,17 @@ pub enum ServerMessage {
 
     // Real-time data updates
     Trade {
-        market_id: String,
-        price: String,
-        size: String,
-        side: String,
-        timestamp: i64,
-    },
-    TradeExecuted {
         trade: TradeData,
     },
-    OrderbookSnapshot {
+    Orderbook {
         orderbook: OrderbookData,
     },
-    OrderUpdate {
+    Order {
         order_id: String,
         status: String,
         filled_size: String,
     },
-    BalanceUpdate {
+    Balance {
         token_ticker: String,
         available: String,
         locked: String,

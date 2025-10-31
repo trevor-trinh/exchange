@@ -213,7 +213,7 @@ async fn test_full_e2e_order_matching_via_api() {
         }
     };
 
-    assert_eq!(trade_event["type"], "trade_executed");
+    assert_eq!(trade_event["type"], "trade");
     assert_eq!(trade_event["trade"]["buyer_address"], "buyer");
     assert_eq!(trade_event["trade"]["seller_address"], "seller");
     assert_eq!(trade_event["trade"]["price"], "50000000000");
@@ -448,7 +448,7 @@ async fn test_e2e_orderbook_snapshots_via_websocket() {
         }
     };
 
-    assert_eq!(orderbook_event["type"], "orderbook_snapshot");
+    assert_eq!(orderbook_event["type"], "orderbook");
     assert_eq!(orderbook_event["orderbook"]["market_id"], market.id);
 
     // Should have asks

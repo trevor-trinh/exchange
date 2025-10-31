@@ -47,36 +47,33 @@ export type ServerMessage =
     }
   | {
       type: 'trade';
-      market_id: string;
-      trade: Trade;
+      trade: TradeData;
     }
   | {
-      type: 'orderbook_snapshot';
-      market_id: string;
-      bids: OrderbookLevel[];
-      asks: OrderbookLevel[];
+      type: 'orderbook';
+      orderbook: OrderbookData;
     }
   | {
-      type: 'orderbook_update';
-      market_id: string;
-      bids: OrderbookLevel[];
-      asks: OrderbookLevel[];
-    }
-  | {
-      type: 'order_placed';
-      order: Order;
-    }
-  | {
-      type: 'order_update';
-      order: Order;
-    }
-  | {
-      type: 'order_cancelled';
+      type: 'order';
       order_id: string;
+      status: string;
+      filled_size: string;
     }
   | {
-      type: 'balance_update';
-      balance: Balance;
+      type: 'balance';
+      token_ticker: string;
+      available: string;
+      locked: string;
+    }
+  | {
+      type: 'candle';
+      market_id: string;
+      timestamp: number;
+      open: string;
+      high: string;
+      low: string;
+      close: string;
+      volume: string;
     }
   | {
       type: 'pong';
@@ -85,6 +82,26 @@ export type ServerMessage =
       type: 'error';
       message: string;
     };
+
+// Trade data structure
+export interface TradeData {
+  id: string;
+  market_id: string;
+  buyer_address: string;
+  seller_address: string;
+  buyer_order_id: string;
+  seller_order_id: string;
+  price: string;
+  size: string;
+  timestamp: number;
+}
+
+// Orderbook data structure
+export interface OrderbookData {
+  market_id: string;
+  bids: OrderbookLevel[];
+  asks: OrderbookLevel[];
+}
 
 export interface OrderbookLevel {
   price: string;

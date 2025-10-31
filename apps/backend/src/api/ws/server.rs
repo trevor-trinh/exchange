@@ -83,7 +83,7 @@ pub(super) async fn handle_server_messages(
 /// Convert an EngineEvent to a ServerMessage for WebSocket transmission
 fn engine_event_to_message(event: EngineEvent) -> ServerMessage {
     match event {
-        EngineEvent::TradeExecuted { trade } => ServerMessage::TradeExecuted {
+        EngineEvent::TradeExecuted { trade } => ServerMessage::Trade {
             trade: crate::models::api::TradeData {
                 id: trade.id.to_string(),
                 market_id: trade.market_id,
@@ -96,12 +96,12 @@ fn engine_event_to_message(event: EngineEvent) -> ServerMessage {
                 timestamp: trade.timestamp.timestamp(),
             },
         },
-        EngineEvent::OrderPlaced { order } => ServerMessage::OrderUpdate {
+        EngineEvent::OrderPlaced { order } => ServerMessage::Order {
             order_id: order.id.to_string(),
             status: format!("{:?}", order.status).to_lowercase(),
             filled_size: order.filled_size.to_string(),
         },
-        EngineEvent::OrderCancelled { order_id, .. } => ServerMessage::OrderUpdate {
+        EngineEvent::OrderCancelled { order_id, .. } => ServerMessage::Order {
             order_id: order_id.to_string(),
             status: "cancelled".to_string(),
             filled_size: "0".to_string(),
@@ -111,12 +111,12 @@ fn engine_event_to_message(event: EngineEvent) -> ServerMessage {
             available,
             locked,
             ..
-        } => ServerMessage::BalanceUpdate {
+        } => ServerMessage::Balance {
             token_ticker,
             available: available.to_string(),
             locked: locked.to_string(),
         },
-        EngineEvent::OrderbookSnapshot { orderbook } => ServerMessage::OrderbookSnapshot {
+        EngineEvent::OrderbookSnapshot { orderbook } => ServerMessage::Orderbook {
             orderbook: OrderbookData {
                 market_id: orderbook.market_id,
                 bids: orderbook
