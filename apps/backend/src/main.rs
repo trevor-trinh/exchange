@@ -80,7 +80,7 @@ async fn main() -> anyhow::Result<()> {
     println!("\n🚀 Backend server running on http://{}", addr);
     println!("📖 OpenAPI docs: http://{}/api/docs", addr);
     println!("📋 OpenAPI spec: http://{}/api/openapi.json", addr);
-    println!("\n💡 Tip: Run 'just init' to initialize markets and tokens\n");
+    println!("\n💡 Tip: Run 'just db-init' to initialize markets and tokens\n");
 
     axum::serve(listener, app).await.context("Server error")?;
 

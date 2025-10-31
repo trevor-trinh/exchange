@@ -1,3 +1,6 @@
+-- Create database if it doesn't exist
+CREATE DATABASE IF NOT EXISTS exchange;
+
 -- Trades table for tick data (raw trades from the matching engine)
 CREATE TABLE IF NOT EXISTS exchange.trades (
     id String,
