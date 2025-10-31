@@ -17,7 +17,19 @@ export function useMarkets() {
         const [marketsData, tokensData] = await Promise.all([exchange.getMarkets(), exchange.getTokens()]);
 
         if (mounted) {
-          setMarkets(marketsData);
+          // Enrich markets with decimal information from tokens
+          const enrichedMarkets = marketsData.map((market: any) => {
+            const baseToken = tokensData.find((t: any) => t.ticker === market.base_ticker);
+            const quoteToken = tokensData.find((t: any) => t.ticker === market.quote_ticker);
+
+            return {
+              ...market,
+              base_decimals: baseToken?.decimals ?? 0,
+              quote_decimals: quoteToken?.decimals ?? 0,
+            };
+          });
+
+          setMarkets(enrichedMarkets);
           setTokens(tokensData);
         }
       } catch (error) {

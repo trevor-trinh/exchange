@@ -5,6 +5,15 @@ import { useExchangeStore } from "@/lib/store";
 import { getExchangeClient } from "@/lib/api";
 import { formatSize } from "@/lib/format";
 import type { Balance } from "@exchange/sdk";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export function Balances() {
   const tokens = useExchangeStore((state) => state.tokens);
@@ -41,33 +50,33 @@ export function Balances() {
   return (
     <div>
       <div className="mb-4">
-        <input
+        <Input
           type="text"
           value={userAddress}
           onChange={(e) => setUserAddress(e.target.value)}
           placeholder="Enter your address to view balances"
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm"
+          className="max-w-md"
         />
       </div>
 
       <div className="overflow-auto max-h-80">
         {loading && !balances.length ? (
-          <p className="text-gray-500 text-sm">Loading balances...</p>
+          <p className="text-muted-foreground text-sm">Loading balances...</p>
         ) : !userAddress.trim() ? (
-          <p className="text-gray-500 text-sm">Enter your address to view balances</p>
+          <p className="text-muted-foreground text-sm">Enter your address to view balances</p>
         ) : balances.length === 0 ? (
-          <p className="text-gray-500 text-sm">No balances found</p>
+          <p className="text-muted-foreground text-sm">No balances found</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-800">
-                <th className="text-left p-2 text-gray-400 font-medium">Token</th>
-                <th className="text-right p-2 text-gray-400 font-medium">Available</th>
-                <th className="text-right p-2 text-gray-400 font-medium">In Orders</th>
-                <th className="text-right p-2 text-gray-400 font-medium">Total</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Token</TableHead>
+                <TableHead className="text-right">Available</TableHead>
+                <TableHead className="text-right">In Orders</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {balances.map((balance) => {
                 const token = tokens.find((t) => t.ticker === balance.token_ticker);
                 if (!token) return null;
@@ -76,22 +85,22 @@ export function Balances() {
                 const total = BigInt(balance.amount);
 
                 return (
-                  <tr key={balance.token_ticker} className="border-b border-gray-800 hover:bg-gray-800/50">
-                    <td className="p-2 text-white font-medium">{balance.token_ticker}</td>
-                    <td className="p-2 text-gray-300 text-right">
+                  <TableRow key={balance.token_ticker}>
+                    <TableCell className="font-semibold">{balance.token_ticker}</TableCell>
+                    <TableCell className="text-right font-mono text-muted-foreground">
                       {formatSize(available.toString(), token.decimals)}
-                    </td>
-                    <td className="p-2 text-gray-300 text-right">
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-muted-foreground">
                       {formatSize(balance.open_interest, token.decimals)}
-                    </td>
-                    <td className="p-2 text-white font-medium text-right">
+                    </TableCell>
+                    <TableCell className="text-right font-mono font-semibold">
                       {formatSize(total.toString(), token.decimals)}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
       </div>
     </div>

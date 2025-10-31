@@ -27,6 +27,28 @@ export function parseSize(rawSize: string, baseDecimals: number): number {
 }
 
 /**
+ * Format a number with commas and remove trailing zeros
+ * @param value Number to format
+ * @param maxDecimals Maximum number of decimal places
+ * @returns Formatted string with commas and no trailing zeros
+ */
+export function formatNumberWithCommas(value: number, maxDecimals: number = 8): string {
+  // Format with max decimals, then remove trailing zeros
+  const fixed = value.toFixed(maxDecimals);
+  // Remove trailing zeros and unnecessary decimal point
+  const trimmed = fixed.replace(/\.?0+$/, '');
+
+  // Split into integer and decimal parts
+  const [integer, decimal] = trimmed.split('.');
+
+  // Add commas to integer part
+  const withCommas = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  // Rejoin with decimal if it exists
+  return decimal !== undefined ? `${withCommas}.${decimal}` : withCommas;
+}
+
+/**
  * Format a price for display with appropriate precision
  * @param rawPrice Raw price string from backend
  * @param quoteDecimals Number of decimals for the quote token
@@ -36,7 +58,7 @@ export function formatPrice(rawPrice: string, quoteDecimals: number): string {
   const price = parsePrice(rawPrice, quoteDecimals);
   // Use quote_decimals for display precision, but cap at 8 for readability
   const decimals = Math.min(quoteDecimals, 8);
-  return price.toFixed(decimals);
+  return formatNumberWithCommas(price, decimals);
 }
 
 /**
@@ -49,7 +71,7 @@ export function formatSize(rawSize: string, baseDecimals: number): string {
   const size = parseSize(rawSize, baseDecimals);
   // Use base_decimals for display precision, but cap at 8 for readability
   const decimals = Math.min(baseDecimals, 8);
-  return size.toFixed(decimals);
+  return formatNumberWithCommas(size, decimals);
 }
 
 /**

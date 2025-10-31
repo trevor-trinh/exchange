@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useExchangeStore } from "@/lib/store";
 import { ExchangeDatafeed } from "@/lib/tradingview-datafeed";
+import { Card, CardContent } from "@/components/ui/card";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - TradingView types
@@ -106,15 +107,17 @@ export function TradingViewChart() {
 
   if (!selectedMarketId) {
     return (
-      <div className="bg-gray-900 rounded-lg p-6 border border-gray-800 flex items-center justify-center h-96">
-        <p className="text-gray-500 text-sm">Select a market to view chart</p>
-      </div>
+      <Card className="flex items-center justify-center h-96">
+        <CardContent className="p-6">
+          <p className="text-gray-500 text-sm">Select a market to view chart</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden" style={{ height: "500px" }}>
+    <Card className="overflow-hidden" style={{ height: "500px" }}>
       <div ref={containerRef} className="h-full" />
-    </div>
+    </Card>
   );
 }

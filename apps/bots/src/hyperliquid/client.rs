@@ -47,6 +47,7 @@ impl HyperliquidClient {
             subscription: Subscription {
                 sub_type: "l2Book".to_string(),
                 coin: coin.clone(),
+                n_sig_figs: Some(5), // Aggregate to 5 significant figures for finer granularity
             },
         };
 
@@ -60,6 +61,7 @@ impl HyperliquidClient {
             subscription: Subscription {
                 sub_type: "trades".to_string(),
                 coin: coin.clone(),
+                n_sig_figs: None, // Not applicable for trades
             },
         };
 

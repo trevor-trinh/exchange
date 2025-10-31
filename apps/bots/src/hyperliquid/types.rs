@@ -12,6 +12,8 @@ pub struct Subscription {
     #[serde(rename = "type")]
     pub sub_type: String, // "l2Book" or "trades"
     pub coin: String, // e.g., "BTC" for BTC-PERP (perpetual futures by default)
+    #[serde(rename = "nSigFigs", skip_serializing_if = "Option::is_none")]
+    pub n_sig_figs: Option<u8>, // Optional: 2-5 for aggregated levels, null for full precision
 }
 
 /// Hyperliquid L2 book snapshot/update

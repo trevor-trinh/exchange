@@ -12,7 +12,7 @@ taker_address = "taker_bot"
 [orderbook_mirror]
 enabled = true
 market_id = "BTC/USDC"          # Your exchange market to mirror to
-depth_levels = 5                # Number of price levels to mirror
+depth_levels = 15               # Number of price levels to mirror
 update_interval_ms = 2000       # Only sync orders every 2000ms (throttling)
 
 # Trade mirror bot - executes trades based on Hyperliquid

@@ -1,44 +1,39 @@
 "use client";
 
-import { useState } from "react";
 import { Balances } from "./Balances";
 import { RecentOrders } from "./RecentOrders";
-
-type TabType = "balances" | "orders";
+import { RecentTrades } from "./RecentTrades";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export function BottomPanel() {
-  const [activeTab, setActiveTab] = useState<TabType>("balances");
-
   return (
-    <div className="bg-[#0f0f0f] rounded-xl border border-gray-800/30 backdrop-blur-sm flex flex-col overflow-hidden">
-      {/* Tabs */}
-      <div className="flex border-b border-gray-800/30">
-        <button
-          onClick={() => setActiveTab("balances")}
-          className={`px-6 py-3 text-xs font-semibold uppercase tracking-wider transition-all ${
-            activeTab === "balances"
-              ? "text-white bg-gradient-to-b from-blue-500/10 to-transparent border-b-2 border-blue-500"
-              : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
-          }`}
-        >
-          Balances
-        </button>
-        <button
-          onClick={() => setActiveTab("orders")}
-          className={`px-6 py-3 text-xs font-semibold uppercase tracking-wider transition-all ${
-            activeTab === "orders"
-              ? "text-white bg-gradient-to-b from-blue-500/10 to-transparent border-b-2 border-blue-500"
-              : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
-          }`}
-        >
-          Orders
-        </button>
-      </div>
+    <Card className="py-0">
+      <Tabs defaultValue="balances">
+        <TabsList className="w-full justify-start rounded-none border-b h-auto p-0 bg-transparent">
+          <TabsTrigger value="balances" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+            Balances
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+            Orders
+          </TabsTrigger>
+          <TabsTrigger value="trades" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+            Trades
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Content */}
-      <div className="p-5">
-        {activeTab === "balances" ? <Balances /> : <RecentOrders />}
-      </div>
-    </div>
+        <TabsContent value="balances" className="px-6 pb-6 pt-4">
+          <Balances />
+        </TabsContent>
+
+        <TabsContent value="orders" className="px-6 pb-6 pt-4">
+          <RecentOrders />
+        </TabsContent>
+
+        <TabsContent value="trades" className="px-6 pb-6 pt-4">
+          <RecentTrades />
+        </TabsContent>
+      </Tabs>
+    </Card>
   );
 }

@@ -20,6 +20,12 @@ compose:
 db-run:
   docker compose up -d postgres clickhouse
 
+db:
+  just db-reset
+  just db-prepare
+  just db-setup
+  just db-init
+
 db-init:
   # inits exchange with tokens and markets from config.toml
   # this also automatically sets up database schemas

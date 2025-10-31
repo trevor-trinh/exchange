@@ -5,6 +5,15 @@ import { useExchangeStore, selectSelectedMarket } from "@/lib/store";
 import { getExchangeClient } from "@/lib/api";
 import { formatPrice, formatSize } from "@/lib/format";
 import type { Order } from "@exchange/sdk";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export function RecentOrders() {
   const selectedMarketId = useExchangeStore((state) => state.selectedMarketId);
@@ -49,87 +58,87 @@ export function RecentOrders() {
   }, [userAddress, selectedMarketId]);
 
   if (!selectedMarketId || !selectedMarket || !baseToken || !quoteToken) {
-    return <p className="text-gray-500 text-sm">Select a market to view orders</p>;
+    return <p className="text-muted-foreground text-sm">Select a market to view orders</p>;
   }
 
   return (
     <div>
       <div className="mb-4">
-        <input
+        <Input
           type="text"
           value={userAddress}
           onChange={(e) => setUserAddress(e.target.value)}
           placeholder="Enter your address to view orders"
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm"
+          className="max-w-md"
         />
       </div>
 
       <div className="overflow-auto max-h-80">
         {loading && !orders.length ? (
-          <p className="text-gray-500 text-sm">Loading orders...</p>
+          <p className="text-muted-foreground text-sm">Loading orders...</p>
         ) : !userAddress.trim() ? (
-          <p className="text-gray-500 text-sm">Enter your address to view orders</p>
+          <p className="text-muted-foreground text-sm">Enter your address to view orders</p>
         ) : orders.length === 0 ? (
-          <p className="text-gray-500 text-sm">No orders found</p>
+          <p className="text-muted-foreground text-sm">No orders found</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-800">
-                <th className="text-left p-2 text-gray-400 font-medium">Side</th>
-                <th className="text-left p-2 text-gray-400 font-medium">Type</th>
-                <th className="text-left p-2 text-gray-400 font-medium">Price</th>
-                <th className="text-left p-2 text-gray-400 font-medium">Size</th>
-                <th className="text-left p-2 text-gray-400 font-medium">Filled</th>
-                <th className="text-left p-2 text-gray-400 font-medium">Status</th>
-                <th className="text-left p-2 text-gray-400 font-medium">Time</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Side</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Size</TableHead>
+                <TableHead>Filled</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Time</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {orders.map((order) => (
-                <tr key={order.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                  <td className="p-2">
+                <TableRow key={order.id}>
+                  <TableCell>
                     <span
-                      className={`font-medium ${
+                      className={`font-bold ${
                         order.side === "buy" ? "text-green-500" : "text-red-500"
                       }`}
                     >
                       {order.side === "buy" ? "Buy" : "Sell"}
                     </span>
-                  </td>
-                  <td className="p-2 text-gray-300">
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
                     {order.order_type === "limit" ? "Limit" : "Market"}
-                  </td>
-                  <td className="p-2 text-gray-300">
+                  </TableCell>
+                  <TableCell className="font-mono">
                     {formatPrice(order.price, quoteToken.decimals)}
-                  </td>
-                  <td className="p-2 text-gray-300">
+                  </TableCell>
+                  <TableCell className="font-mono text-muted-foreground">
                     {formatSize(order.size, baseToken.decimals)}
-                  </td>
-                  <td className="p-2 text-gray-300">
+                  </TableCell>
+                  <TableCell className="font-mono text-muted-foreground">
                     {formatSize(order.filled_size, baseToken.decimals)}
-                  </td>
-                  <td className="p-2">
+                  </TableCell>
+                  <TableCell>
                     <span
-                      className={`text-xs px-2 py-1 rounded ${
+                      className={`text-xs px-2 py-1 font-semibold uppercase tracking-wide ${
                         order.status === "filled"
-                          ? "bg-green-900/30 text-green-400"
+                          ? "bg-green-500/10 text-green-500 border border-green-500/20"
                           : order.status === "open"
-                          ? "bg-blue-900/30 text-blue-400"
+                          ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
                           : order.status === "partially_filled"
-                          ? "bg-yellow-900/30 text-yellow-400"
-                          : "bg-gray-800 text-gray-400"
+                          ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                          : "bg-muted text-muted-foreground border border-border"
                       }`}
                     >
                       {order.status.replace("_", " ")}
                     </span>
-                  </td>
-                  <td className="p-2 text-gray-500">
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs">
                     {new Date(order.created_at).toLocaleTimeString()}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
       </div>
     </div>

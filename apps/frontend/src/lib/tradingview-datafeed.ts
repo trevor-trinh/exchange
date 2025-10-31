@@ -123,8 +123,10 @@ export class ExchangeDatafeed implements IBasicDataFeed {
         }
 
         // Calculate pricescale based on quote decimals
-        // pricescale is 10^decimals (e.g., 6 decimals = 1000000)
-        const pricescale = Math.pow(10, Math.min(quoteToken.decimals, 8));
+        // Limit to 2 decimals for better readability (can show prices like 1234.56)
+        // pricescale is 10^decimals (e.g., 2 decimals = 100)
+        const priceDecimals = 2;
+        const pricescale = Math.pow(10, priceDecimals);
 
         const symbolInfo: LibrarySymbolInfo = {
           name: market.id,
@@ -140,7 +142,7 @@ export class ExchangeDatafeed implements IBasicDataFeed {
           listed_exchange: "Exchange",
           has_weekly_and_monthly: false,
           supported_resolutions: this.configurationData.supported_resolutions,
-          volume_precision: Math.min(baseToken.decimals, 8),
+          volume_precision: 2,
           data_status: "streaming",
           format: "price",
         };

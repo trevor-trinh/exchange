@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useExchangeStore, selectSelectedMarket } from "@/lib/store";
 import { getExchangeClient } from "@/lib/api";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function TradePanel() {
   const selectedMarketId = useExchangeStore((state) => state.selectedMarketId);
@@ -20,10 +24,11 @@ export function TradePanel() {
 
   if (!selectedMarketId || !selectedMarket) {
     return (
-      <div className="bg-[#0f0f0f] rounded-xl p-6 border border-gray-800/30">
-        <h3 className="text-sm font-semibold mb-4 uppercase tracking-wider">Trade</h3>
-        <p className="text-gray-500 text-xs">Select a market to trade</p>
-      </div>
+      <Card className="h-full">
+        <CardContent className="flex items-center justify-center h-full">
+          <p className="text-muted-foreground text-sm">Select a market to trade</p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -32,10 +37,11 @@ export function TradePanel() {
 
   if (!baseToken || !quoteToken) {
     return (
-      <div className="bg-[#0f0f0f] rounded-xl p-6 border border-gray-800/30">
-        <h3 className="text-sm font-semibold mb-4 uppercase tracking-wider">Trade</h3>
-        <p className="text-gray-500 text-xs">Loading token information...</p>
-      </div>
+      <Card className="h-full">
+        <CardContent className="flex items-center justify-center h-full">
+          <p className="text-muted-foreground text-sm">Loading token information...</p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -83,107 +89,89 @@ export function TradePanel() {
   };
 
   return (
-    <div className="bg-[#0f0f0f] rounded-xl p-5 border border-gray-800/30 h-full">
-      {/* Buy/Sell Tabs */}
-      <div className="grid grid-cols-2 gap-1.5 mb-5 bg-[#141414] p-1 rounded-lg">
-        <button
-          onClick={() => setSide("buy")}
-          className={`py-2.5 px-4 rounded-md text-xs font-bold uppercase tracking-wide transition-all ${
-            side === "buy"
-              ? "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg shadow-green-500/20"
-              : "text-gray-500 hover:text-gray-300"
-          }`}
-        >
-          Buy
-        </button>
-        <button
-          onClick={() => setSide("sell")}
-          className={`py-2.5 px-4 rounded-md text-xs font-bold uppercase tracking-wide transition-all ${
-            side === "sell"
-              ? "bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-500/20"
-              : "text-gray-500 hover:text-gray-300"
-          }`}
-        >
-          Sell
-        </button>
-      </div>
-
-      {/* Order Type */}
-      <div className="mb-4">
-        <label className="block text-[10px] font-semibold text-gray-500 mb-2 uppercase tracking-wider">Order Type</label>
-        <div className="grid grid-cols-2 gap-1.5 bg-[#141414] p-1 rounded-lg">
-          <button
-            onClick={() => setOrderType("limit")}
-            className={`py-2 px-3 rounded-md text-xs font-semibold transition-all ${
-              orderType === "limit"
-                ? "bg-blue-500 text-white"
-                : "text-gray-500 hover:text-gray-300"
-            }`}
+    <Card className="h-full">
+      <CardContent className="p-6">
+        {/* Buy/Sell Tabs */}
+        <div className="grid grid-cols-2 gap-2 mb-6">
+          <Button
+            onClick={() => setSide("buy")}
+            variant={side === "buy" ? "default" : "outline"}
+            className={side === "buy" ? "bg-green-600 hover:bg-green-700 text-white" : ""}
           >
-            Limit
-          </button>
-          <button
-            onClick={() => setOrderType("market")}
-            className={`py-2 px-3 rounded-md text-xs font-semibold transition-all ${
-              orderType === "market"
-                ? "bg-blue-500 text-white"
-                : "text-gray-500 hover:text-gray-300"
-            }`}
+            Buy
+          </Button>
+          <Button
+            onClick={() => setSide("sell")}
+            variant={side === "sell" ? "default" : "outline"}
+            className={side === "sell" ? "bg-red-600 hover:bg-red-700 text-white" : ""}
           >
-            Market
-          </button>
+            Sell
+          </Button>
         </div>
-      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3.5">
+        {/* Order Type */}
+        <div className="mb-6">
+          <Label className="mb-2 block text-sm font-medium">Order Type</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              onClick={() => setOrderType("limit")}
+              variant={orderType === "limit" ? "default" : "outline"}
+              size="sm"
+            >
+              Limit
+            </Button>
+            <Button
+              onClick={() => setOrderType("market")}
+              variant={orderType === "market" ? "default" : "outline"}
+              size="sm"
+            >
+              Market
+            </Button>
+          </div>
+        </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* User Address */}
-        <div>
-          <label className="block text-[10px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">User Address</label>
-          <input
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">User Address</Label>
+          <Input
             type="text"
             value={userAddress}
             onChange={(e) => setUserAddress(e.target.value)}
             placeholder="Enter your address"
-            className="w-full bg-[#141414] border border-gray-800/50 rounded-lg px-3 py-2.5 text-white text-xs placeholder-gray-600 focus:outline-none focus:border-blue-500/50 hover:border-gray-700 transition-colors"
           />
         </div>
 
         {/* Price - Only for limit orders */}
         {orderType === "limit" && (
-          <div>
-            <label className="block text-[10px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">
-              Price ({quoteToken.ticker})
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Price ({quoteToken.ticker})</Label>
+            <Input
               type="text"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="0.00"
-              className="w-full bg-[#141414] border border-gray-800/50 rounded-lg px-3 py-2.5 text-white text-xs font-mono placeholder-gray-600 focus:outline-none focus:border-blue-500/50 hover:border-gray-700 transition-colors"
             />
           </div>
         )}
 
         {/* Size */}
-        <div>
-          <label className="block text-[10px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">
-            Size ({baseToken.ticker})
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Size ({baseToken.ticker})</Label>
+          <Input
             type="text"
             value={size}
             onChange={(e) => setSize(e.target.value)}
             placeholder="0.00"
-            className="w-full bg-[#141414] border border-gray-800/50 rounded-lg px-3 py-2.5 text-white text-xs font-mono placeholder-gray-600 focus:outline-none focus:border-blue-500/50 hover:border-gray-700 transition-colors"
           />
         </div>
 
         {/* Total - Only for limit orders */}
         {orderType === "limit" && price && size && (
-          <div className="bg-[#141414] border border-gray-800/30 rounded-lg p-3">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-gray-500 font-semibold uppercase tracking-wider">Total</span>
-              <span className="text-white font-mono font-semibold">
+          <div className="bg-muted border border-border p-3">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Total</span>
+              <span className="text-foreground font-medium">
                 {(parseFloat(price) * parseFloat(size)).toFixed(quoteToken.decimals)}{" "}
                 {quoteToken.ticker}
               </span>
@@ -193,31 +181,30 @@ export function TradePanel() {
 
         {/* Error/Success Messages */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-2.5 text-red-400 text-xs">
+          <div className="bg-red-500/10 border border-red-500/50 p-3 text-red-500 text-sm">
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-2.5 text-green-400 text-xs">
+          <div className="bg-green-500/10 border border-green-500/50 p-3 text-green-500 text-sm">
             {success}
           </div>
         )}
 
         {/* Submit Button */}
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className={`w-full py-3 px-4 rounded-lg text-xs font-bold uppercase tracking-wide transition-all ${
-            loading
-              ? "bg-gray-800 text-gray-600 cursor-not-allowed"
-              : side === "buy"
-              ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg shadow-green-500/20 hover:shadow-green-500/30"
-              : "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg shadow-red-500/20 hover:shadow-red-500/30"
+          className={`w-full ${
+            side === "buy"
+              ? "bg-green-600 hover:bg-green-700 text-white"
+              : "bg-red-600 hover:bg-red-700 text-white"
           }`}
         >
           {loading ? "Placing Order..." : `${side === "buy" ? "Buy" : "Sell"} ${baseToken.ticker}`}
-        </button>
+        </Button>
       </form>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
