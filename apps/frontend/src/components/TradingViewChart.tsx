@@ -106,14 +106,14 @@ export function TradingViewChart() {
 
   if (!selectedMarketId) {
     return (
-      <div className="p-4 border rounded flex items-center justify-center h-96">
-        <p className="text-gray-500">Select a market to view chart</p>
+      <div className="bg-gray-900 rounded-lg p-6 border border-gray-800 flex items-center justify-center h-96">
+        <p className="text-gray-500 text-sm">Select a market to view chart</p>
       </div>
     );
   }
 
   return (
-    <div className="border rounded overflow-hidden" style={{ height: "500px" }}>
+    <div className="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden" style={{ height: "500px" }}>
       <div ref={containerRef} className="h-full" />
     </div>
   );

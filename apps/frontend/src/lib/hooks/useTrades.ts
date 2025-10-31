@@ -18,17 +18,17 @@ export function useTrades(marketId: string | null) {
 
     // Handler for trade messages
     const handleTrade = (message: TradeMessage) => {
-      if (message.data.market_id === marketId) {
+      if (message.trade.market_id === marketId) {
         addTrade({
-          id: message.data.id,
-          market_id: message.data.market_id,
-          buyer_address: message.data.buyer_address,
-          seller_address: message.data.seller_address,
-          price: message.data.price,
-          size: message.data.size,
+          id: message.trade.id,
+          market_id: message.trade.market_id,
+          buyer_address: message.trade.buyer_address,
+          seller_address: message.trade.seller_address,
+          price: message.trade.price,
+          size: message.trade.size,
           buyer_fee: "0", // Not included in WebSocket message
           seller_fee: "0", // Not included in WebSocket message
-          timestamp: message.data.timestamp,
+          timestamp: message.trade.timestamp,
         });
       }
     };
