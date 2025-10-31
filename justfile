@@ -4,16 +4,13 @@ default:
   just --list
 
 backend:
-  cargo run --release -p backend
+  cd apps/backend && cargo run --release
 
 frontend:
   cd apps/frontend && bun run dev
 
 bots:
-  cargo run -p exchange-bots
-
-init:
-  cd apps/backend && cargo run --bin init_exchange
+  cd apps/bots && cargo run
 
 compose:
   docker compose up --build
@@ -23,15 +20,15 @@ compose:
 db-run:
   docker compose up -d postgres clickhouse
 
-db-reset:
-  # assumes exchange database is already created from docker compose
-  psql $DATABASE_URL -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true
-  clickhouse client --user default --password password --query "DROP TABLE IF EXISTS exchange.candles" 2>/dev/null || true
-  just db-setup
+db-init:
+  # inits exchange with tokens and markets from config.toml
+  # this also automatically sets up database schemas
+  cd apps/backend && cargo run --bin init_exchange
 
-db-setup:
-  cd apps/backend/src/db/pg && cargo sqlx migrate run --database-url $DATABASE_URL
-  clickhouse client --user default --password password --query "$(cat src/db/ch/schema.sql)"
+db-reset:
+  # Drop and recreate databases (WARNING: destroys all data)
+  psql $DATABASE_URL -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true
+  clickhouse client --user default --password password --query "DROP DATABASE IF EXISTS exchange" 2>/dev/null || true
 
 db-prepare:
   cd apps/backend && cargo sqlx prepare --database-url $DATABASE_URL

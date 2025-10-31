@@ -1,6 +1,5 @@
 /// Integration tests for the full trade → ClickHouse → candles flow
 /// These tests verify end-to-end functionality from trade execution to candle generation
-
 use backend::models::domain::{OrderType, Side};
 
 mod utils;
@@ -26,7 +25,10 @@ async fn test_trades_persisted_to_clickhouse() {
         95000000000, // $95,000
         1000000,     // 1 BTC
     );
-    engine.place_order(sell_order).await.expect("Failed to place sell order");
+    engine
+        .place_order(sell_order)
+        .await
+        .expect("Failed to place sell order");
 
     let buy_order = TestEngine::create_order(
         "buyer",
@@ -36,7 +38,10 @@ async fn test_trades_persisted_to_clickhouse() {
         95000000000,
         1000000,
     );
-    let result = engine.place_order(buy_order).await.expect("Failed to place buy order");
+    let result = engine
+        .place_order(buy_order)
+        .await
+        .expect("Failed to place buy order");
 
     // Verify trade was executed
     assert_eq!(result.trades.len(), 1, "Expected 1 trade to be executed");
@@ -46,14 +51,20 @@ async fn test_trades_persisted_to_clickhouse() {
 
     // Query ClickHouse to verify trade was persisted
     let query = "SELECT COUNT(*) FROM exchange.trades WHERE market_id = ?";
-    let count: u64 = test_db.db.clickhouse
+    let count: u64 = test_db
+        .db
+        .clickhouse
         .query(query)
         .bind(&market.id)
         .fetch_one::<u64>()
         .await
         .expect("Failed to query trades");
 
-    assert!(count >= 1, "Expected at least 1 trade in ClickHouse, got {}", count);
+    assert!(
+        count >= 1,
+        "Expected at least 1 trade in ClickHouse, got {}",
+        count
+    );
 }
 
 /// Test that 1-minute candles are generated from trades via materialized view
@@ -76,11 +87,31 @@ async fn test_candles_generated_from_trades() {
     ];
 
     for (price, size) in trades {
-        let sell_order = TestEngine::create_order("seller", &market.id, Side::Sell, OrderType::Limit, price, size);
-        engine.place_order(sell_order).await.expect("Failed to place sell order");
+        let sell_order = TestEngine::create_order(
+            "seller",
+            &market.id,
+            Side::Sell,
+            OrderType::Limit,
+            price,
+            size,
+        );
+        engine
+            .place_order(sell_order)
+            .await
+            .expect("Failed to place sell order");
 
-        let buy_order = TestEngine::create_order("buyer", &market.id, Side::Buy, OrderType::Limit, price, size);
-        engine.place_order(buy_order).await.expect("Failed to place buy order");
+        let buy_order = TestEngine::create_order(
+            "buyer",
+            &market.id,
+            Side::Buy,
+            OrderType::Limit,
+            price,
+            size,
+        );
+        engine
+            .place_order(buy_order)
+            .await
+            .expect("Failed to place buy order");
     }
 
     // Wait for ClickHouse materialized view to aggregate
@@ -88,18 +119,26 @@ async fn test_candles_generated_from_trades() {
 
     // Query candles table
     let query = "SELECT COUNT(*) FROM exchange.candles WHERE market_id = ? AND interval = '1m'";
-    let count: u64 = test_db.db.clickhouse
+    let count: u64 = test_db
+        .db
+        .clickhouse
         .query(query)
         .bind(&market.id)
         .fetch_one::<u64>()
         .await
         .expect("Failed to query candles");
 
-    assert!(count >= 1, "Expected at least 1 candle generated, got {}", count);
+    assert!(
+        count >= 1,
+        "Expected at least 1 candle generated, got {}",
+        count
+    );
 
     // Query the actual candle data to verify OHLCV
     let query = "SELECT open, high, low, close, volume FROM exchange.candles WHERE market_id = ? AND interval = '1m' ORDER BY timestamp DESC LIMIT 1";
-    let candle: Option<(u128, u128, u128, u128, u128)> = test_db.db.clickhouse
+    let candle: Option<(u128, u128, u128, u128, u128)> = test_db
+        .db
+        .clickhouse
         .query(query)
         .bind(&market.id)
         .fetch_one::<(u128, u128, u128, u128, u128)>()
@@ -116,10 +155,22 @@ async fn test_candles_generated_from_trades() {
         assert!(volume > 0, "Volume must be > 0");
 
         // Verify values are in our expected price range
-        assert!(open >= 94000000000 && open <= 96000000000, "Open price in reasonable range");
-        assert!(high >= 94000000000 && high <= 96000000000, "High price in reasonable range");
-        assert!(low >= 94000000000 && low <= 96000000000, "Low price in reasonable range");
-        assert!(close >= 94000000000 && close <= 96000000000, "Close price in reasonable range");
+        assert!(
+            open >= 94000000000 && open <= 96000000000,
+            "Open price in reasonable range"
+        );
+        assert!(
+            high >= 94000000000 && high <= 96000000000,
+            "High price in reasonable range"
+        );
+        assert!(
+            low >= 94000000000 && low <= 96000000000,
+            "Low price in reasonable range"
+        );
+        assert!(
+            close >= 94000000000 && close <= 96000000000,
+            "Close price in reasonable range"
+        );
     } else {
         panic!("No candle data found");
     }
@@ -141,7 +192,9 @@ async fn test_no_trades_means_no_candles() {
 
     // Query candles - should be empty
     let query = "SELECT COUNT(*) FROM exchange.candles WHERE market_id = ?";
-    let count: u64 = test_db.db.clickhouse
+    let count: u64 = test_db
+        .db
+        .clickhouse
         .query(query)
         .bind(&market.id)
         .fetch_one::<u64>()

@@ -30,8 +30,7 @@ pub use websocket::{WebSocketClient, WebSocketHandle};
 
 // Re-export backend types for convenience
 pub use backend::models::api::{
-    ApiCandle, CandlesRequest, CandlesResponse, ClientMessage, OrderCancelled,
-    SubscriptionChannel,
+    ApiCandle, CandlesRequest, CandlesResponse, ClientMessage, OrderCancelled, SubscriptionChannel,
 };
 pub use backend::models::domain::*;
 

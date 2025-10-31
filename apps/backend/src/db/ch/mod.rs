@@ -6,26 +6,33 @@ use std::env;
 pub async fn create_client() -> anyhow::Result<Client> {
     let clickhouse_url = env::var("CH_URL").context("CH_URL must be set in environment")?;
 
-    // Create client without database first
-    let client_no_db = Client::default()
-        .with_url(&clickhouse_url)
-        .with_user("default")
-        .with_password("password");
+    // Get credentials from env (empty password for testcontainers)
+    let user = env::var("CH_USER").unwrap_or_else(|_| "default".to_string());
+    let password = env::var("CH_PASSWORD").unwrap_or_else(|_| "".to_string());
+
+    let mut client = Client::default().with_url(&clickhouse_url).with_user(&user);
+
+    if !password.is_empty() {
+        client = client.with_password(&password);
+    }
 
     // Create database if it doesn't exist
     log::info!("Creating ClickHouse database...");
-    client_no_db
+    client
         .query("CREATE DATABASE IF NOT EXISTS exchange")
         .execute()
         .await
         .context("Failed to create ClickHouse database")?;
 
     // Create client with database
-    let client = Client::default()
+    let mut client = Client::default()
         .with_url(&clickhouse_url)
-        .with_user("default")
-        .with_password("password")
+        .with_user(&user)
         .with_database("exchange");
+
+    if !password.is_empty() {
+        client = client.with_password(&password);
+    }
 
     // Run schema initialization
     log::info!("Running ClickHouse schema initialization...");

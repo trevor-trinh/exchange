@@ -1,5 +1,5 @@
 use backend::db::Db;
-use clickhouse::Client;
+use std::env;
 use testcontainers::runners::AsyncRunner;
 use testcontainers_modules::{clickhouse::ClickHouse, postgres::Postgres};
 
@@ -13,8 +13,9 @@ pub struct TestContainers {
 impl TestContainers {
     /// Set up test databases with containers
     ///
-    /// This starts PostgreSQL and ClickHouse containers, runs migrations,
-    /// and returns handles. The containers will be cleaned up when dropped.
+    /// This starts PostgreSQL and ClickHouse containers, sets environment variables,
+    /// and uses Db::connect() to automatically run migrations.
+    /// The containers will be cleaned up when dropped.
     pub async fn setup() -> anyhow::Result<Self> {
         // ================================ Start containers ================================
         let postgres_container = Postgres::default()
@@ -37,7 +38,7 @@ impl TestContainers {
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get ClickHouse port: {}", e))?;
 
-        // ================================ Create database connections ================================
+        // ================================ Set environment variables ================================
         let postgres_url = format!(
             "postgres://postgres:postgres@{}:{}/postgres",
             postgres_container.get_host().await.unwrap(),
@@ -50,78 +51,20 @@ impl TestContainers {
             clickhouse_port
         );
 
-        let postgres = sqlx::postgres::PgPoolOptions::new()
-            .max_connections(10)
-            .acquire_timeout(std::time::Duration::from_secs(30))
-            .connect(&postgres_url)
+        env::set_var("PG_URL", &postgres_url);
+        env::set_var("CH_URL", &clickhouse_url);
+
+        // ================================ Connect using Db::connect() ================================
+        // This automatically runs migrations and creates schemas!
+        let db = Db::connect()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to connect to PostgreSQL: {}", e))?;
-
-        // Create ClickHouse client without database first
-        let clickhouse_temp = Client::default()
-            .with_url(&clickhouse_url)
-            .with_user("default");
-
-        // ================================ Run migrations ================================
-        sqlx::migrate!("../../apps/backend/src/db/pg/migrations")
-            .run(&postgres)
-            .await
-            .map_err(|e| anyhow::anyhow!("Failed to run PostgreSQL migrations: {}", e))?;
-
-        // Initialize ClickHouse schema (creates database)
-        Self::setup_clickhouse_schema(&clickhouse_temp).await?;
-
-        // Now create client with the database set
-        let clickhouse = Client::default()
-            .with_url(&clickhouse_url)
-            .with_user("default")
-            .with_database("exchange");
-
-        // ================================ Return database connections ================================
-        let db = Db {
-            postgres,
-            clickhouse,
-        };
+            .map_err(|e| anyhow::anyhow!("Failed to connect to databases: {}", e))?;
 
         Ok(TestContainers {
             db,
             _postgres_container: postgres_container,
             _clickhouse_container: clickhouse_container,
         })
-    }
-
-    /// Set up ClickHouse schema for testing
-    async fn setup_clickhouse_schema(client: &Client) -> anyhow::Result<()> {
-        // Create database first
-        client
-            .query("CREATE DATABASE IF NOT EXISTS exchange")
-            .execute()
-            .await
-            .map_err(|e| anyhow::anyhow!("Failed to create ClickHouse database: {}", e))?;
-
-        // Load and execute schema from file
-        const SCHEMA_SQL: &str = include_str!("../../../apps/backend/src/db/ch/schema.sql");
-
-        // Remove comments and split by semicolon
-        let sql_without_comments: String = SCHEMA_SQL
-            .lines()
-            .filter(|line| !line.trim().starts_with("--"))
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        // Execute each statement
-        for statement in sql_without_comments.split(';') {
-            let trimmed = statement.trim();
-            if !trimmed.is_empty() {
-                client
-                    .query(trimmed)
-                    .execute()
-                    .await
-                    .map_err(|e| anyhow::anyhow!("Failed to execute schema: {}", e))?;
-            }
-        }
-
-        Ok(())
     }
 
     /// Get a clone of the database connection
