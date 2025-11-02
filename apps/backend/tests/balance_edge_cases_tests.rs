@@ -76,25 +76,35 @@ async fn test_insufficient_balance_buy_order() {
         .await
         .expect("Failed to create market");
 
-    // Give user only 100 USDC
-    drip_tokens(&server.address, "buyer", "USDC", "100000000").await;
+    // Tokens are created with 18 decimals
+    // Calculation: quote_needed = (price * size) / 10^18
+    // Give user 1000 atoms
+    drip_tokens(&server.address, "buyer", "USDC", "1000").await;
 
-    // Try to buy 1 ETH at $3000 (needs 3000 USDC)
+    // Place order that needs:
+    // price=50000000000, size=100000000000 → 50000000000 * 100000000000 / 10^18 = 5000 atoms
+    // User only has 1000 atoms, so this should fail
     let result = place_order(
         &server.address,
         "buyer",
         &market.id,
         Side::Buy,
         OrderType::Limit,
-        "3000000000", // $3000
-        "1000000",    // 1 ETH
+        "50000000000",   // Price
+        "100000000000",  // Size - needs 5000 atoms
     )
     .await;
 
+    if result.is_ok() {
+        println!("Order succeeded when it should have failed!");
+        println!("Result: {:?}", result);
+    }
     assert!(result.is_err(), "Should fail with insufficient balance");
+    let err = result.unwrap_err();
     assert!(
-        result.unwrap_err().contains("Insufficient balance"),
-        "Error message should mention insufficient balance"
+        err.contains("Insufficient balance"),
+        "Error message should mention insufficient balance, got: {}",
+        err
     );
 }
 
@@ -166,12 +176,12 @@ async fn test_multiple_orders_lock_balance() {
         .await
         .expect("Failed to create market");
 
-    // Calculate required amounts (price * size for buy orders)
-    // First order: 30000000 * 10000000 = 300000000000000
-    // Second order: 40000000 * 10000000 = 400000000000000
-    // Total needed: 700000000000000
-    // Give user exactly 700000000000000 to allow both orders
-    drip_tokens(&server.address, "buyer", "USDC", "700000000000000").await;
+    // Tokens have 18 decimals
+    // Calculate amounts: (price * size) / 10^18 = quote_amount needed
+    // First order: 30000000000 * 10000000000 / 10^18 = 300 atoms
+    // Second order: 40000000000 * 10000000000 / 10^18 = 400 atoms
+    // Give user exactly 700 atoms to allow both orders
+    drip_tokens(&server.address, "buyer", "USDC", "700").await;
 
     // Place first order
     place_order(
@@ -180,8 +190,8 @@ async fn test_multiple_orders_lock_balance() {
         &market.id,
         Side::Buy,
         OrderType::Limit,
-        "30000000", // 30 USDC per AVAX
-        "10000000", // 10 AVAX
+        "30000000000",  // Price
+        "10000000000",  // Size - needs 300 atoms
     )
     .await
     .expect("First order should succeed");
@@ -193,21 +203,21 @@ async fn test_multiple_orders_lock_balance() {
         &market.id,
         Side::Buy,
         OrderType::Limit,
-        "40000000", // 40 USDC per AVAX
-        "10000000", // 10 AVAX
+        "40000000000",  // Price
+        "10000000000",  // Size - needs 400 atoms
     )
     .await
     .expect("Second order should succeed");
 
-    // Try to place third order (would need more funds)
+    // Try to place third order (would need 400 more atoms, but all 700 atoms are locked)
     let result = place_order(
         &server.address,
         "buyer",
         &market.id,
         Side::Buy,
         OrderType::Limit,
-        "40000000",
-        "10000000",
+        "40000000000",
+        "10000000000",
     )
     .await;
 
@@ -227,11 +237,11 @@ async fn test_cancel_order_unlocks_balance() {
         .await
         .expect("Failed to create market");
 
-    // Calculate amounts:
-    // First order: 10000000 * 40000000 = 400000000000000
-    // Second order: 10000000 * 20000000 = 200000000000000
+    // Tokens have 18 decimals
+    // First order needs: 10000000000 * 40000000000 / 10^18 = 400 atoms
+    // Second order needs: 10000000000 * 20000000000 / 10^18 = 200 atoms
     // Give user enough for first order only
-    drip_tokens(&server.address, "buyer", "USDC", "400000000000000").await;
+    drip_tokens(&server.address, "buyer", "USDC", "400").await;
 
     // Place first order
     let order1 = place_order(
@@ -240,26 +250,26 @@ async fn test_cancel_order_unlocks_balance() {
         &market.id,
         Side::Buy,
         OrderType::Limit,
-        "10000000", // 10 USDC per DOT
-        "40000000", // 40 DOT
+        "10000000000",  // Price
+        "40000000000",  // Size - needs 400 atoms
     )
     .await
     .expect("First order should succeed");
 
     let order1_id = order1["order"]["id"].as_str().unwrap();
 
-    // Second order should fail (no available balance)
+    // Second order should fail (no available balance - all 400 atoms locked)
     let result = place_order(
         &server.address,
         "buyer",
         &market.id,
         Side::Buy,
         OrderType::Limit,
-        "10000000", // 10 USDC per DOT
-        "20000000", // 20 DOT
+        "10000000000",  // Price
+        "20000000000",  // Size - needs 200 atoms
     )
     .await;
-    assert!(result.is_err());
+    assert!(result.is_err(), "Second order should fail due to locked balance");
 
     // Cancel first order
     let client = reqwest::Client::new();
@@ -275,15 +285,15 @@ async fn test_cancel_order_unlocks_balance() {
         .await
         .expect("Failed to cancel order");
 
-    // Now second order should succeed (balance unlocked)
+    // Now second order should succeed (balance unlocked after cancellation)
     let result2 = place_order(
         &server.address,
         "buyer",
         &market.id,
         Side::Buy,
         OrderType::Limit,
-        "10000000",
-        "20000000",
+        "10000000000",
+        "20000000000",
     )
     .await;
 
