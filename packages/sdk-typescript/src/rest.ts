@@ -108,7 +108,11 @@ export class RestClient {
 
   // ===== Enhancement Helpers =====
 
-  private enhanceTrade(trade: Trade): EnhancedTrade {
+  /**
+   * Enhance a trade with display values
+   * @public - Used by WebSocket handlers
+   */
+  public enhanceTrade(trade: Trade): EnhancedTrade {
     const market = this.marketsCache.get(trade.market_id);
     if (!market) {
       throw new Error(`Market ${trade.market_id} not found in cache. Call getMarkets() first.`);
@@ -131,7 +135,11 @@ export class RestClient {
     };
   }
 
-  private enhanceOrder(order: Order, marketId: string): EnhancedOrder {
+  /**
+   * Enhance an order with display values
+   * @public - Used by WebSocket handlers
+   */
+  public enhanceOrder(order: Order, marketId: string): EnhancedOrder {
     const market = this.marketsCache.get(marketId);
     if (!market) {
       throw new Error(`Market ${marketId} not found in cache. Call getMarkets() first.`);
@@ -157,7 +165,11 @@ export class RestClient {
     };
   }
 
-  private enhanceBalance(balance: Balance): EnhancedBalance {
+  /**
+   * Enhance a balance with display values
+   * @public - Used by WebSocket handlers
+   */
+  public enhanceBalance(balance: Balance): EnhancedBalance {
     const token = this.tokensCache.get(balance.token_ticker);
     if (!token) {
       throw new Error(`Token ${balance.token_ticker} not found in cache. Call getTokens() first.`);

@@ -257,12 +257,9 @@ export class ExchangeDatafeed implements IBasicDataFeed {
     if (isFirstSubscription) {
       console.log(`[TradingView] Subscribing to trades for ${marketId}`);
 
-      // Subscribe using SDK convenience method
-      const unsubscribe = this.client.onTrades(marketId, (trade) => {
-        this.handleTrade({
-          type: "trade",
-          trade,
-        });
+      // Subscribe using SDK convenience method (receives enhanced trades)
+      const unsubscribe = this.client.onTrades(marketId, (enhancedTrade) => {
+        this.handleEnhancedTrade(enhancedTrade);
       });
 
       this.tradeUnsubscribers.set(marketId, unsubscribe);
@@ -303,32 +300,14 @@ export class ExchangeDatafeed implements IBasicDataFeed {
   /**
    * Trade handler for WebSocket events
    */
-  private handleTrade(message: ServerMessage): void {
-    if (message.type !== "trade") {
-      return;
-    }
-
-    const trade = message.trade;
-
-    // Get market config
-    const market = this.marketsCache.find((m) => m.id === trade.market_id);
-    if (!market) {
-      console.warn(`Market ${trade.market_id} not found in cache`);
-      return;
-    }
-
-    // Look up token decimals
-    const quoteToken = this.tokensCache.find((t) => t.ticker === market.quote_ticker);
-    const baseToken = this.tokensCache.find((t) => t.ticker === market.base_ticker);
-
-    if (!quoteToken || !baseToken) {
-      console.warn(`Token not found in cache for market ${trade.market_id}`);
-      return;
-    }
-
-    const price = toDisplayValue(trade.price, quoteToken.decimals);
-    const size = toDisplayValue(trade.size, baseToken.decimals);
-    const timestamp = Number(trade.timestamp) * 1000; // Convert to milliseconds
+  /**
+   * Handle enhanced trade from SDK (WebSocket)
+   */
+  private handleEnhancedTrade(trade: import("@exchange/sdk").EnhancedTrade): void {
+    // SDK already enhanced the trade with display values!
+    const price = trade.priceValue;
+    const size = trade.sizeValue;
+    const timestamp = trade.timestamp.getTime(); // Already a Date object
 
     // Update all subscriptions for this market
     this.subscriptions.forEach((subscription) => {

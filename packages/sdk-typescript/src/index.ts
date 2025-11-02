@@ -23,7 +23,7 @@
  */
 
 import { RestClient } from './rest';
-import type { RestClientConfig, Trade, Order, Balance } from './rest';
+import type { RestClientConfig, Trade, Order, Balance, EnhancedTrade, EnhancedOrder, EnhancedBalance } from './rest';
 import { WebSocketClient } from './websocket';
 import type { WebSocketClientConfig } from './websocket';
 import type { OrderbookLevel, TradeData } from './types/websocket';
@@ -215,15 +215,35 @@ export class ExchangeClient {
   // ============================================================================
 
   /**
-   * Stream trades for a market
+   * Stream trades for a market (enhanced with display values)
    * @returns Unsubscribe function
    */
-  onTrades(marketId: string, handler: (trade: TradeData) => void): () => void {
+  onTrades(marketId: string, handler: (trade: EnhancedTrade) => void): () => void {
     this.ws.connect();
     this.ws.subscribe('trades', { marketId });
     return this.ws.on('trade', (msg) => {
       if (msg.type === 'trade') {
-        handler(msg.trade);
+        // Convert WebSocket TradeData to REST Trade format
+        const restTrade: Trade = {
+          id: msg.trade.id,
+          market_id: msg.trade.market_id,
+          buyer_address: msg.trade.buyer_address,
+          seller_address: msg.trade.seller_address,
+          buyer_order_id: msg.trade.buyer_order_id,
+          seller_order_id: msg.trade.seller_order_id,
+          price: msg.trade.price,
+          size: msg.trade.size,
+          timestamp: new Date(msg.trade.timestamp).toISOString(),
+        };
+
+        // Enhance and pass to handler
+        try {
+          const enhanced = this.rest.enhanceTrade(restTrade);
+          handler(enhanced);
+        } catch (error) {
+          console.error('Failed to enhance trade:', error);
+          // Optionally: pass unenhanced or skip
+        }
       }
     });
   }
@@ -257,15 +277,33 @@ export class ExchangeClient {
   }
 
   /**
-   * Stream trade updates for a user
+   * Stream trade updates for a user (enhanced with display values)
    * @returns Unsubscribe function
    */
-  onUserTrades(userAddress: string, handler: (trade: TradeData) => void): () => void {
+  onUserTrades(userAddress: string, handler: (trade: EnhancedTrade) => void): () => void {
     this.ws.connect();
     this.ws.subscribe('user', { userAddress });
     return this.ws.on('trade', (msg) => {
       if (msg.type === 'trade') {
-        handler(msg.trade);
+        // Convert WebSocket TradeData to REST Trade format
+        const restTrade: Trade = {
+          id: msg.trade.id,
+          market_id: msg.trade.market_id,
+          buyer_address: msg.trade.buyer_address,
+          seller_address: msg.trade.seller_address,
+          buyer_order_id: msg.trade.buyer_order_id,
+          seller_order_id: msg.trade.seller_order_id,
+          price: msg.trade.price,
+          size: msg.trade.size,
+          timestamp: new Date(msg.trade.timestamp).toISOString(),
+        };
+
+        try {
+          const enhanced = this.rest.enhanceTrade(restTrade);
+          handler(enhanced);
+        } catch (error) {
+          console.error('Failed to enhance user trade:', error);
+        }
       }
     });
   }

@@ -86,7 +86,7 @@ services:
       dockerfile: Dockerfile
     container_name: exchange-frontend
     env_file:
-      - path: ./apps/frontend/.env.defaults
+      - path: ./apps/frontend/.env.local
         required: true
       - path: .env
         required: false
