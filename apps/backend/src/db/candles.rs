@@ -1,6 +1,7 @@
 use crate::db::Db;
-use crate::errors::Result;
+use crate::errors::{ExchangeError, Result};
 use crate::models::{
+    api::ApiCandle,
     db::{CandleRow, ClickHouseTradeRow},
     domain::{Candle, Trade},
 };
@@ -105,6 +106,62 @@ impl Db {
                 volume: row.volume,
             })
             .collect())
+    }
+
+    /// Get candles for API with support for countBack parameter
+    /// Returns candles as ApiCandle with timestamp aggregation and optional limit
+    pub async fn get_candles_for_api(
+        &self,
+        market_id: &str,
+        interval: &str,
+        from: i64,
+        to: i64,
+        count_back: Option<usize>,
+    ) -> Result<Vec<ApiCandle>> {
+        // Build the base query with aggregation
+        let mut query = format!(
+            "SELECT
+                toUnixTimestamp(timestamp) as timestamp,
+                argMin(open, trade_time) as open,
+                max(high) as high,
+                min(low) as low,
+                argMax(close, trade_time) as close,
+                sum(volume) as volume
+            FROM exchange.candles
+            WHERE market_id = '{}'
+              AND interval = '{}'
+              AND timestamp >= toDateTime({})
+              AND timestamp <= toDateTime({})
+            GROUP BY timestamp
+            ORDER BY timestamp",
+            market_id, interval, from, to
+        );
+
+        // Handle countBack: limit to N most recent bars
+        if let Some(count_back) = count_back {
+            if count_back > 0 {
+                // Get the last N bars by ordering DESC and limiting
+                query = format!("{} DESC LIMIT {}", query, count_back);
+            } else {
+                query = format!("{} ASC", query);
+            }
+        } else {
+            query = format!("{} ASC", query);
+        }
+
+        let mut candles: Vec<ApiCandle> = self
+            .clickhouse
+            .query(&query)
+            .fetch_all()
+            .await
+            .map_err(ExchangeError::ClickHouse)?;
+
+        // If we used DESC for countBack, reverse to get ascending order
+        if count_back.is_some() && count_back.unwrap() > 0 {
+            candles.reverse();
+        }
+
+        Ok(candles)
     }
 
     /// Get recent trades for a market (tick data)
