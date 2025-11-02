@@ -6,6 +6,7 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import type { Market, Token, Orderbook, OrderbookLevel, Trade, PricePoint } from "./types/exchange";
+import { parsePrice } from "./format";
 
 // ============================================================================
 // State Interface
@@ -141,8 +142,7 @@ export const useExchangeStore = create<ExchangeState>()(
             if (market) {
               const quoteToken = state.tokens.find((t) => t.ticker === market.quote_ticker);
               if (quoteToken) {
-                const raw = parseFloat(trade.price);
-                const price = raw / Math.pow(10, quoteToken.decimals);
+                const price = parsePrice(trade.price, quoteToken.decimals);
                 if (!isNaN(price)) {
                   state.priceHistory.push({
                     timestamp: Date.now(),
@@ -171,8 +171,7 @@ export const useExchangeStore = create<ExchangeState>()(
               if (market) {
                 const quoteToken = state.tokens.find((t) => t.ticker === market.quote_ticker);
                 if (quoteToken) {
-                  const raw = parseFloat(trade.price);
-                  const price = raw / Math.pow(10, quoteToken.decimals);
+                  const price = parsePrice(trade.price, quoteToken.decimals);
                   if (!isNaN(price)) {
                     state.priceHistory.push({
                       timestamp: Date.now(),

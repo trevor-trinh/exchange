@@ -197,3 +197,39 @@ export function getDecimalPlaces(tickOrLotSize: string, decimals: number): numbe
   if (decimalIndex === -1) return 0;
   return trimmed.length - decimalIndex - 1;
 }
+
+/**
+ * Format a timestamp to localized time string
+ * @param timestamp Date object, ISO string, or Unix timestamp (ms)
+ * @returns Formatted time string (e.g., "2:30:45 PM")
+ */
+export function formatTime(timestamp: Date | string | number): string {
+  const date = typeof timestamp === "number" || typeof timestamp === "string"
+    ? new Date(timestamp)
+    : timestamp;
+  return date.toLocaleTimeString();
+}
+
+/**
+ * Format a timestamp to localized date string
+ * @param timestamp Date object, ISO string, or Unix timestamp (ms)
+ * @returns Formatted date string (e.g., "12/31/2024")
+ */
+export function formatDate(timestamp: Date | string | number): string {
+  const date = typeof timestamp === "number" || typeof timestamp === "string"
+    ? new Date(timestamp)
+    : timestamp;
+  return date.toLocaleDateString();
+}
+
+/**
+ * Format a timestamp to localized date and time string
+ * @param timestamp Date object, ISO string, or Unix timestamp (ms)
+ * @returns Formatted date and time string (e.g., "12/31/2024, 2:30:45 PM")
+ */
+export function formatDateTime(timestamp: Date | string | number): string {
+  const date = typeof timestamp === "number" || typeof timestamp === "string"
+    ? new Date(timestamp)
+    : timestamp;
+  return date.toLocaleString();
+}

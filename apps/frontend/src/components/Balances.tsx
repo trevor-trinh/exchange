@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useExchangeStore } from "@/lib/store";
 import { getExchangeClient } from "@/lib/api";
-import { formatSize } from "@/lib/format";
+import { formatSize, toRawValue } from "@/lib/format";
 import type { Balance } from "@exchange/sdk";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -65,7 +65,7 @@ export function Balances() {
       }
 
       // Faucet 1000 tokens (adjust amount with decimals)
-      const amount = (1000n * BigInt(10 ** token.decimals)).toString();
+      const amount = toRawValue(1000, token.decimals);
 
       await client.rest.faucet({
         userAddress,

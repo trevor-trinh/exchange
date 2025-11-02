@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useExchangeStore, selectSelectedMarket } from "@/lib/store";
 import { getExchangeClient } from "@/lib/api";
-import { formatPrice, formatSize } from "@/lib/format";
+import { formatPrice, formatSize, formatTime } from "@/lib/format";
 import type { Order } from "@exchange/sdk";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -111,7 +111,7 @@ export function RecentOrders() {
                     </span>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-xs">
-                    {new Date(order.created_at).toLocaleTimeString()}
+                    {formatTime(order.created_at)}
                   </TableCell>
                 </TableRow>
               ))}

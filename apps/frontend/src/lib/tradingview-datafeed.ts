@@ -16,6 +16,7 @@ import type {
   SubscribeBarsCallback,
   SearchSymbolsCallback,
 } from "../../public/vendor/trading-view/charting_library";
+import { toDisplayValue } from "./format";
 
 // ErrorCallback is not exported from TradingView types, so we define it here
 type ErrorCallback = (reason: string) => void;
@@ -189,9 +190,6 @@ export class ExchangeDatafeed implements IBasicDataFeed {
       return;
     }
 
-    const priceScale = Math.pow(10, quoteToken.decimals);
-    const sizeScale = Math.pow(10, baseToken.decimals);
-
     // Fetch candles using the SDK
     exchange
       .getCandles({
@@ -209,11 +207,11 @@ export class ExchangeDatafeed implements IBasicDataFeed {
 
         const bars: Bar[] = candles.map((candle) => ({
           time: candle.timestamp * 1000, // TradingView expects milliseconds
-          open: candle.open / priceScale, // Convert from fixed-point using token decimals
-          high: candle.high / priceScale,
-          low: candle.low / priceScale,
-          close: candle.close / priceScale,
-          volume: candle.volume / sizeScale,
+          open: toDisplayValue(String(candle.open), quoteToken.decimals),
+          high: toDisplayValue(String(candle.high), quoteToken.decimals),
+          low: toDisplayValue(String(candle.low), quoteToken.decimals),
+          close: toDisplayValue(String(candle.close), quoteToken.decimals),
+          volume: toDisplayValue(String(candle.volume), baseToken.decimals),
         }));
 
         onResult(bars, { noData: false });
@@ -328,11 +326,8 @@ export class ExchangeDatafeed implements IBasicDataFeed {
       return;
     }
 
-    const priceScale = Math.pow(10, quoteToken.decimals);
-    const sizeScale = Math.pow(10, baseToken.decimals);
-
-    const price = Number(trade.price) / priceScale;
-    const size = Number(trade.size) / sizeScale;
+    const price = toDisplayValue(trade.price, quoteToken.decimals);
+    const size = toDisplayValue(trade.size, baseToken.decimals);
     const timestamp = Number(trade.timestamp) * 1000; // Convert to milliseconds
 
     // Update all subscriptions for this market

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useExchangeStore, selectSelectedMarket } from "@/lib/store";
 import { getExchangeClient } from "@/lib/api";
-import { formatPrice, formatSize } from "@/lib/format";
+import { formatPrice, formatSize, formatTime } from "@/lib/format";
 import type { Trade } from "@exchange/sdk";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -99,7 +99,7 @@ export function RecentTrades() {
                       </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-xs">
-                      {new Date(trade.timestamp).toLocaleTimeString()}
+                      {formatTime(trade.timestamp)}
                     </TableCell>
                   </TableRow>
                 );

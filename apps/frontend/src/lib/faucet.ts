@@ -1,4 +1,5 @@
 import { getExchangeClient } from "./api";
+import { toRawValue } from "./format";
 
 /**
  * Auto-faucet: Give new users starting tokens
@@ -9,7 +10,7 @@ export async function autoFaucet(userAddress: string, tokens: Array<{ ticker: st
   try {
     // Give 10000 of each token to new users
     const faucetPromises = tokens.map(async (token) => {
-      const amount = (10000n * BigInt(10 ** token.decimals)).toString();
+      const amount = toRawValue(10000, token.decimals);
 
       try {
         await client.rest.faucet({

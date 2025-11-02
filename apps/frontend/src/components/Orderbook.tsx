@@ -2,7 +2,7 @@
 
 import { useOrderbook, useTrades } from "@/lib/hooks";
 import { useExchangeStore, selectSelectedMarket } from "@/lib/store";
-import { formatPrice, formatSize } from "@/lib/format";
+import { formatPrice, formatSize, formatTime } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
@@ -186,7 +186,7 @@ export function Orderbook() {
                       </span>
                       <span className="text-muted-foreground">{formatSize(trade.size, baseToken.decimals)}</span>
                       <span className="text-muted-foreground text-xs">
-                        {new Date(trade.timestamp).toLocaleTimeString()}
+                        {formatTime(trade.timestamp)}
                       </span>
                     </div>
                   );
