@@ -758,6 +758,7 @@
           "seller_order_id",
           "price",
           "size",
+          "side",
           "timestamp"
         ],
         "properties": {
@@ -781,6 +782,9 @@
           },
           "seller_order_id": {
             "type": "string"
+          },
+          "side": {
+            "$ref": "#/components/schemas/Side"
           },
           "size": {
             "type": "string"

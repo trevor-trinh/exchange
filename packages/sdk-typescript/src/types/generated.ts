@@ -246,6 +246,7 @@ export interface components {
             price: string;
             seller_address: string;
             seller_order_id: string;
+            side: components["schemas"]["Side"];
             size: string;
             /** Format: date-time */
             timestamp: string;

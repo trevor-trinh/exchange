@@ -20,6 +20,10 @@ impl Db {
             seller_order_id: trade.seller_order_id.to_string(),
             price: trade.price,
             size: trade.size,
+            side: match trade.side {
+                crate::models::domain::Side::Buy => "buy".to_string(),
+                crate::models::domain::Side::Sell => "sell".to_string(),
+            },
             timestamp: trade.timestamp.timestamp() as u32,
         };
 
@@ -189,6 +193,11 @@ impl Db {
                     seller_order_id: uuid::Uuid::parse_str(&row.seller_order_id).ok()?,
                     price: row.price,
                     size: row.size,
+                    side: if row.side == "buy" {
+                        crate::models::domain::Side::Buy
+                    } else {
+                        crate::models::domain::Side::Sell
+                    },
                     timestamp: DateTime::from_timestamp(row.timestamp as i64, 0)
                         .unwrap_or(DateTime::UNIX_EPOCH),
                 })

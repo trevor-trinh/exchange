@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::models::domain::{Balance, Market, Order, Token, Trade, User};
+use crate::models::domain::{Balance, Market, Order, Side, Token, Trade, User};
 use crate::utils::BigDecimalExt;
 
 // ============================================================================
@@ -63,6 +63,7 @@ pub struct TradeRow {
     pub seller_order_id: Uuid,
     pub price: BigDecimal,
     pub size: BigDecimal,
+    pub side: String, // "buy" or "sell"
     pub timestamp: DateTime<Utc>,
 }
 
@@ -86,6 +87,7 @@ pub struct ClickHouseTradeRow {
     pub seller_order_id: String, // UUID as string
     pub price: u128,
     pub size: u128,
+    pub side: String,   // "buy" or "sell"
     pub timestamp: u32, // Unix timestamp
 }
 
@@ -189,6 +191,11 @@ impl From<TradeRow> for Trade {
             seller_order_id: row.seller_order_id,
             price: row.price.to_u128(),
             size: row.size.to_u128(),
+            side: if row.side == "buy" {
+                Side::Buy
+            } else {
+                Side::Sell
+            },
             timestamp: row.timestamp,
         }
     }

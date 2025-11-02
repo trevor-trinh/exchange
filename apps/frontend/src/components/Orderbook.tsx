@@ -2,17 +2,19 @@
 
 import { useOrderbook, useTrades } from "@/lib/hooks";
 import { useExchangeStore, selectSelectedMarket } from "@/lib/store";
-import { toDisplayValue } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export function Orderbook() {
   const selectedMarketId = useExchangeStore((state) => state.selectedMarketId);
   const selectedMarket = useExchangeStore(selectSelectedMarket);
-  const tokens = useExchangeStore((state) => state.tokens);
-  const { bids, asks } = useOrderbook(selectedMarketId);
+
+  // Get orderbook data with calculated values from hook
+  const { spread, asksWithCumulative, bidsWithCumulative, maxAskCumulative, maxBidCumulative } =
+    useOrderbook(selectedMarketId);
   const trades = useTrades(selectedMarketId);
 
+  // Early return if no market selected
   if (!selectedMarketId || !selectedMarket) {
     return (
       <Card className="h-full min-h-[400px]">
@@ -22,53 +24,6 @@ export function Orderbook() {
       </Card>
     );
   }
-
-  // Look up token decimals for orderbook formatting (orderbook data is still raw)
-  const baseToken = tokens.find((t) => t.ticker === selectedMarket.base_ticker);
-  const quoteToken = tokens.find((t) => t.ticker === selectedMarket.quote_ticker);
-
-  if (!baseToken || !quoteToken) {
-    return (
-      <Card className="h-full min-h-[400px]">
-        <CardContent className="flex items-center justify-center h-full">
-          <p className="text-muted-foreground text-sm">Loading token information...</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Helper functions for formatting (orderbook is still raw, trades are enhanced)
-  const formatPrice = (price: string) => {
-    const value = toDisplayValue(price, quoteToken.decimals);
-    return value >= 1000 ? value.toFixed(2) : value.toFixed(Math.min(quoteToken.decimals, 8));
-  };
-
-  const formatSize = (size: string) => {
-    const value = toDisplayValue(size, baseToken.decimals);
-    return value.toFixed(Math.min(baseToken.decimals, 8));
-  };
-
-  // Calculate spread
-  const lowestAsk = asks.length > 0 && asks[0] ? parseFloat(asks[0].price) : 0;
-  const highestBid = bids.length > 0 && bids[0] ? parseFloat(bids[0].price) : 0;
-  const spread = lowestAsk && highestBid ? lowestAsk - highestBid : 0;
-  const spreadPercentage = highestBid ? ((spread / highestBid) * 100).toFixed(2) : "0.00";
-
-  // Calculate cumulative sizes for depth visualization
-  const asksWithCumulative = asks.slice(0, 10).map((ask, i, arr) => {
-    const cumulative = arr.slice(0, i + 1).reduce((sum, a) => sum + parseFloat(a.size), 0);
-    return { ...ask, cumulative };
-  });
-  const bidsWithCumulative = bids.slice(0, 10).map((bid, i, arr) => {
-    const cumulative = arr.slice(0, i + 1).reduce((sum, b) => sum + parseFloat(b.size), 0);
-    return { ...bid, cumulative };
-  });
-
-  const maxAskCumulative =
-    asksWithCumulative.length > 0 ? (asksWithCumulative[asksWithCumulative.length - 1]?.cumulative ?? 1) : 1;
-  const maxBidCumulative =
-    bidsWithCumulative.length > 0 ? (bidsWithCumulative[bidsWithCumulative.length - 1]?.cumulative ?? 1) : 1;
-
   return (
     <Card className="flex flex-col h-full gap-0 py-0 overflow-hidden">
       <Tabs defaultValue="orderbook" className="flex-1 flex flex-col gap-0 min-h-0">
@@ -80,16 +35,14 @@ export function Orderbook() {
             Trades
           </TabsTrigger>
         </TabsList>
-
         <TabsContent
           value="orderbook"
           className="overflow-hidden flex flex-col mt-0 flex-1 min-h-0 data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-bottom-1 data-[state=active]:duration-200"
         >
           <div className="flex justify-between font-medium mb-3 text-xs text-muted-foreground px-2 py-2 uppercase tracking-wide shrink-0">
-            <span>Price ({quoteToken.ticker})</span>
-            <span>Size ({baseToken.ticker})</span>
+            <span>Price ({selectedMarket.quote_ticker})</span>
+            <span>Size ({selectedMarket.base_ticker})</span>
           </div>
-
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {/* Asks (Sell orders - Red) - Takes up top half, aligned to bottom */}
             <div className="flex-1 flex flex-col justify-end overflow-hidden">
@@ -106,23 +59,21 @@ export function Orderbook() {
                         className="absolute left-0 top-0 bottom-0 bg-red-500/10 transition-all duration-300 ease-out"
                         style={{ width: `${depthPercentage}%` }}
                       />
-                      <span className="relative z-10 text-red-500 font-medium">{formatPrice(ask.price)}</span>
-                      <span className="relative z-10 text-muted-foreground">{formatSize(ask.size)}</span>
+                      <span className="relative z-10 text-red-500 font-medium">{ask.priceDisplay}</span>
+                      <span className="relative z-10 text-muted-foreground">{ask.sizeDisplay}</span>
                     </div>
                   );
                 })}
               </div>
             </div>
-
             {/* Spread separator - Always in the middle */}
             <div className="flex items-center justify-center py-2 shrink-0">
               <div className="flex-1 border-t border-border"></div>
               <span className="px-3 text-xs text-muted-foreground font-medium whitespace-nowrap">
-                SPREAD {spreadPercentage}%
+                SPREAD {spread.spreadPercentage}%
               </span>
               <div className="flex-1 border-t border-border"></div>
             </div>
-
             {/* Bids (Buy orders - Green) - Takes up bottom half, aligned to top */}
             <div className="flex-1 flex flex-col justify-start overflow-hidden">
               <div className="px-2 space-y-0.5">
@@ -138,8 +89,8 @@ export function Orderbook() {
                         className="absolute left-0 top-0 bottom-0 bg-green-500/10 transition-all duration-300 ease-out"
                         style={{ width: `${depthPercentage}%` }}
                       />
-                      <span className="relative z-10 text-green-500 font-medium">{formatPrice(bid.price)}</span>
-                      <span className="relative z-10 text-muted-foreground">{formatSize(bid.size)}</span>
+                      <span className="relative z-10 text-green-500 font-medium">{bid.priceDisplay}</span>
+                      <span className="relative z-10 text-muted-foreground">{bid.sizeDisplay}</span>
                     </div>
                   );
                 })}
@@ -147,7 +98,6 @@ export function Orderbook() {
             </div>
           </div>
         </TabsContent>
-
         <TabsContent
           value="trades"
           className="flex-1 overflow-hidden flex flex-col mt-0 min-h-0 data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-bottom-1 data-[state=active]:duration-200"
@@ -157,22 +107,15 @@ export function Orderbook() {
             <span>Size</span>
             <span>Time</span>
           </div>
-
           <div className="flex-1 overflow-y-auto min-h-0 overflow-hidden">
             {trades.length === 0 ? (
               <p className="text-muted-foreground text-sm px-2">No recent trades</p>
             ) : (
               <div className="px-2 space-y-0.5">
-                {trades.slice(0, 30).map((trade, index) => {
-                  // Use priceValue for comparison if available, fallback to parsing price string
-                  const currentPrice = trade.priceValue ?? parseFloat(trade.price);
-                  const prevTrade = trades[index + 1];
-                  const prevPrice = prevTrade ? (prevTrade.priceValue ?? parseFloat(prevTrade.price)) : currentPrice;
-
-                  const direction = index >= trades.length - 1 ? "neutral" : currentPrice >= prevPrice ? "buy" : "sell";
-                  const isBuy = direction === "buy";
-                  const isSell = direction === "sell";
-
+                {trades.slice(0, 50).map((trade) => {
+                  // Use trade side to determine color (buy = green, sell = red)
+                  const isBuy = trade.side === "buy";
+                  const isSell = trade.side === "sell";
                   return (
                     <div
                       key={trade.id}
@@ -183,9 +126,9 @@ export function Orderbook() {
                           isBuy ? "text-green-500" : isSell ? "text-red-500" : "text-foreground"
                         }`}
                       >
-                        {trade.priceDisplay ?? formatPrice(trade.price)}
+                        {trade.priceDisplay}
                       </span>
-                      <span className="text-muted-foreground">{trade.sizeDisplay ?? formatSize(trade.size)}</span>
+                      <span className="text-muted-foreground">{trade.sizeDisplay}</span>
                       <span className="text-muted-foreground text-xs">
                         {trade.timestamp instanceof Date
                           ? trade.timestamp.toLocaleTimeString()

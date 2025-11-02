@@ -3,7 +3,7 @@
 import { useExchangeStore } from "@/lib/store";
 import { useMarkets } from "@/lib/hooks";
 import { AuthButton } from "@/components/AuthButton";
-import { toDisplayValue } from "@/lib/format";
+import { toDisplayValue, formatWithoutTrailingZeros } from "@/lib/format";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function MarketHeader() {
@@ -74,7 +74,8 @@ export function MarketHeader() {
                 <div className="flex items-center gap-1.5">
                   <span className="text-muted-foreground/60 uppercase tracking-wider">Tick</span>
                   <span className="text-foreground font-mono font-medium">
-                    {toDisplayValue(selectedMarket.tick_size, quoteToken.decimals).toFixed(
+                    {formatWithoutTrailingZeros(
+                      toDisplayValue(selectedMarket.tick_size, quoteToken.decimals),
                       Math.min(quoteToken.decimals, 8),
                     )}
                   </span>
@@ -83,7 +84,8 @@ export function MarketHeader() {
                 <div className="flex items-center gap-1.5">
                   <span className="text-muted-foreground/60 uppercase tracking-wider">Lot</span>
                   <span className="text-foreground font-mono font-medium">
-                    {toDisplayValue(selectedMarket.lot_size, baseToken.decimals).toFixed(
+                    {formatWithoutTrailingZeros(
+                      toDisplayValue(selectedMarket.lot_size, baseToken.decimals),
                       Math.min(baseToken.decimals, 8),
                     )}
                   </span>

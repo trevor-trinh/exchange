@@ -434,10 +434,11 @@ pub struct ApiTrade {
     pub market_id: String,
     pub buyer_address: String,
     pub seller_address: String,
-    pub buyer_order_id: String,  // UUID as string
-    pub seller_order_id: String, // UUID as string
-    pub price: String,           // u128 as string
-    pub size: String,            // u128 as string
+    pub buyer_order_id: String,    // UUID as string
+    pub seller_order_id: String,   // UUID as string
+    pub price: String,             // u128 as string
+    pub size: String,              // u128 as string
+    pub side: super::domain::Side, // Taker's side (determines if trade is "buy" or "sell" on tape)
     pub timestamp: DateTime<Utc>,
 }
 
@@ -496,6 +497,7 @@ impl From<super::domain::Trade> for ApiTrade {
             seller_order_id: t.seller_order_id.to_string(),
             price: t.price.to_string(),
             size: t.size.to_string(),
+            side: t.side,
             timestamp: t.timestamp,
         }
     }
@@ -564,6 +566,7 @@ impl TryFrom<ApiTrade> for super::domain::Trade {
             seller_order_id: Uuid::parse_str(&t.seller_order_id)?,
             price: t.price.parse()?,
             size: t.size.parse()?,
+            side: t.side,
             timestamp: t.timestamp,
         })
     }

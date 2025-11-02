@@ -227,3 +227,14 @@ export function formatDateTime(timestamp: Date | string | number): string {
   const date = typeof timestamp === "number" || typeof timestamp === "string" ? new Date(timestamp) : timestamp;
   return date.toLocaleString();
 }
+
+/**
+ * Format a number with a maximum number of decimals, removing trailing zeros
+ * @param value Number to format
+ * @param maxDecimals Maximum number of decimal places
+ * @returns Formatted string without trailing zeros
+ */
+export function formatWithoutTrailingZeros(value: number, maxDecimals: number): string {
+  const fixed = value.toFixed(maxDecimals);
+  return parseFloat(fixed).toString();
+}

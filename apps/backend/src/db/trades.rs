@@ -8,11 +8,15 @@ impl Db {
     pub async fn create_trade(&self, trade: &Trade) -> Result<()> {
         let price_str = trade.price.to_string();
         let size_str = trade.size.to_string();
+        let side_str = match trade.side {
+            crate::models::domain::Side::Buy => "buy",
+            crate::models::domain::Side::Sell => "sell",
+        };
 
         sqlx::query(
             r#"
-            INSERT INTO trades (id, market_id, buyer_address, seller_address, buyer_order_id, seller_order_id, price, size, timestamp)
-            VALUES ($1, $2, $3, $4, $5, $6, $7::numeric, $8::numeric, $9)
+            INSERT INTO trades (id, market_id, buyer_address, seller_address, buyer_order_id, seller_order_id, price, size, side, timestamp)
+            VALUES ($1, $2, $3, $4, $5, $6, $7::numeric, $8::numeric, $9::side, $10)
             "#
         )
         .bind(trade.id)
@@ -23,6 +27,7 @@ impl Db {
         .bind(trade.seller_order_id)
         .bind(price_str)
         .bind(size_str)
+        .bind(side_str)
         .bind(trade.timestamp)
         .execute(&self.postgres)
         .await?;
@@ -38,11 +43,15 @@ impl Db {
     ) -> Result<()> {
         let price_str = trade.price.to_string();
         let size_str = trade.size.to_string();
+        let side_str = match trade.side {
+            crate::models::domain::Side::Buy => "buy",
+            crate::models::domain::Side::Sell => "sell",
+        };
 
         sqlx::query(
             r#"
-            INSERT INTO trades (id, market_id, buyer_address, seller_address, buyer_order_id, seller_order_id, price, size, timestamp)
-            VALUES ($1, $2, $3, $4, $5, $6, $7::numeric, $8::numeric, $9)
+            INSERT INTO trades (id, market_id, buyer_address, seller_address, buyer_order_id, seller_order_id, price, size, side, timestamp)
+            VALUES ($1, $2, $3, $4, $5, $6, $7::numeric, $8::numeric, $9::side, $10)
             "#
         )
         .bind(trade.id)
@@ -53,6 +62,7 @@ impl Db {
         .bind(trade.seller_order_id)
         .bind(price_str)
         .bind(size_str)
+        .bind(side_str)
         .bind(trade.timestamp)
         .execute(&mut **tx)
         .await?;
@@ -71,7 +81,7 @@ impl Db {
         let query = if let Some(market) = market_id {
             sqlx::query(
                 r#"
-                SELECT id, market_id, buyer_address, seller_address, buyer_order_id, seller_order_id, price::TEXT as price, size::TEXT as size, timestamp
+                SELECT id, market_id, buyer_address, seller_address, buyer_order_id, seller_order_id, price::TEXT as price, size::TEXT as size, side, timestamp
                 FROM trades
                 WHERE (buyer_address = $1 OR seller_address = $1) AND market_id = $2
                 ORDER BY timestamp DESC
@@ -84,7 +94,7 @@ impl Db {
         } else {
             sqlx::query(
                 r#"
-                SELECT id, market_id, buyer_address, seller_address, buyer_order_id, seller_order_id, price::TEXT as price, size::TEXT as size, timestamp
+                SELECT id, market_id, buyer_address, seller_address, buyer_order_id, seller_order_id, price::TEXT as price, size::TEXT as size, side, timestamp
                 FROM trades
                 WHERE buyer_address = $1 OR seller_address = $1
                 ORDER BY timestamp DESC
@@ -102,6 +112,7 @@ impl Db {
             .map(|row| {
                 let price_str: String = row.get("price");
                 let size_str: String = row.get("size");
+                let side_str: String = row.get("side");
 
                 Trade {
                     id: row.get("id"),
@@ -112,6 +123,11 @@ impl Db {
                     seller_order_id: row.get("seller_order_id"),
                     price: price_str.parse().unwrap_or(0),
                     size: size_str.parse().unwrap_or(0),
+                    side: if side_str == "buy" {
+                        crate::models::domain::Side::Buy
+                    } else {
+                        crate::models::domain::Side::Sell
+                    },
                     timestamp: row.get("timestamp"),
                 }
             })
@@ -125,7 +141,7 @@ impl Db {
 
         let rows = sqlx::query(
             r#"
-            SELECT id, market_id, buyer_address, seller_address, buyer_order_id, seller_order_id, price::TEXT as price, size::TEXT as size, timestamp
+            SELECT id, market_id, buyer_address, seller_address, buyer_order_id, seller_order_id, price::TEXT as price, size::TEXT as size, side, timestamp
             FROM trades
             WHERE market_id = $1
             ORDER BY timestamp DESC
@@ -142,6 +158,7 @@ impl Db {
             .map(|row| {
                 let price_str: String = row.get("price");
                 let size_str: String = row.get("size");
+                let side_str: String = row.get("side");
 
                 Trade {
                     id: row.get("id"),
@@ -152,6 +169,11 @@ impl Db {
                     seller_order_id: row.get("seller_order_id"),
                     price: price_str.parse().unwrap_or(0),
                     size: size_str.parse().unwrap_or(0),
+                    side: if side_str == "buy" {
+                        crate::models::domain::Side::Buy
+                    } else {
+                        crate::models::domain::Side::Sell
+                    },
                     timestamp: row.get("timestamp"),
                 }
             })

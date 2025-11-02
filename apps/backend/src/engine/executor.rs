@@ -61,6 +61,7 @@ impl Executor {
                 seller_order_id,
                 price: m.price,
                 size: m.size,
+                side: taker_order.side, // Trade side is the taker's side
                 timestamp: Utc::now(),
             };
 

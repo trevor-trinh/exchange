@@ -5,9 +5,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import type { Market, Token, Orderbook, Trade, PricePoint } from "./types/exchange";
-// Import raw OrderbookLevel for WebSocket updates
-import type { OrderbookLevel } from "@exchange/sdk";
+import type { Market, Token, Orderbook, Trade, PricePoint, OrderbookLevel } from "./types/exchange";
 
 // ============================================================================
 // State Interface

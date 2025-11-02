@@ -70,6 +70,7 @@ export interface TradeMessage {
     seller_order_id: string;
     price: string;
     size: string;
+    side: "buy" | "sell"; // Taker's side (determines if trade is "buy" or "sell" on tape)
     timestamp: number;
   };
 }

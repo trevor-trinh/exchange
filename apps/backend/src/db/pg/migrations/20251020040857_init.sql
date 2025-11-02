@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS trades (
     seller_order_id UUID NOT NULL REFERENCES orders(id),
     price NUMERIC(39, 0) NOT NULL CHECK (price > 0), -- in quote token atoms (u128)
     size NUMERIC(39, 0) NOT NULL CHECK (size > 0), -- in base token atoms (u128)
+    side side NOT NULL, -- taker's side (determines if trade is "buy" or "sell" on tape)
     timestamp TIMESTAMPTZ NOT NULL,
     CHECK (buyer_address != seller_address) -- self trading prevention
 );

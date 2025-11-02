@@ -2,70 +2,70 @@
  * REST API client for the exchange
  */
 
-import type { components } from './types/generated';
-import { ApiError } from './errors';
-import { toDisplayValue, formatPrice, formatSize } from './format';
+import type { components } from "./types/generated";
+import { ApiError } from "./errors";
+import { toDisplayValue, formatPrice, formatSize } from "./format";
 
 // Extract types from OpenAPI components
-type InfoRequest = components['schemas']['InfoRequest'];
-type InfoResponse = components['schemas']['InfoResponse'];
-type UserRequest = components['schemas']['UserRequest'];
-type UserResponse = components['schemas']['UserResponse'];
-type TradeRequest = components['schemas']['TradeRequest'];
-type TradeResponse = components['schemas']['TradeResponse'];
-type DripRequest = components['schemas']['DripRequest'];
-type DripResponse = components['schemas']['DripResponse'];
-type AdminRequest = components['schemas']['AdminRequest'];
-type AdminResponse = components['schemas']['AdminResponse'];
-type CandlesRequest = components['schemas']['CandlesRequest'];
+type InfoRequest = components["schemas"]["InfoRequest"];
+type InfoResponse = components["schemas"]["InfoResponse"];
+type UserRequest = components["schemas"]["UserRequest"];
+type UserResponse = components["schemas"]["UserResponse"];
+type TradeRequest = components["schemas"]["TradeRequest"];
+type TradeResponse = components["schemas"]["TradeResponse"];
+type DripRequest = components["schemas"]["DripRequest"];
+type DripResponse = components["schemas"]["DripResponse"];
+type AdminRequest = components["schemas"]["AdminRequest"];
+type AdminResponse = components["schemas"]["AdminResponse"];
+type CandlesRequest = components["schemas"]["CandlesRequest"];
 
 // Domain types (from API)
-export type Market = components['schemas']['ApiMarket'];
-export type Token = components['schemas']['Token'];
-export type Order = components['schemas']['ApiOrder'];
-export type Trade = components['schemas']['ApiTrade'];
-export type Balance = components['schemas']['ApiBalance'];
-export type Side = components['schemas']['Side'];
-export type OrderType = components['schemas']['OrderType'];
-export type OrderStatus = components['schemas']['OrderStatus'];
-export type Candle = components['schemas']['ApiCandle'];
-export type CandlesResponse = components['schemas']['CandlesResponse'];
+export type Market = components["schemas"]["ApiMarket"];
+export type Token = components["schemas"]["Token"];
+export type Order = components["schemas"]["ApiOrder"];
+export type Trade = components["schemas"]["ApiTrade"];
+export type Balance = components["schemas"]["ApiBalance"];
+export type Side = components["schemas"]["Side"];
+export type OrderType = components["schemas"]["OrderType"];
+export type OrderStatus = components["schemas"]["OrderStatus"];
+export type Candle = components["schemas"]["ApiCandle"];
+export type CandlesResponse = components["schemas"]["CandlesResponse"];
 
 // Enhanced types (with display values pre-computed)
-export type EnhancedTrade = Omit<Trade, 'timestamp'> & {
-  timestamp: Date;          // Converted from string
-  priceDisplay: string;     // Formatted price
-  sizeDisplay: string;      // Formatted size
-  priceValue: number;       // Numeric price
-  sizeValue: number;        // Numeric size
+export type EnhancedTrade = Omit<Trade, "timestamp"> & {
+  timestamp: Date; // Converted from string
+  priceDisplay: string; // Formatted price
+  sizeDisplay: string; // Formatted size
+  priceValue: number; // Numeric price
+  sizeValue: number; // Numeric size
 };
 
-export type EnhancedOrder = Omit<Order, 'created_at' | 'updated_at'> & {
-  created_at: Date;         // Converted from string
-  updated_at: Date;         // Converted from string
-  priceDisplay: string;     // Formatted price
-  sizeDisplay: string;      // Formatted size
-  filledDisplay: string;    // Formatted filled_size
-  priceValue: number;       // Numeric price
-  sizeValue: number;        // Numeric size
-  filledValue: number;      // Numeric filled_size
+export type EnhancedOrder = Omit<Order, "created_at" | "updated_at"> & {
+  created_at: Date; // Converted from string
+  updated_at: Date; // Converted from string
+  priceDisplay: string; // Formatted price
+  sizeDisplay: string; // Formatted size
+  filledDisplay: string; // Formatted filled_size
+  priceValue: number; // Numeric price
+  sizeValue: number; // Numeric size
+  filledValue: number; // Numeric filled_size
 };
 
-export type EnhancedBalance = Omit<Balance, 'updated_at'> & {
-  updated_at: Date;         // Converted from string
-  amountDisplay: string;    // Formatted amount
-  lockedDisplay: string;    // Formatted open_interest
-  amountValue: number;      // Numeric amount
-  lockedValue: number;      // Numeric open_interest
+export type EnhancedBalance = Omit<Balance, "updated_at"> & {
+  updated_at: Date; // Converted from string
+  amountDisplay: string; // Formatted amount
+  lockedDisplay: string; // Formatted open_interest
+  amountValue: number; // Numeric amount
+  lockedValue: number; // Numeric open_interest
 };
 
 export interface EnhancedOrderbookLevel {
-  price: string;            // atoms
-  size: string;             // atoms
-  priceDisplay: string;     // Formatted
-  sizeDisplay: string;      // Formatted
-  priceValue: number;       // Numeric
-  sizeValue: number;        // Numeric
+  price: string; // atoms
+  size: string; // atoms
+  priceDisplay: string; // Formatted
+  sizeDisplay: string; // Formatted
+  priceValue: number; // Numeric
+  sizeValue: number; // Numeric
 }
 
 export interface RestClientConfig {
@@ -83,9 +83,9 @@ export class RestClient {
 
   constructor(config: RestClientConfig) {
     if (!config.baseUrl) {
-      throw new Error('RestClient: baseUrl is required');
+      throw new Error("RestClient: baseUrl is required");
     }
-    this.baseUrl = config.baseUrl.replace(/\/$/, ''); // Remove trailing slash
+    this.baseUrl = config.baseUrl.replace(/\/$/, ""); // Remove trailing slash
     this.timeout = config.timeout ?? 30000;
   }
 
@@ -118,8 +118,8 @@ export class RestClient {
     if (!market) {
       throw new Error(
         `[SDK] Market ${trade.market_id} not found in cache. ` +
-        `Available markets: ${Array.from(this.marketsCache.keys()).join(', ') || 'none'}. ` +
-        `Call getMarkets() first to populate cache.`
+          `Available markets: ${Array.from(this.marketsCache.keys()).join(", ") || "none"}. ` +
+          `Call getMarkets() first to populate cache.`
       );
     }
 
@@ -129,9 +129,9 @@ export class RestClient {
     if (!baseToken || !quoteToken) {
       throw new Error(
         `[SDK] Tokens for market ${trade.market_id} not found in cache. ` +
-        `Need: ${market.base_ticker}, ${market.quote_ticker}. ` +
-        `Available: ${Array.from(this.tokensCache.keys()).join(', ') || 'none'}. ` +
-        `Call getTokens() first to populate cache.`
+          `Need: ${market.base_ticker}, ${market.quote_ticker}. ` +
+          `Available: ${Array.from(this.tokensCache.keys()).join(", ") || "none"}. ` +
+          `Call getTokens() first to populate cache.`
       );
     }
 
@@ -152,14 +152,18 @@ export class RestClient {
   public enhanceOrder(order: Order, marketId: string): EnhancedOrder {
     const market = this.marketsCache.get(marketId);
     if (!market) {
-      throw new Error(`Market ${marketId} not found in cache. Call getMarkets() first.`);
+      throw new Error(
+        `Market ${marketId} not found in cache. Call getMarkets() first.`
+      );
     }
 
     const baseToken = this.tokensCache.get(market.base_ticker);
     const quoteToken = this.tokensCache.get(market.quote_ticker);
 
     if (!baseToken || !quoteToken) {
-      throw new Error(`Tokens for market ${marketId} not found in cache. Call getTokens() first.`);
+      throw new Error(
+        `Tokens for market ${marketId} not found in cache. Call getTokens() first.`
+      );
     }
 
     return {
@@ -182,7 +186,9 @@ export class RestClient {
   public enhanceBalance(balance: Balance): EnhancedBalance {
     const token = this.tokensCache.get(balance.token_ticker);
     if (!token) {
-      throw new Error(`Token ${balance.token_ticker} not found in cache. Call getTokens() first.`);
+      throw new Error(
+        `Token ${balance.token_ticker} not found in cache. Call getTokens() first.`
+      );
     }
 
     return {
@@ -195,36 +201,72 @@ export class RestClient {
     };
   }
 
+  /**
+   * Enhance an orderbook level with display values
+   * @public - Used by WebSocket handlers
+   */
+  public enhanceOrderbookLevel(
+    level: { price: string; size: string },
+    marketId: string
+  ): EnhancedOrderbookLevel {
+    const market = this.marketsCache.get(marketId);
+    if (!market) {
+      throw new Error(
+        `Market ${marketId} not found in cache. Call getMarkets() first.`
+      );
+    }
+
+    const baseToken = this.tokensCache.get(market.base_ticker);
+    const quoteToken = this.tokensCache.get(market.quote_ticker);
+
+    if (!baseToken || !quoteToken) {
+      throw new Error(
+        `Tokens for market ${marketId} not found in cache. Call getTokens() first.`
+      );
+    }
+
+    return {
+      ...level,
+      priceDisplay: formatPrice(level.price, quoteToken.decimals),
+      sizeDisplay: formatSize(level.size, baseToken.decimals),
+      priceValue: toDisplayValue(level.price, quoteToken.decimals),
+      sizeValue: toDisplayValue(level.size, baseToken.decimals),
+    };
+  }
+
   // ===== Info Endpoints =====
 
   async getToken(ticker: string): Promise<Token> {
-    const request: InfoRequest = { type: 'token_details', ticker };
-    const response = await this.post<InfoResponse>('/api/info', request);
-    if (response.type !== 'token_details') {
-      throw new ApiError('Invalid response type', 500);
+    const request: InfoRequest = { type: "token_details", ticker };
+    const response = await this.post<InfoResponse>("/api/info", request);
+    if (response.type !== "token_details") {
+      throw new ApiError("Invalid response type", 500);
     }
     return response.token;
   }
 
   async getMarket(marketId: string): Promise<Market> {
-    const request: InfoRequest = { type: 'market_details', market_id: marketId };
-    const response = await this.post<InfoResponse>('/api/info', request);
-    if (response.type !== 'market_details') {
-      throw new ApiError('Invalid response type', 500);
+    const request: InfoRequest = {
+      type: "market_details",
+      market_id: marketId,
+    };
+    const response = await this.post<InfoResponse>("/api/info", request);
+    if (response.type !== "market_details") {
+      throw new ApiError("Invalid response type", 500);
     }
     return response.market;
   }
 
   async getMarkets(): Promise<Market[]> {
-    console.log('[SDK] Fetching markets...');
-    const request: InfoRequest = { type: 'all_markets' };
-    const response = await this.post<InfoResponse>('/api/info', request);
-    if (response.type !== 'all_markets') {
-      throw new ApiError('Invalid response type', 500);
+    console.log("[SDK] Fetching markets...");
+    const request: InfoRequest = { type: "all_markets" };
+    const response = await this.post<InfoResponse>("/api/info", request);
+    if (response.type !== "all_markets") {
+      throw new ApiError("Invalid response type", 500);
     }
 
     // Cache markets for data enhancement
-    response.markets.forEach(market => {
+    response.markets.forEach((market) => {
       this.marketsCache.set(market.id, market);
     });
 
@@ -233,15 +275,15 @@ export class RestClient {
   }
 
   async getTokens(): Promise<Token[]> {
-    console.log('[SDK] Fetching tokens...');
-    const request: InfoRequest = { type: 'all_tokens' };
-    const response = await this.post<InfoResponse>('/api/info', request);
-    if (response.type !== 'all_tokens') {
-      throw new ApiError('Invalid response type', 500);
+    console.log("[SDK] Fetching tokens...");
+    const request: InfoRequest = { type: "all_tokens" };
+    const response = await this.post<InfoResponse>("/api/info", request);
+    if (response.type !== "all_tokens") {
+      throw new ApiError("Invalid response type", 500);
     }
 
     // Cache tokens for data enhancement
-    response.tokens.forEach(token => {
+    response.tokens.forEach((token) => {
       this.tokensCache.set(token.ticker, token);
     });
 
@@ -257,36 +299,38 @@ export class RestClient {
     limit?: number;
   }): Promise<EnhancedOrder[]> {
     const request: UserRequest = {
-      type: 'orders',
+      type: "orders",
       user_address: params.userAddress,
       market_id: params.marketId,
       status: params.status,
       limit: params.limit,
     };
-    const response = await this.post<UserResponse>('/api/user', request);
-    if (response.type !== 'orders') {
-      throw new ApiError('Invalid response type', 500);
+    const response = await this.post<UserResponse>("/api/user", request);
+    if (response.type !== "orders") {
+      throw new ApiError("Invalid response type", 500);
     }
 
     // Enhance orders with display values
     if (!params.marketId) {
-      throw new Error('marketId is required for data enhancement');
+      throw new Error("marketId is required for data enhancement");
     }
-    return response.orders.map(order => this.enhanceOrder(order, params.marketId!));
+    return response.orders.map((order) =>
+      this.enhanceOrder(order, params.marketId!)
+    );
   }
 
   async getBalances(userAddress: string): Promise<EnhancedBalance[]> {
     const request: UserRequest = {
-      type: 'balances',
+      type: "balances",
       user_address: userAddress,
     };
-    const response = await this.post<UserResponse>('/api/user', request);
-    if (response.type !== 'balances') {
-      throw new ApiError('Invalid response type', 500);
+    const response = await this.post<UserResponse>("/api/user", request);
+    if (response.type !== "balances") {
+      throw new ApiError("Invalid response type", 500);
     }
 
     // Enhance balances with display values
-    return response.balances.map(balance => this.enhanceBalance(balance));
+    return response.balances.map((balance) => this.enhanceBalance(balance));
   }
 
   async getTrades(params: {
@@ -295,18 +339,18 @@ export class RestClient {
     limit?: number;
   }): Promise<EnhancedTrade[]> {
     const request: UserRequest = {
-      type: 'trades',
+      type: "trades",
       user_address: params.userAddress,
       market_id: params.marketId,
       limit: params.limit,
     };
-    const response = await this.post<UserResponse>('/api/user', request);
-    if (response.type !== 'trades') {
-      throw new ApiError('Invalid response type', 500);
+    const response = await this.post<UserResponse>("/api/user", request);
+    if (response.type !== "trades") {
+      throw new ApiError("Invalid response type", 500);
     }
 
     // Enhance trades with display values
-    return response.trades.map(trade => this.enhanceTrade(trade));
+    return response.trades.map((trade) => this.enhanceTrade(trade));
   }
 
   // ===== Trade Endpoints =====
@@ -341,7 +385,7 @@ export class RestClient {
     signature: string;
   }): Promise<{ order: EnhancedOrder; trades: EnhancedTrade[] }> {
     const request: TradeRequest = {
-      type: 'place_order',
+      type: "place_order",
       user_address: params.userAddress,
       market_id: params.marketId,
       side: params.side,
@@ -350,15 +394,15 @@ export class RestClient {
       size: params.size,
       signature: params.signature,
     };
-    const response = await this.post<TradeResponse>('/api/trade', request);
-    if (response.type !== 'place_order') {
-      throw new ApiError('Invalid response type', 500);
+    const response = await this.post<TradeResponse>("/api/trade", request);
+    if (response.type !== "place_order") {
+      throw new ApiError("Invalid response type", 500);
     }
 
     // Enhance the order and trades
     return {
       order: this.enhanceOrder(response.order, params.marketId),
-      trades: response.trades.map(trade => this.enhanceTrade(trade)),
+      trades: response.trades.map((trade) => this.enhanceTrade(trade)),
     };
   }
 
@@ -409,7 +453,7 @@ export class RestClient {
     side: Side;
     orderType: OrderType;
     priceDecimal: string; // Human-readable price (e.g., "110000.50")
-    sizeDecimal: string;  // Human-readable size (e.g., "0.5")
+    sizeDecimal: string; // Human-readable size (e.g., "0.5")
     signature: string;
   }): Promise<{ order: EnhancedOrder; trades: EnhancedTrade[] }> {
     // Get market and token details
@@ -458,14 +502,14 @@ export class RestClient {
     signature: string;
   }): Promise<{ orderId: string }> {
     const request: TradeRequest = {
-      type: 'cancel_order',
+      type: "cancel_order",
       user_address: params.userAddress,
       order_id: params.orderId,
       signature: params.signature,
     };
-    const response = await this.post<TradeResponse>('/api/trade', request);
-    if (response.type !== 'cancel_order') {
-      throw new ApiError('Invalid response type', 500);
+    const response = await this.post<TradeResponse>("/api/trade", request);
+    if (response.type !== "cancel_order") {
+      throw new ApiError("Invalid response type", 500);
     }
     return { orderId: response.order_id };
   }
@@ -476,16 +520,19 @@ export class RestClient {
     signature: string;
   }): Promise<{ cancelledOrderIds: string[]; count: number }> {
     const request: TradeRequest = {
-      type: 'cancel_all_orders',
+      type: "cancel_all_orders",
       user_address: params.userAddress,
       market_id: params.marketId,
       signature: params.signature,
     };
-    const response = await this.post<TradeResponse>('/api/trade', request);
-    if (response.type !== 'cancel_all_orders') {
-      throw new ApiError('Invalid response type', 500);
+    const response = await this.post<TradeResponse>("/api/trade", request);
+    if (response.type !== "cancel_all_orders") {
+      throw new ApiError("Invalid response type", 500);
     }
-    return { cancelledOrderIds: response.cancelled_order_ids, count: response.count };
+    return {
+      cancelledOrderIds: response.cancelled_order_ids,
+      count: response.count,
+    };
   }
 
   // ===== Drip/Faucet =====
@@ -495,15 +542,20 @@ export class RestClient {
     tokenTicker: string;
     amount: string;
     signature: string;
-  }): Promise<{ userAddress: string; tokenTicker: string; amount: string; newBalance: string }> {
+  }): Promise<{
+    userAddress: string;
+    tokenTicker: string;
+    amount: string;
+    newBalance: string;
+  }> {
     const request: DripRequest = {
-      type: 'faucet',
+      type: "faucet",
       user_address: params.userAddress,
       token_ticker: params.tokenTicker,
       amount: params.amount,
       signature: params.signature,
     };
-    const response = await this.post<DripResponse>('/api/drip', request);
+    const response = await this.post<DripResponse>("/api/drip", request);
     return {
       userAddress: response.user_address,
       tokenTicker: response.token_ticker,
@@ -520,14 +572,14 @@ export class RestClient {
     name: string;
   }): Promise<Token> {
     const request: AdminRequest = {
-      type: 'create_token',
+      type: "create_token",
       ticker: params.ticker,
       decimals: params.decimals as any, // OpenAPI types u8 as number
       name: params.name,
     };
-    const response = await this.post<AdminResponse>('/api/admin', request);
-    if (response.type !== 'create_token') {
-      throw new ApiError('Invalid response type', 500);
+    const response = await this.post<AdminResponse>("/api/admin", request);
+    if (response.type !== "create_token") {
+      throw new ApiError("Invalid response type", 500);
     }
     return response.token;
   }
@@ -542,7 +594,7 @@ export class RestClient {
     takerFeeBps: number;
   }): Promise<Market> {
     const request: AdminRequest = {
-      type: 'create_market',
+      type: "create_market",
       base_ticker: params.baseTicker,
       quote_ticker: params.quoteTicker,
       tick_size: params.tickSize as any, // Backend expects string (u128)
@@ -551,9 +603,9 @@ export class RestClient {
       maker_fee_bps: params.makerFeeBps as any, // OpenAPI types i32 as number
       taker_fee_bps: params.takerFeeBps as any,
     };
-    const response = await this.post<AdminResponse>('/api/admin', request);
-    if (response.type !== 'create_market') {
-      throw new ApiError('Invalid response type', 500);
+    const response = await this.post<AdminResponse>("/api/admin", request);
+    if (response.type !== "create_market") {
+      throw new ApiError("Invalid response type", 500);
     }
     return response.market;
   }
@@ -564,15 +616,15 @@ export class RestClient {
     amount: string;
   }): Promise<{ newBalance: string }> {
     const request: AdminRequest = {
-      type: 'faucet',
+      type: "faucet",
       user_address: params.userAddress,
       token_ticker: params.tokenTicker,
       amount: params.amount,
-      signature: 'admin',
+      signature: "admin",
     };
-    const response = await this.post<AdminResponse>('/api/admin', request);
-    if (response.type !== 'faucet') {
-      throw new ApiError('Invalid response type', 500);
+    const response = await this.post<AdminResponse>("/api/admin", request);
+    if (response.type !== "faucet") {
+      throw new ApiError("Invalid response type", 500);
     }
     return { newBalance: response.new_balance };
   }
@@ -593,45 +645,11 @@ export class RestClient {
       to: params.to,
       count_back: params.countBack,
     };
-    const response = await this.post<CandlesResponse>('/api/candles', request);
+    const response = await this.post<CandlesResponse>("/api/candles", request);
     return response.candles;
   }
 
   // ===== HTTP Helpers =====
-
-  private async get<T>(path: string): Promise<T> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
-    try {
-      const response = await fetch(`${this.baseUrl}${path}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: response.statusText }));
-        throw new ApiError(
-          error.error || 'Request failed',
-          response.status,
-          error.code
-        );
-      }
-
-      return await response.json();
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      throw new ApiError('Network error', 0, undefined, error);
-    }
-  }
 
   private async post<T>(path: string, body: unknown): Promise<T> {
     const controller = new AbortController();
@@ -639,9 +657,9 @@ export class RestClient {
 
     try {
       const response = await fetch(`${this.baseUrl}${path}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(body),
         signal: controller.signal,
@@ -650,9 +668,11 @@ export class RestClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: response.statusText }));
+        const error = await response
+          .json()
+          .catch(() => ({ error: response.statusText }));
         throw new ApiError(
-          error.error || 'Request failed',
+          error.error || "Request failed",
           response.status,
           error.code
         );
@@ -664,7 +684,7 @@ export class RestClient {
       if (error instanceof ApiError) {
         throw error;
       }
-      throw new ApiError('Network error', 0, undefined, error);
+      throw new ApiError("Network error", 0, undefined, error);
     }
   }
 }

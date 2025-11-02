@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS exchange.trades (
     seller_order_id String,
     price UInt128,
     size UInt128,
+    side String,
     timestamp DateTime
 ) ENGINE = MergeTree()
 ORDER BY (market_id, timestamp)

@@ -172,6 +172,7 @@ pub struct Trade {
     pub seller_order_id: Uuid,
     pub price: u128,
     pub size: u128,
+    pub side: Side, // Taker's side (determines if trade is "buy" or "sell" on tape)
     pub timestamp: DateTime<Utc>,
 }
 
