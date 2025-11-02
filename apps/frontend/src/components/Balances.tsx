@@ -55,7 +55,9 @@ export function Balances() {
           </div>
         ) : balances.length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-muted-foreground text-sm">No balances found. Use the faucet button in the top bar to get tokens!</p>
+            <p className="text-muted-foreground text-sm">
+              No balances found. Use the faucet button in the top bar to get tokens!
+            </p>
           </div>
         ) : (
           <div className="overflow-auto max-h-80">

@@ -65,11 +65,7 @@ export function FaucetDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-2"
-        >
+        <Button size="sm" variant="outline" className="gap-2">
           <Droplet className="h-4 w-4" />
           Faucet
         </Button>

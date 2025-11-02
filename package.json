@@ -7,7 +7,8 @@
     "packages/sdk-typescript"
   ],
   "scripts": {
-    "dev": "bun --filter exchange dev",
+    "dev": "bun run build:sdk && bun --filter exchange dev",
+    "dev:watch": "bun --parallel --filter @exchange/sdk dev --filter exchange dev",
     "build": "bun --filter @exchange/sdk build && bun --filter exchange build",
     "build:frontend": "bun --filter exchange build",
     "build:sdk": "bun --filter @exchange/sdk build",

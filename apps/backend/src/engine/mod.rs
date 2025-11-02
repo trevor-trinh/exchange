@@ -123,11 +123,53 @@ impl MatchingEngine {
             order.status = OrderStatus::PartiallyFilled;
         }
 
-        // Broadcast if order is still on the book
+        // Handle unfilled/partially filled orders based on order type
         if order.filled_size < order.size {
-            let _ = self.event_tx.send(EngineEvent::OrderPlaced {
-                order: order.clone(),
-            });
+            match order.order_type {
+                crate::models::domain::OrderType::Market => {
+                    // Market orders that don't fully fill are cancelled
+                    // (IOC - Immediate or Cancel behavior)
+                    order.status = if total_matched > 0 {
+                        OrderStatus::PartiallyFilled
+                    } else {
+                        OrderStatus::Cancelled
+                    };
+
+                    // Update database with final status
+                    self.db
+                        .update_order_fill(order.id, order.filled_size, order.status)
+                        .await?;
+
+                    // Unlock the unfilled portion
+                    let unfilled_size = order.size - order.filled_size;
+                    if unfilled_size > 0 {
+                        let (token_to_unlock, amount_to_unlock) = match order.side {
+                            crate::models::domain::Side::Buy => {
+                                let quote_amount = order
+                                    .price
+                                    .checked_mul(unfilled_size)
+                                    .ok_or_else(|| ExchangeError::InvalidParameter {
+                                        message: "Unlock amount overflow".to_string(),
+                                    })?;
+                                (market.quote_ticker.clone(), quote_amount)
+                            }
+                            crate::models::domain::Side::Sell => {
+                                (market.base_ticker.clone(), unfilled_size)
+                            }
+                        };
+
+                        self.db
+                            .unlock_balance(&order.user_address, &token_to_unlock, amount_to_unlock)
+                            .await?;
+                    }
+                }
+                crate::models::domain::OrderType::Limit => {
+                    // Limit orders stay on the book
+                    let _ = self.event_tx.send(EngineEvent::OrderPlaced {
+                        order: order.clone(),
+                    });
+                }
+            }
         }
 
         Ok(OrderPlaced {

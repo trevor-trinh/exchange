@@ -36,7 +36,7 @@ export function parseSize(rawSize: string, baseDecimals: number): number {
 export function formatNumberWithCommas(
   value: number,
   maxDecimals: number = 8,
-  keepTrailingZeros: boolean = false,
+  keepTrailingZeros: boolean = false
 ): string {
   // Format with max decimals
   const fixed = value.toFixed(maxDecimals);

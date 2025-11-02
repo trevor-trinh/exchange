@@ -205,8 +205,8 @@ export const useExchangeStore = create<ExchangeState>()(
       // Reset
       reset: () => set(initialState),
     })),
-    { name: "ExchangeStore" },
-  ),
+    { name: "ExchangeStore" }
+  )
 );
 
 // ============================================================================

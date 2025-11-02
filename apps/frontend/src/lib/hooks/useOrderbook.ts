@@ -57,12 +57,12 @@ export function useOrderbook(marketId: string | null) {
 
   const maxAskCumulative = useMemo(
     () => (asksWithCumulative.length > 0 ? (asksWithCumulative[asksWithCumulative.length - 1]?.cumulative ?? 1) : 1),
-    [asksWithCumulative],
+    [asksWithCumulative]
   );
 
   const maxBidCumulative = useMemo(
     () => (bidsWithCumulative.length > 0 ? (bidsWithCumulative[bidsWithCumulative.length - 1]?.cumulative ?? 1) : 1),
-    [bidsWithCumulative],
+    [bidsWithCumulative]
   );
 
   return {

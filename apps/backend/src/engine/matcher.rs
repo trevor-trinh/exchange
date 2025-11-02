@@ -37,6 +37,11 @@ impl Matcher {
                     break;
                 }
 
+                // Skip self-trading: don't match orders from the same user
+                if maker_order.user_address == taker_order.user_address {
+                    continue;
+                }
+
                 // Calculate match size (minimum of what's needed and what's available)
                 let maker_remaining = maker_order.size - maker_order.filled_size;
                 let match_size = remaining_size.min(maker_remaining);

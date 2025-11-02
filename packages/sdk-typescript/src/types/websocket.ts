@@ -3,70 +3,70 @@
  * These are hand-written since WebSocket isn't part of OpenAPI
  */
 
-import type { components } from './generated';
+import type { components } from "./generated";
 
 // Re-export domain types from generated
-export type Trade = components['schemas']['ApiTrade'];
-export type Order = components['schemas']['ApiOrder'];
-export type Balance = components['schemas']['ApiBalance'];
+export type Trade = components["schemas"]["ApiTrade"];
+export type Order = components["schemas"]["ApiOrder"];
+export type Balance = components["schemas"]["ApiBalance"];
 
 // Subscription channels (must match backend snake_case serialization)
-export type SubscriptionChannel = 'trades' | 'orderbook' | 'user';
+export type SubscriptionChannel = "trades" | "orderbook" | "user";
 
 // Client -> Server messages
 export type ClientMessage =
   | {
-      type: 'subscribe';
+      type: "subscribe";
       channel: SubscriptionChannel;
       market_id?: string;
       user_address?: string;
     }
   | {
-      type: 'unsubscribe';
+      type: "unsubscribe";
       channel: SubscriptionChannel;
       market_id?: string;
       user_address?: string;
     }
   | {
-      type: 'ping';
+      type: "ping";
     };
 
 // Server -> Client messages
 export type ServerMessage =
   | {
-      type: 'subscribed';
+      type: "subscribed";
       channel: SubscriptionChannel;
       market_id?: string;
       user_address?: string;
     }
   | {
-      type: 'unsubscribed';
+      type: "unsubscribed";
       channel: SubscriptionChannel;
       market_id?: string;
       user_address?: string;
     }
   | {
-      type: 'trade';
+      type: "trade";
       trade: TradeData;
     }
   | {
-      type: 'orderbook';
+      type: "orderbook";
       orderbook: OrderbookData;
     }
   | {
-      type: 'order';
+      type: "order";
       order_id: string;
       status: string;
       filled_size: string;
     }
   | {
-      type: 'balance';
+      type: "balance";
       token_ticker: string;
       available: string;
       locked: string;
     }
   | {
-      type: 'candle';
+      type: "candle";
       market_id: string;
       timestamp: number;
       open: string;
@@ -76,10 +76,10 @@ export type ServerMessage =
       volume: string;
     }
   | {
-      type: 'pong';
+      type: "pong";
     }
   | {
-      type: 'error';
+      type: "error";
       message: string;
     };
 
@@ -93,7 +93,7 @@ export interface TradeData {
   seller_order_id: string;
   price: string;
   size: string;
-  side: 'buy' | 'sell'; // Taker's side (determines if trade is "buy" or "sell" on tape)
+  side: "buy" | "sell"; // Taker's side (determines if trade is "buy" or "sell" on tape)
   timestamp: number;
 }
 

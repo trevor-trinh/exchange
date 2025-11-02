@@ -3,9 +3,12 @@
  */
 
 export class SdkError extends Error {
-  constructor(message: string, public readonly cause?: unknown) {
+  constructor(
+    message: string,
+    public readonly cause?: unknown
+  ) {
     super(message);
-    this.name = 'SdkError';
+    this.name = "SdkError";
   }
 }
 
@@ -17,20 +20,20 @@ export class ApiError extends SdkError {
     cause?: unknown
   ) {
     super(message, cause);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
 export class WebSocketError extends SdkError {
   constructor(message: string, cause?: unknown) {
     super(message, cause);
-    this.name = 'WebSocketError';
+    this.name = "WebSocketError";
   }
 }
 
 export class ValidationError extends SdkError {
   constructor(message: string, cause?: unknown) {
     super(message, cause);
-    this.name = 'ValidationError';
+    this.name = "ValidationError";
   }
 }

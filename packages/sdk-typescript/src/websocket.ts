@@ -2,21 +2,23 @@
  * WebSocket client for real-time exchange data
  */
 
-import type {
-  ClientMessage,
-  ServerMessage,
-  SubscriptionChannel,
-  MessageHandler,
-} from './types/websocket';
-import { WebSocketError } from './errors';
+import type { ClientMessage, ServerMessage, SubscriptionChannel, MessageHandler } from "./types/websocket";
+import { WebSocketError } from "./errors";
+import type { EnhancedTrade, EnhancedOrderbookLevel, WsTradeData } from "./enhancement";
+import type { CacheService } from "./cache";
+import type { EnhancementService } from "./enhancement";
+import type { Logger } from "./logger";
 
 export interface WebSocketClientConfig {
   url: string;
   reconnectDelays?: number[];
   pingInterval?: number;
+  cache: CacheService;
+  enhancer: EnhancementService;
+  logger: Logger;
 }
 
-type MessageType = ServerMessage['type'];
+type MessageType = ServerMessage["type"];
 
 // Subscription key for tracking active subscriptions
 type SubscriptionKey = string;
@@ -40,10 +42,17 @@ export class WebSocketClient {
   // Key format: "channel:marketId" or "channel:userAddress"
   private activeSubscriptions = new Map<SubscriptionKey, number>(); // ref count
 
+  private cache: CacheService;
+  private enhancer: EnhancementService;
+  private logger: Logger;
+
   constructor(config: WebSocketClientConfig) {
     this.url = config.url;
     this.reconnectDelays = config.reconnectDelays ?? [1000, 2000, 4000, 8000, 16000];
     this.pingInterval = config.pingInterval ?? 30000;
+    this.cache = config.cache;
+    this.enhancer = config.enhancer;
+    this.logger = config.logger;
   }
 
   /**
@@ -80,12 +89,12 @@ export class WebSocketClient {
           const message: ServerMessage = JSON.parse(event.data);
           this.handleMessage(message);
         } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
+          this.logger.error("Failed to parse WebSocket message", error);
         }
       };
 
       this.ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        this.logger.error("WebSocket error", error);
       };
 
       this.ws.onclose = () => {
@@ -94,7 +103,7 @@ export class WebSocketClient {
         this.scheduleReconnect();
       };
     } catch (error) {
-      throw new WebSocketError('Failed to connect', error);
+      throw new WebSocketError("Failed to connect", error);
     }
   }
 
@@ -121,25 +130,22 @@ export class WebSocketClient {
   /**
    * Subscribe to a channel (with reference counting to prevent duplicates)
    */
-  subscribe(
-    channel: SubscriptionChannel,
-    params?: { marketId?: string; userAddress?: string }
-  ): void {
+  subscribe(channel: SubscriptionChannel, params?: { marketId?: string; userAddress?: string }): void {
     const key = this.getSubscriptionKey(channel, params);
     const currentCount = this.activeSubscriptions.get(key) || 0;
 
     // Only send subscribe message if this is the first subscription
     if (currentCount === 0) {
-      console.log(`[WebSocket] Subscribing to ${key}`);
+      this.logger.debug(`Subscribing to ${key}`);
       const message: ClientMessage = {
-        type: 'subscribe',
+        type: "subscribe",
         channel,
         market_id: params?.marketId,
         user_address: params?.userAddress,
       };
       this.send(message);
     } else {
-      console.log(`[WebSocket] Already subscribed to ${key} (count: ${currentCount}), incrementing ref count`);
+      this.logger.debug(`Already subscribed to ${key} (count: ${currentCount}), incrementing ref count`);
     }
 
     // Increment reference count
@@ -149,15 +155,12 @@ export class WebSocketClient {
   /**
    * Unsubscribe from a channel (with reference counting)
    */
-  unsubscribe(
-    channel: SubscriptionChannel,
-    params?: { marketId?: string; userAddress?: string }
-  ): void {
+  unsubscribe(channel: SubscriptionChannel, params?: { marketId?: string; userAddress?: string }): void {
     const key = this.getSubscriptionKey(channel, params);
     const currentCount = this.activeSubscriptions.get(key) || 0;
 
     if (currentCount === 0) {
-      console.warn(`[WebSocket] Attempted to unsubscribe from ${key} but no active subscription found`);
+      this.logger.warn(`Attempted to unsubscribe from ${key} but no active subscription found`);
       return;
     }
 
@@ -165,9 +168,9 @@ export class WebSocketClient {
 
     // Only send unsubscribe message when ref count reaches 0
     if (newCount === 0) {
-      console.log(`[WebSocket] Unsubscribing from ${key}`);
+      this.logger.debug(`Unsubscribing from ${key}`);
       const message: ClientMessage = {
-        type: 'unsubscribe',
+        type: "unsubscribe",
         channel,
         market_id: params?.marketId,
         user_address: params?.userAddress,
@@ -175,7 +178,7 @@ export class WebSocketClient {
       this.send(message);
       this.activeSubscriptions.delete(key);
     } else {
-      console.log(`[WebSocket] Decrementing ref count for ${key} (count: ${newCount})`);
+      this.logger.debug(`Decrementing ref count for ${key} (count: ${newCount})`);
       this.activeSubscriptions.set(key, newCount);
     }
   }
@@ -187,17 +190,14 @@ export class WebSocketClient {
     channel: SubscriptionChannel,
     params?: { marketId?: string; userAddress?: string }
   ): SubscriptionKey {
-    const identifier = params?.marketId || params?.userAddress || 'global';
+    const identifier = params?.marketId || params?.userAddress || "global";
     return `${channel}:${identifier}`;
   }
 
   /**
    * Register a message handler
    */
-  on<T extends MessageType>(
-    type: T,
-    handler: MessageHandler<Extract<ServerMessage, { type: T }>>
-  ): () => void {
+  on<T extends MessageType>(type: T, handler: MessageHandler<Extract<ServerMessage, { type: T }>>): () => void {
     if (!this.handlers.has(type)) {
       this.handlers.set(type, new Set());
     }
@@ -251,14 +251,14 @@ export class WebSocketClient {
     try {
       this.ws.send(JSON.stringify(message));
     } catch (error) {
-      console.error('Failed to send WebSocket message:', error);
+      this.logger.error("Failed to send WebSocket message", error);
       this.messageQueue.push(message);
     }
   }
 
   private handleMessage(message: ServerMessage): void {
     // Handle pong messages automatically
-    if (message.type === 'pong') {
+    if (message.type === "pong") {
       this.lastPongTime = Date.now();
     }
 
@@ -268,7 +268,7 @@ export class WebSocketClient {
         try {
           handler(message);
         } catch (error) {
-          console.error(`Error in ${message.type} handler:`, error);
+          this.logger.error(`Error in ${message.type} handler`, error);
         }
       });
     }
@@ -279,9 +279,7 @@ export class WebSocketClient {
       return;
     }
 
-    const delay = this.reconnectDelays[
-      Math.min(this.reconnectAttempt, this.reconnectDelays.length - 1)
-    ];
+    const delay = this.reconnectDelays[Math.min(this.reconnectAttempt, this.reconnectDelays.length - 1)];
 
     this.reconnectTimeout = setTimeout(() => {
       this.reconnectTimeout = null;
@@ -297,13 +295,13 @@ export class WebSocketClient {
         // Check if we've received a pong recently
         const timeSinceLastPong = Date.now() - this.lastPongTime;
         if (timeSinceLastPong > this.pongTimeout) {
-          console.warn('[WebSocket] No pong received, reconnecting...');
+          this.logger.warn("No pong received, reconnecting...");
           this.ws?.close();
           return;
         }
 
         // Send ping
-        this.send({ type: 'ping' });
+        this.send({ type: "ping" });
       }
     }, this.pingInterval);
   }
@@ -323,22 +321,203 @@ export class WebSocketClient {
       return;
     }
 
-    console.log(`[WebSocket] Re-subscribing to ${this.activeSubscriptions.size} subscriptions`);
+    this.logger.info(`Re-subscribing to ${this.activeSubscriptions.size} subscriptions`);
 
     // Parse subscription keys and send subscribe messages
     this.activeSubscriptions.forEach((count, key) => {
-      const [channel, identifier] = key.split(':') as [SubscriptionChannel, string];
+      const [channel, identifier] = key.split(":") as [SubscriptionChannel, string];
 
       const message: ClientMessage = {
-        type: 'subscribe',
+        type: "subscribe",
         channel,
         // Determine if it's a market or user subscription
-        market_id: channel === 'trades' || channel === 'orderbook' ? identifier : undefined,
-        user_address: channel === 'user' ? identifier : undefined,
+        market_id: channel === "trades" || channel === "orderbook" ? identifier : undefined,
+        user_address: channel === "user" ? identifier : undefined,
       };
 
       this.send(message);
-      console.log(`[WebSocket] Re-subscribed to ${key}`);
+      this.logger.debug(`Re-subscribed to ${key}`);
     });
+  }
+
+  // ============================================================================
+  // Type-Safe Convenience Methods (WebSocket-specific logic)
+  // ============================================================================
+
+  /**
+   * Stream trades for a market (enhanced with display values)
+   * @returns Unsubscribe function
+   */
+  onTrades(marketId: string, handler: (trade: EnhancedTrade) => void): () => void {
+    this.logger.debug(`Setting up trades subscription for ${marketId}`);
+
+    const removeHandler = this.on("trade", (msg) => {
+      if (msg.type !== "trade" || msg.trade.market_id !== marketId) return;
+
+      if (!this.cache.isReady()) {
+        this.logger.warn("Trade received before cache initialized, skipping");
+        return;
+      }
+
+      try {
+        const wsTrade: WsTradeData = {
+          id: msg.trade.id,
+          market_id: msg.trade.market_id,
+          buyer_address: msg.trade.buyer_address,
+          seller_address: msg.trade.seller_address,
+          buyer_order_id: msg.trade.buyer_order_id,
+          seller_order_id: msg.trade.seller_order_id,
+          price: msg.trade.price,
+          size: msg.trade.size,
+          side: msg.trade.side,
+          timestamp: msg.trade.timestamp,
+        };
+
+        const enhanced = this.enhancer.enhanceWsTrade(wsTrade);
+        handler(enhanced);
+      } catch (error) {
+        this.logger.error("Failed to enhance trade", error);
+      }
+    });
+
+    this.subscribe("trades", { marketId });
+
+    return () => {
+      this.logger.debug(`Cleaning up trades subscription for ${marketId}`);
+      removeHandler();
+      this.unsubscribe("trades", { marketId });
+    };
+  }
+
+  /**
+   * Stream orderbook updates for a market (enhanced with display values)
+   * @returns Unsubscribe function
+   */
+  onOrderbook(
+    marketId: string,
+    handler: (update: { bids: EnhancedOrderbookLevel[]; asks: EnhancedOrderbookLevel[] }) => void
+  ): () => void {
+    this.logger.debug(`Setting up orderbook subscription for ${marketId}`);
+
+    const removeHandler = this.on("orderbook", (msg) => {
+      if (msg.type !== "orderbook" || msg.orderbook.market_id !== marketId) return;
+
+      if (!this.cache.isReady()) {
+        this.logger.warn("Orderbook received before cache initialized, skipping");
+        return;
+      }
+
+      try {
+        const enhancedBids = msg.orderbook.bids.map((bid) => this.enhancer.enhanceOrderbookLevel(bid, marketId));
+        const enhancedAsks = msg.orderbook.asks.map((ask) => this.enhancer.enhanceOrderbookLevel(ask, marketId));
+
+        handler({ bids: enhancedBids, asks: enhancedAsks });
+      } catch (error) {
+        this.logger.error("Failed to enhance orderbook", error);
+      }
+    });
+
+    this.subscribe("orderbook", { marketId });
+
+    return () => {
+      this.logger.debug(`Cleaning up orderbook subscription for ${marketId}`);
+      removeHandler();
+      this.unsubscribe("orderbook", { marketId });
+    };
+  }
+
+  /**
+   * Stream order updates for a user
+   * @returns Unsubscribe function
+   */
+  onUserOrders(
+    userAddress: string,
+    handler: (order: { order_id: string; status: string; filled_size: string }) => void
+  ): () => void {
+    this.logger.debug(`Setting up user orders subscription for ${userAddress}`);
+
+    const removeHandler = this.on("order", (msg) => {
+      if (msg.type === "order") {
+        handler({ order_id: msg.order_id, status: msg.status, filled_size: msg.filled_size });
+      }
+    });
+
+    this.subscribe("user", { userAddress });
+
+    return () => {
+      this.logger.debug(`Cleaning up user orders subscription for ${userAddress}`);
+      removeHandler();
+      this.unsubscribe("user", { userAddress });
+    };
+  }
+
+  /**
+   * Stream trade updates for a user (enhanced with display values)
+   * @returns Unsubscribe function
+   */
+  onUserTrades(userAddress: string, handler: (trade: EnhancedTrade) => void): () => void {
+    this.logger.debug(`Setting up user trades subscription for ${userAddress}`);
+
+    const removeHandler = this.on("trade", (msg) => {
+      if (msg.type !== "trade") return;
+
+      if (!this.cache.isReady()) {
+        this.logger.warn("Trade received before cache initialized, skipping");
+        return;
+      }
+
+      try {
+        const wsTrade: WsTradeData = {
+          id: msg.trade.id,
+          market_id: msg.trade.market_id,
+          buyer_address: msg.trade.buyer_address,
+          seller_address: msg.trade.seller_address,
+          buyer_order_id: msg.trade.buyer_order_id,
+          seller_order_id: msg.trade.seller_order_id,
+          price: msg.trade.price,
+          size: msg.trade.size,
+          side: msg.trade.side,
+          timestamp: msg.trade.timestamp,
+        };
+
+        const enhanced = this.enhancer.enhanceWsTrade(wsTrade);
+        handler(enhanced);
+      } catch (error) {
+        this.logger.error("Failed to enhance user trade", error);
+      }
+    });
+
+    this.subscribe("user", { userAddress });
+
+    return () => {
+      this.logger.debug(`Cleaning up user trades subscription for ${userAddress}`);
+      removeHandler();
+      this.unsubscribe("user", { userAddress });
+    };
+  }
+
+  /**
+   * Stream balance updates for a user
+   * @returns Unsubscribe function
+   */
+  onUserBalances(
+    userAddress: string,
+    handler: (balance: { token_ticker: string; available: string; locked: string }) => void
+  ): () => void {
+    this.logger.debug(`Setting up user balances subscription for ${userAddress}`);
+
+    const removeHandler = this.on("balance", (msg) => {
+      if (msg.type === "balance") {
+        handler({ token_ticker: msg.token_ticker, available: msg.available, locked: msg.locked });
+      }
+    });
+
+    this.subscribe("user", { userAddress });
+
+    return () => {
+      this.logger.debug(`Cleaning up user balances subscription for ${userAddress}`);
+      removeHandler();
+      this.unsubscribe("user", { userAddress });
+    };
   }
 }

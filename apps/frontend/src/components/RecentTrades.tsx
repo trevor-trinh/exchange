@@ -76,11 +76,15 @@ export function RecentTrades() {
 
                 return (
                   <TableRow key={trade.id}>
-                    <TableCell className="font-mono font-semibold">{trade.priceDisplay}</TableCell>
+                    <TableCell
+                      className={`font-mono font-semibold ${side === "buy" ? "text-green-500" : "text-red-500"}`}
+                    >
+                      {trade.priceDisplay}
+                    </TableCell>
                     <TableCell className="font-mono text-muted-foreground">{trade.sizeDisplay}</TableCell>
                     <TableCell>
                       <span
-                        className={`text-xs px-2 py-1 font-semibold uppercase tracking-wide ${
+                        className={`text-xs px-2 py-1 font-semibold uppercase tracking-wide rounded ${
                           side === "buy"
                             ? "bg-green-500/10 text-green-500 border border-green-500/20"
                             : "bg-red-500/10 text-red-500 border border-red-500/20"

@@ -221,7 +221,7 @@ export function TradePanel() {
       });
 
       setSuccess(
-        `Order placed! ${result.trades.length > 0 ? `Filled ${result.trades.length} trade(s)` : "Order in book"}`,
+        `Order placed! ${result.trades.length > 0 ? `Filled ${result.trades.length} trade(s)` : "Order in book"}`
       );
       setPrice("");
       setSize("");
@@ -403,7 +403,7 @@ export function TradePanel() {
                   <span className="font-mono font-semibold">
                     {formatNumberWithCommas(
                       side === "buy" ? estimatedTotal + estimatedFee : estimatedTotal - estimatedFee,
-                      Math.min(priceDecimals, 4),
+                      Math.min(priceDecimals, 4)
                     )}{" "}
                     {quoteToken.ticker}
                   </span>

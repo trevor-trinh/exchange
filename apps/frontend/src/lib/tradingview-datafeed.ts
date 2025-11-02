@@ -172,7 +172,7 @@ export class ExchangeDatafeed implements IBasicDataFeed {
       countBack?: number;
     },
     onResult: HistoryCallback,
-    onError: ErrorCallback,
+    onError: ErrorCallback
   ): void {
     console.log("[TradingView Datafeed] getBars called for:", symbolInfo.name, resolution);
     const { from, to, countBack } = periodParams;
@@ -235,7 +235,7 @@ export class ExchangeDatafeed implements IBasicDataFeed {
     resolution: ResolutionString,
     onTick: SubscribeBarsCallback,
     listenerGuid: string,
-    _onResetCacheNeededCallback: () => void,
+    _onResetCacheNeededCallback: () => void
   ): void {
     const intervalSeconds = resolutionToSeconds[resolution];
     if (!intervalSeconds) {
@@ -287,7 +287,7 @@ export class ExchangeDatafeed implements IBasicDataFeed {
 
     // If no more subscriptions for this market, unsubscribe from trades
     const hasOtherSubscriptions = Array.from(this.subscriptions.values()).some(
-      (sub) => sub.symbolInfo.name === marketId,
+      (sub) => sub.symbolInfo.name === marketId
     );
 
     if (!hasOtherSubscriptions) {

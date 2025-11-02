@@ -1,0 +1,44 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+.next
+**/.next
+out
+**/out
+dist
+**/dist
+build
+**/build
+target
+**/target
+
+# Logs
+*.log
+**/*.log
+
+# Env files
+.env*
+**/.env*
+
+# Generated files
+packages/shared/openapi.json
+packages/sdk-typescript/src/types/generated.ts
+apps/frontend/src/lib/types/openapi.ts
+**/.sqlx
+.sqlx
+*.sqlx
+
+# Vendor
+public/vendor
+**/public/vendor
+
+# Rust
+Cargo.lock
+**/Cargo.lock
+
+# Misc
+.DS_Store
+*.pem
+bun.lockb

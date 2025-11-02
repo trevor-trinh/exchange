@@ -80,7 +80,7 @@ export function MarketHeader() {
                   <span className="text-foreground font-mono font-medium">
                     {formatWithoutTrailingZeros(
                       toDisplayValue(selectedMarket.tick_size, quoteToken.decimals),
-                      Math.min(quoteToken.decimals, 8),
+                      Math.min(quoteToken.decimals, 8)
                     )}
                   </span>
                 </div>
@@ -90,7 +90,7 @@ export function MarketHeader() {
                   <span className="text-foreground font-mono font-medium">
                     {formatWithoutTrailingZeros(
                       toDisplayValue(selectedMarket.lot_size, baseToken.decimals),
-                      Math.min(baseToken.decimals, 8),
+                      Math.min(baseToken.decimals, 8)
                     )}
                   </span>
                 </div>

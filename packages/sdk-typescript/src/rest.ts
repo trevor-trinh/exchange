@@ -4,7 +4,18 @@
 
 import type { components } from "./types/generated";
 import { ApiError } from "./errors";
-import { toDisplayValue, formatPrice, formatSize } from "./format";
+import type { CacheService, Market, Token } from "./cache";
+import type {
+  EnhancementService,
+  EnhancedTrade,
+  EnhancedOrder,
+  EnhancedBalance,
+  EnhancedOrderbookLevel,
+  Order,
+  Trade,
+  Balance,
+} from "./enhancement";
+import type { Logger } from "./logger";
 
 // Extract types from OpenAPI components
 type InfoRequest = components["schemas"]["InfoRequest"];
@@ -19,67 +30,30 @@ type AdminRequest = components["schemas"]["AdminRequest"];
 type AdminResponse = components["schemas"]["AdminResponse"];
 type CandlesRequest = components["schemas"]["CandlesRequest"];
 
-// Domain types (from API)
-export type Market = components["schemas"]["ApiMarket"];
-export type Token = components["schemas"]["Token"];
-export type Order = components["schemas"]["ApiOrder"];
-export type Trade = components["schemas"]["ApiTrade"];
-export type Balance = components["schemas"]["ApiBalance"];
+// Re-export domain types for convenience
+export type { Market, Token };
+export type { EnhancedTrade, EnhancedOrder, EnhancedBalance, EnhancedOrderbookLevel, Order, Trade, Balance };
+
 export type Side = components["schemas"]["Side"];
 export type OrderType = components["schemas"]["OrderType"];
 export type OrderStatus = components["schemas"]["OrderStatus"];
 export type Candle = components["schemas"]["ApiCandle"];
 export type CandlesResponse = components["schemas"]["CandlesResponse"];
 
-// Enhanced types (with display values pre-computed)
-export type EnhancedTrade = Omit<Trade, "timestamp"> & {
-  timestamp: Date; // Converted from string
-  priceDisplay: string; // Formatted price
-  sizeDisplay: string; // Formatted size
-  priceValue: number; // Numeric price
-  sizeValue: number; // Numeric size
-};
-
-export type EnhancedOrder = Omit<Order, "created_at" | "updated_at"> & {
-  created_at: Date; // Converted from string
-  updated_at: Date; // Converted from string
-  priceDisplay: string; // Formatted price
-  sizeDisplay: string; // Formatted size
-  filledDisplay: string; // Formatted filled_size
-  priceValue: number; // Numeric price
-  sizeValue: number; // Numeric size
-  filledValue: number; // Numeric filled_size
-};
-
-export type EnhancedBalance = Omit<Balance, "updated_at"> & {
-  updated_at: Date; // Converted from string
-  amountDisplay: string; // Formatted amount
-  lockedDisplay: string; // Formatted open_interest
-  amountValue: number; // Numeric amount
-  lockedValue: number; // Numeric open_interest
-};
-
-export interface EnhancedOrderbookLevel {
-  price: string; // atoms
-  size: string; // atoms
-  priceDisplay: string; // Formatted
-  sizeDisplay: string; // Formatted
-  priceValue: number; // Numeric
-  sizeValue: number; // Numeric
-}
-
 export interface RestClientConfig {
   baseUrl: string;
   timeout?: number;
+  cache: CacheService;
+  enhancer: EnhancementService;
+  logger: Logger;
 }
 
 export class RestClient {
   private baseUrl: string;
   private timeout: number;
-
-  // Internal caches for data enhancement
-  private tokensCache: Map<string, Token> = new Map();
-  private marketsCache: Map<string, Market> = new Map();
+  private cache: CacheService;
+  private enhancer: EnhancementService;
+  private logger: Logger;
 
   constructor(config: RestClientConfig) {
     if (!config.baseUrl) {
@@ -87,151 +61,9 @@ export class RestClient {
     }
     this.baseUrl = config.baseUrl.replace(/\/$/, ""); // Remove trailing slash
     this.timeout = config.timeout ?? 30000;
-  }
-
-  // Public access to cached data
-  get tokens(): Token[] {
-    return Array.from(this.tokensCache.values());
-  }
-
-  get markets(): Market[] {
-    return Array.from(this.marketsCache.values());
-  }
-
-  getTokenByTicker(ticker: string): Token | undefined {
-    return this.tokensCache.get(ticker);
-  }
-
-  getMarketById(marketId: string): Market | undefined {
-    return this.marketsCache.get(marketId);
-  }
-
-  // ===== Enhancement Helpers =====
-
-  /**
-   * Enhance a trade with display values
-   * @public - Used by WebSocket handlers
-   * @throws Error if cache is not populated (call getMarkets() and getTokens() first)
-   */
-  public enhanceTrade(trade: Trade): EnhancedTrade {
-    const market = this.marketsCache.get(trade.market_id);
-    if (!market) {
-      throw new Error(
-        `[SDK] Market ${trade.market_id} not found in cache. ` +
-          `Available markets: ${Array.from(this.marketsCache.keys()).join(", ") || "none"}. ` +
-          `Call getMarkets() first to populate cache.`
-      );
-    }
-
-    const baseToken = this.tokensCache.get(market.base_ticker);
-    const quoteToken = this.tokensCache.get(market.quote_ticker);
-
-    if (!baseToken || !quoteToken) {
-      throw new Error(
-        `[SDK] Tokens for market ${trade.market_id} not found in cache. ` +
-          `Need: ${market.base_ticker}, ${market.quote_ticker}. ` +
-          `Available: ${Array.from(this.tokensCache.keys()).join(", ") || "none"}. ` +
-          `Call getTokens() first to populate cache.`
-      );
-    }
-
-    return {
-      ...trade,
-      timestamp: new Date(trade.timestamp),
-      priceDisplay: formatPrice(trade.price, quoteToken.decimals),
-      sizeDisplay: formatSize(trade.size, baseToken.decimals),
-      priceValue: toDisplayValue(trade.price, quoteToken.decimals),
-      sizeValue: toDisplayValue(trade.size, baseToken.decimals),
-    };
-  }
-
-  /**
-   * Enhance an order with display values
-   * @public - Used by WebSocket handlers
-   */
-  public enhanceOrder(order: Order, marketId: string): EnhancedOrder {
-    const market = this.marketsCache.get(marketId);
-    if (!market) {
-      throw new Error(
-        `Market ${marketId} not found in cache. Call getMarkets() first.`
-      );
-    }
-
-    const baseToken = this.tokensCache.get(market.base_ticker);
-    const quoteToken = this.tokensCache.get(market.quote_ticker);
-
-    if (!baseToken || !quoteToken) {
-      throw new Error(
-        `Tokens for market ${marketId} not found in cache. Call getTokens() first.`
-      );
-    }
-
-    return {
-      ...order,
-      created_at: new Date(order.created_at),
-      updated_at: new Date(order.updated_at),
-      priceDisplay: formatPrice(order.price, quoteToken.decimals),
-      sizeDisplay: formatSize(order.size, baseToken.decimals),
-      filledDisplay: formatSize(order.filled_size, baseToken.decimals),
-      priceValue: toDisplayValue(order.price, quoteToken.decimals),
-      sizeValue: toDisplayValue(order.size, baseToken.decimals),
-      filledValue: toDisplayValue(order.filled_size, baseToken.decimals),
-    };
-  }
-
-  /**
-   * Enhance a balance with display values
-   * @public - Used by WebSocket handlers
-   */
-  public enhanceBalance(balance: Balance): EnhancedBalance {
-    const token = this.tokensCache.get(balance.token_ticker);
-    if (!token) {
-      throw new Error(
-        `Token ${balance.token_ticker} not found in cache. Call getTokens() first.`
-      );
-    }
-
-    return {
-      ...balance,
-      updated_at: new Date(balance.updated_at),
-      amountDisplay: formatSize(balance.amount, token.decimals),
-      lockedDisplay: formatSize(balance.open_interest, token.decimals),
-      amountValue: toDisplayValue(balance.amount, token.decimals),
-      lockedValue: toDisplayValue(balance.open_interest, token.decimals),
-    };
-  }
-
-  /**
-   * Enhance an orderbook level with display values
-   * @public - Used by WebSocket handlers
-   */
-  public enhanceOrderbookLevel(
-    level: { price: string; size: string },
-    marketId: string
-  ): EnhancedOrderbookLevel {
-    const market = this.marketsCache.get(marketId);
-    if (!market) {
-      throw new Error(
-        `Market ${marketId} not found in cache. Call getMarkets() first.`
-      );
-    }
-
-    const baseToken = this.tokensCache.get(market.base_ticker);
-    const quoteToken = this.tokensCache.get(market.quote_ticker);
-
-    if (!baseToken || !quoteToken) {
-      throw new Error(
-        `Tokens for market ${marketId} not found in cache. Call getTokens() first.`
-      );
-    }
-
-    return {
-      ...level,
-      priceDisplay: formatPrice(level.price, quoteToken.decimals),
-      sizeDisplay: formatSize(level.size, baseToken.decimals),
-      priceValue: toDisplayValue(level.price, quoteToken.decimals),
-      sizeValue: toDisplayValue(level.size, baseToken.decimals),
-    };
+    this.cache = config.cache;
+    this.enhancer = config.enhancer;
+    this.logger = config.logger;
   }
 
   // ===== Info Endpoints =====
@@ -258,7 +90,7 @@ export class RestClient {
   }
 
   async getMarkets(): Promise<Market[]> {
-    console.log("[SDK] Fetching markets...");
+    this.logger.info("Fetching markets...");
     const request: InfoRequest = { type: "all_markets" };
     const response = await this.post<InfoResponse>("/api/info", request);
     if (response.type !== "all_markets") {
@@ -266,16 +98,13 @@ export class RestClient {
     }
 
     // Cache markets for data enhancement
-    response.markets.forEach((market) => {
-      this.marketsCache.set(market.id, market);
-    });
+    this.cache.setMarkets(response.markets);
 
-    console.log(`[SDK] Fetched ${response.markets.length} markets`);
     return response.markets;
   }
 
   async getTokens(): Promise<Token[]> {
-    console.log("[SDK] Fetching tokens...");
+    this.logger.info("Fetching tokens...");
     const request: InfoRequest = { type: "all_tokens" };
     const response = await this.post<InfoResponse>("/api/info", request);
     if (response.type !== "all_tokens") {
@@ -283,9 +112,7 @@ export class RestClient {
     }
 
     // Cache tokens for data enhancement
-    response.tokens.forEach((token) => {
-      this.tokensCache.set(token.ticker, token);
-    });
+    this.cache.setTokens(response.tokens);
 
     return response.tokens;
   }
@@ -314,9 +141,7 @@ export class RestClient {
     if (!params.marketId) {
       throw new Error("marketId is required for data enhancement");
     }
-    return response.orders.map((order) =>
-      this.enhanceOrder(order, params.marketId!)
-    );
+    return response.orders.map((order) => this.enhancer.enhanceOrder(order, params.marketId!));
   }
 
   async getBalances(userAddress: string): Promise<EnhancedBalance[]> {
@@ -330,14 +155,10 @@ export class RestClient {
     }
 
     // Enhance balances with display values
-    return response.balances.map((balance) => this.enhanceBalance(balance));
+    return response.balances.map((balance) => this.enhancer.enhanceBalance(balance));
   }
 
-  async getTrades(params: {
-    userAddress: string;
-    marketId?: string;
-    limit?: number;
-  }): Promise<EnhancedTrade[]> {
+  async getTrades(params: { userAddress: string; marketId?: string; limit?: number }): Promise<EnhancedTrade[]> {
     const request: UserRequest = {
       type: "trades",
       user_address: params.userAddress,
@@ -350,7 +171,7 @@ export class RestClient {
     }
 
     // Enhance trades with display values
-    return response.trades.map((trade) => this.enhanceTrade(trade));
+    return response.trades.map((trade) => this.enhancer.enhanceTrade(trade));
   }
 
   // ===== Trade Endpoints =====
@@ -401,8 +222,8 @@ export class RestClient {
 
     // Enhance the order and trades
     return {
-      order: this.enhanceOrder(response.order, params.marketId),
-      trades: response.trades.map((trade) => this.enhanceTrade(trade)),
+      order: this.enhancer.enhanceOrder(response.order, params.marketId),
+      trades: response.trades.map((trade) => this.enhancer.enhanceTrade(trade)),
     };
   }
 
@@ -430,10 +251,7 @@ export class RestClient {
 
     // Check if rounded size is 0
     if (roundedSize === 0n) {
-      throw new ApiError(
-        `Size ${params.size} is too small for lot_size ${market.lot_size} (rounded to 0)`,
-        400
-      );
+      throw new ApiError(`Size ${params.size} is too small for lot_size ${market.lot_size} (rounded to 0)`, 400);
     }
 
     // Place order with rounded size
@@ -496,11 +314,7 @@ export class RestClient {
     });
   }
 
-  async cancelOrder(params: {
-    userAddress: string;
-    orderId: string;
-    signature: string;
-  }): Promise<{ orderId: string }> {
+  async cancelOrder(params: { userAddress: string; orderId: string; signature: string }): Promise<{ orderId: string }> {
     const request: TradeRequest = {
       type: "cancel_order",
       user_address: params.userAddress,
@@ -537,12 +351,7 @@ export class RestClient {
 
   // ===== Drip/Faucet =====
 
-  async faucet(params: {
-    userAddress: string;
-    tokenTicker: string;
-    amount: string;
-    signature: string;
-  }): Promise<{
+  async faucet(params: { userAddress: string; tokenTicker: string; amount: string; signature: string }): Promise<{
     userAddress: string;
     tokenTicker: string;
     amount: string;
@@ -566,11 +375,7 @@ export class RestClient {
 
   // ===== Admin Endpoints =====
 
-  async adminCreateToken(params: {
-    ticker: string;
-    decimals: number;
-    name: string;
-  }): Promise<Token> {
+  async adminCreateToken(params: { ticker: string; decimals: number; name: string }): Promise<Token> {
     const request: AdminRequest = {
       type: "create_token",
       ticker: params.ticker,
@@ -668,14 +473,8 @@ export class RestClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const error = await response
-          .json()
-          .catch(() => ({ error: response.statusText }));
-        throw new ApiError(
-          error.error || "Request failed",
-          response.status,
-          error.code
-        );
+        const error = await response.json().catch(() => ({ error: response.statusText }));
+        throw new ApiError(error.error || "Request failed", response.status, error.code);
       }
 
       return await response.json();
