@@ -87,6 +87,9 @@ export class ExchangeClient {
   public readonly rest: RestClient;
   public readonly ws: WebSocketClient;
 
+  private cacheInitialized = false;
+  private cacheInitPromise: Promise<void> | null = null;
+
   constructor(config: string | ExchangeClientConfig) {
     // Support both simple URL string and full config object
     const cfg = typeof config === 'string'
@@ -106,6 +109,45 @@ export class ExchangeClient {
       reconnectDelays: cfg.wsReconnectDelays,
       pingInterval: cfg.wsPingInterval,
     });
+  }
+
+  /**
+   * Initialize the SDK cache with markets and tokens
+   * This is called automatically by WebSocket methods
+   * @public - Can also be called manually for eager initialization
+   */
+  async initializeCache(): Promise<void> {
+    // If already initialized, return immediately
+    if (this.cacheInitialized) {
+      console.log('[SDK] Cache already initialized, skipping');
+      return;
+    }
+
+    // If initialization is in progress, wait for it
+    if (this.cacheInitPromise) {
+      console.log('[SDK] Cache initialization in progress, waiting...');
+      return this.cacheInitPromise;
+    }
+
+    console.log('[SDK] Starting cache initialization...');
+
+    // Start initialization
+    this.cacheInitPromise = (async () => {
+      try {
+        const [markets, tokens] = await Promise.all([
+          this.rest.getMarkets(),
+          this.rest.getTokens(),
+        ]);
+        this.cacheInitialized = true;
+        console.log(`[SDK] Cache initialized: ${markets.length} markets, ${tokens.length} tokens`);
+      } catch (error) {
+        console.error('[SDK] Failed to initialize cache:', error);
+        this.cacheInitPromise = null; // Allow retry
+        throw error;
+      }
+    })();
+
+    return this.cacheInitPromise;
   }
 
   // ============================================================================
@@ -216,13 +258,28 @@ export class ExchangeClient {
 
   /**
    * Stream trades for a market (enhanced with display values)
+   * Automatically initializes cache if needed
    * @returns Unsubscribe function
    */
   onTrades(marketId: string, handler: (trade: EnhancedTrade) => void): () => void {
-    this.ws.connect();
-    this.ws.subscribe('trades', { marketId });
-    return this.ws.on('trade', (msg) => {
+    console.log(`[SDK] onTrades called for ${marketId}`);
+
+    // Initialize cache asynchronously before connecting
+    this.initializeCache().then(() => {
+      console.log(`[SDK] Cache ready, subscribing to trades for ${marketId}`);
+      this.ws.connect();
+      this.ws.subscribe('trades', { marketId });
+    }).catch(error => {
+      console.error('[SDK] Failed to initialize cache for trades:', error);
+    });
+
+    const removeHandler = this.ws.on('trade', (msg) => {
       if (msg.type === 'trade') {
+        // Only process if cache is ready
+        if (!this.cacheInitialized) {
+          return; // Skip trades until cache is ready
+        }
+
         // Convert WebSocket TradeData to REST Trade format
         const restTrade: Trade = {
           id: msg.trade.id,
@@ -241,25 +298,48 @@ export class ExchangeClient {
           const enhanced = this.rest.enhanceTrade(restTrade);
           handler(enhanced);
         } catch (error) {
-          console.error('Failed to enhance trade:', error);
-          // Optionally: pass unenhanced or skip
+          console.error('[SDK] Failed to enhance trade:', error);
         }
       }
     });
+
+    // Return cleanup function that both removes handler AND unsubscribes
+    return () => {
+      console.log(`[SDK] Cleaning up trades subscription for ${marketId}`);
+      removeHandler(); // Remove message handler
+      this.ws.unsubscribe('trades', { marketId }); // Unsubscribe from channel
+    };
   }
 
   /**
    * Stream orderbook updates for a market
+   * Automatically initializes cache if needed
    * @returns Unsubscribe function
    */
   onOrderbook(marketId: string, handler: (update: { bids: OrderbookLevel[], asks: OrderbookLevel[] }) => void): () => void {
-    this.ws.connect();
-    this.ws.subscribe('orderbook', { marketId });
-    return this.ws.on('orderbook', (msg) => {
+    console.log(`[SDK] onOrderbook called for ${marketId}`);
+
+    // Initialize cache asynchronously before connecting
+    this.initializeCache().then(() => {
+      console.log(`[SDK] Cache ready, subscribing to orderbook for ${marketId}`);
+      this.ws.connect();
+      this.ws.subscribe('orderbook', { marketId });
+    }).catch(error => {
+      console.error('[SDK] Failed to initialize cache for orderbook:', error);
+    });
+
+    const removeHandler = this.ws.on('orderbook', (msg) => {
       if (msg.type === 'orderbook') {
         handler({ bids: msg.orderbook.bids, asks: msg.orderbook.asks });
       }
     });
+
+    // Return cleanup function that both removes handler AND unsubscribes
+    return () => {
+      console.log(`[SDK] Cleaning up orderbook subscription for ${marketId}`);
+      removeHandler(); // Remove message handler
+      this.ws.unsubscribe('orderbook', { marketId }); // Unsubscribe from channel
+    };
   }
 
   /**
@@ -267,24 +347,48 @@ export class ExchangeClient {
    * @returns Unsubscribe function
    */
   onUserOrders(userAddress: string, handler: (order: { order_id: string; status: string; filled_size: string }) => void): () => void {
+    console.log(`[SDK] onUserOrders called for ${userAddress}`);
     this.ws.connect();
     this.ws.subscribe('user', { userAddress });
-    return this.ws.on('order', (msg) => {
+
+    const removeHandler = this.ws.on('order', (msg) => {
       if (msg.type === 'order') {
         handler({ order_id: msg.order_id, status: msg.status, filled_size: msg.filled_size });
       }
     });
+
+    // Return cleanup function
+    return () => {
+      console.log(`[SDK] Cleaning up user orders subscription for ${userAddress}`);
+      removeHandler();
+      this.ws.unsubscribe('user', { userAddress });
+    };
   }
 
   /**
    * Stream trade updates for a user (enhanced with display values)
+   * Automatically initializes cache if needed
    * @returns Unsubscribe function
    */
   onUserTrades(userAddress: string, handler: (trade: EnhancedTrade) => void): () => void {
-    this.ws.connect();
-    this.ws.subscribe('user', { userAddress });
-    return this.ws.on('trade', (msg) => {
+    console.log(`[SDK] onUserTrades called for ${userAddress}`);
+
+    // Initialize cache asynchronously before connecting
+    this.initializeCache().then(() => {
+      console.log(`[SDK] Cache ready, subscribing to user trades for ${userAddress}`);
+      this.ws.connect();
+      this.ws.subscribe('user', { userAddress });
+    }).catch(error => {
+      console.error('[SDK] Failed to initialize cache for user trades:', error);
+    });
+
+    const removeHandler = this.ws.on('trade', (msg) => {
       if (msg.type === 'trade') {
+        // Only process if cache is ready
+        if (!this.cacheInitialized) {
+          return; // Skip trades until cache is ready
+        }
+
         // Convert WebSocket TradeData to REST Trade format
         const restTrade: Trade = {
           id: msg.trade.id,
@@ -302,10 +406,17 @@ export class ExchangeClient {
           const enhanced = this.rest.enhanceTrade(restTrade);
           handler(enhanced);
         } catch (error) {
-          console.error('Failed to enhance user trade:', error);
+          console.error('[SDK] Failed to enhance user trade:', error);
         }
       }
     });
+
+    // Return cleanup function
+    return () => {
+      console.log(`[SDK] Cleaning up user trades subscription for ${userAddress}`);
+      removeHandler();
+      this.ws.unsubscribe('user', { userAddress });
+    };
   }
 
   /**
@@ -313,13 +424,22 @@ export class ExchangeClient {
    * @returns Unsubscribe function
    */
   onUserBalances(userAddress: string, handler: (balance: { token_ticker: string; available: string; locked: string }) => void): () => void {
+    console.log(`[SDK] onUserBalances called for ${userAddress}`);
     this.ws.connect();
     this.ws.subscribe('user', { userAddress });
-    return this.ws.on('balance', (msg) => {
+
+    const removeHandler = this.ws.on('balance', (msg) => {
       if (msg.type === 'balance') {
         handler({ token_ticker: msg.token_ticker, available: msg.available, locked: msg.locked });
       }
     });
+
+    // Return cleanup function
+    return () => {
+      console.log(`[SDK] Cleaning up user balances subscription for ${userAddress}`);
+      removeHandler();
+      this.ws.unsubscribe('user', { userAddress });
+    };
   }
 
   /**

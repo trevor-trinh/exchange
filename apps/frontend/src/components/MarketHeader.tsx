@@ -74,14 +74,18 @@ export function MarketHeader() {
                 <div className="flex items-center gap-1.5">
                   <span className="text-muted-foreground/60 uppercase tracking-wider">Tick</span>
                   <span className="text-foreground font-mono font-medium">
-                    {toDisplayValue(selectedMarket.tick_size, quoteToken.decimals).toFixed(Math.min(quoteToken.decimals, 8))}
+                    {toDisplayValue(selectedMarket.tick_size, quoteToken.decimals).toFixed(
+                      Math.min(quoteToken.decimals, 8),
+                    )}
                   </span>
                 </div>
                 <div className="h-3.5 w-[1px] bg-primary/40"></div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-muted-foreground/60 uppercase tracking-wider">Lot</span>
                   <span className="text-foreground font-mono font-medium">
-                    {toDisplayValue(selectedMarket.lot_size, baseToken.decimals).toFixed(Math.min(baseToken.decimals, 8))}
+                    {toDisplayValue(selectedMarket.lot_size, baseToken.decimals).toFixed(
+                      Math.min(baseToken.decimals, 8),
+                    )}
                   </span>
                 </div>
               </>

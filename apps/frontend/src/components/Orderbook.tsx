@@ -65,9 +65,9 @@ export function Orderbook() {
   });
 
   const maxAskCumulative =
-    asksWithCumulative.length > 0 ? asksWithCumulative[asksWithCumulative.length - 1]?.cumulative ?? 1 : 1;
+    asksWithCumulative.length > 0 ? (asksWithCumulative[asksWithCumulative.length - 1]?.cumulative ?? 1) : 1;
   const maxBidCumulative =
-    bidsWithCumulative.length > 0 ? bidsWithCumulative[bidsWithCumulative.length - 1]?.cumulative ?? 1 : 1;
+    bidsWithCumulative.length > 0 ? (bidsWithCumulative[bidsWithCumulative.length - 1]?.cumulative ?? 1) : 1;
 
   return (
     <Card className="flex flex-col h-full gap-0 py-0 overflow-hidden">
@@ -106,12 +106,8 @@ export function Orderbook() {
                         className="absolute left-0 top-0 bottom-0 bg-red-500/10 transition-all duration-300 ease-out"
                         style={{ width: `${depthPercentage}%` }}
                       />
-                      <span className="relative z-10 text-red-500 font-medium">
-                        {formatPrice(ask.price)}
-                      </span>
-                      <span className="relative z-10 text-muted-foreground">
-                        {formatSize(ask.size)}
-                      </span>
+                      <span className="relative z-10 text-red-500 font-medium">{formatPrice(ask.price)}</span>
+                      <span className="relative z-10 text-muted-foreground">{formatSize(ask.size)}</span>
                     </div>
                   );
                 })}
@@ -142,12 +138,8 @@ export function Orderbook() {
                         className="absolute left-0 top-0 bottom-0 bg-green-500/10 transition-all duration-300 ease-out"
                         style={{ width: `${depthPercentage}%` }}
                       />
-                      <span className="relative z-10 text-green-500 font-medium">
-                        {formatPrice(bid.price)}
-                      </span>
-                      <span className="relative z-10 text-muted-foreground">
-                        {formatSize(bid.size)}
-                      </span>
+                      <span className="relative z-10 text-green-500 font-medium">{formatPrice(bid.price)}</span>
+                      <span className="relative z-10 text-muted-foreground">{formatSize(bid.size)}</span>
                     </div>
                   );
                 })}

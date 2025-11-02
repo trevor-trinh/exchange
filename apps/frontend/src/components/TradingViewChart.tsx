@@ -25,10 +25,15 @@ declare global {
 export function TradingViewChart() {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetRef = useRef<IChartingLibraryWidget | null>(null);
+  const datafeedRef = useRef<ExchangeDatafeed | null>(null);
   const selectedMarketId = useExchangeStore((state) => state.selectedMarketId);
 
   useEffect(() => {
-    if (!containerRef.current || !selectedMarketId) return;
+    console.log('[TradingView] useEffect triggered - selectedMarketId:', selectedMarketId);
+    if (!containerRef.current || !selectedMarketId) {
+      console.log('[TradingView] Early return - no container or marketId');
+      return;
+    }
 
     // Check if TradingView library is loaded
     if (typeof window === "undefined" || !window.TradingView) {
@@ -38,9 +43,18 @@ export function TradingViewChart() {
 
     const TradingView = window.TradingView;
 
+    // Create datafeed once and reuse
+    if (!datafeedRef.current) {
+      console.log('[TradingView] Creating datafeed');
+      datafeedRef.current = new ExchangeDatafeed();
+    }
+
+    console.log('[TradingView] Initializing chart for market:', selectedMarketId);
+    console.log('[TradingView] TradingView object:', typeof TradingView, Object.keys(TradingView));
+
     const widgetOptions: ChartingLibraryWidgetOptions = {
       symbol: selectedMarketId,
-      datafeed: new ExchangeDatafeed(),
+      datafeed: datafeedRef.current,
       interval: "1" as ResolutionString, // 1 minute
       container: containerRef.current,
       library_path: "/vendor/trading-view/",
@@ -110,18 +124,20 @@ export function TradingViewChart() {
       },
     };
 
+    console.log('[TradingView] Creating widget...');
     try {
       const widget = new TradingView.widget(widgetOptions);
+      console.log('[TradingView] Widget created successfully');
       widgetRef.current = widget;
 
       widget.onChartReady(() => {
-        console.log("TradingView chart is ready");
+        console.log("[TradingView] Chart is ready!");
 
         // Force candlestick chart style
         widget.activeChart().setChartType(1); // 1 = Candles
       });
     } catch (error) {
-      console.error("Failed to create TradingView widget:", error);
+      console.error("[TradingView] Failed to create widget:", error);
     }
 
     // Cleanup

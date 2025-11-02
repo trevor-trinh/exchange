@@ -111,18 +111,28 @@ export class RestClient {
   /**
    * Enhance a trade with display values
    * @public - Used by WebSocket handlers
+   * @throws Error if cache is not populated (call getMarkets() and getTokens() first)
    */
   public enhanceTrade(trade: Trade): EnhancedTrade {
     const market = this.marketsCache.get(trade.market_id);
     if (!market) {
-      throw new Error(`Market ${trade.market_id} not found in cache. Call getMarkets() first.`);
+      throw new Error(
+        `[SDK] Market ${trade.market_id} not found in cache. ` +
+        `Available markets: ${Array.from(this.marketsCache.keys()).join(', ') || 'none'}. ` +
+        `Call getMarkets() first to populate cache.`
+      );
     }
 
     const baseToken = this.tokensCache.get(market.base_ticker);
     const quoteToken = this.tokensCache.get(market.quote_ticker);
 
     if (!baseToken || !quoteToken) {
-      throw new Error(`Tokens for market ${trade.market_id} not found in cache. Call getTokens() first.`);
+      throw new Error(
+        `[SDK] Tokens for market ${trade.market_id} not found in cache. ` +
+        `Need: ${market.base_ticker}, ${market.quote_ticker}. ` +
+        `Available: ${Array.from(this.tokensCache.keys()).join(', ') || 'none'}. ` +
+        `Call getTokens() first to populate cache.`
+      );
     }
 
     return {
@@ -206,6 +216,7 @@ export class RestClient {
   }
 
   async getMarkets(): Promise<Market[]> {
+    console.log('[SDK] Fetching markets...');
     const request: InfoRequest = { type: 'all_markets' };
     const response = await this.post<InfoResponse>('/api/info', request);
     if (response.type !== 'all_markets') {
@@ -217,10 +228,12 @@ export class RestClient {
       this.marketsCache.set(market.id, market);
     });
 
+    console.log(`[SDK] Fetched ${response.markets.length} markets`);
     return response.markets;
   }
 
   async getTokens(): Promise<Token[]> {
+    console.log('[SDK] Fetching tokens...');
     const request: InfoRequest = { type: 'all_tokens' };
     const response = await this.post<InfoResponse>('/api/info', request);
     if (response.type !== 'all_tokens') {

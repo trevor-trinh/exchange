@@ -18,6 +18,9 @@ export interface WebSocketClientConfig {
 
 type MessageType = ServerMessage['type'];
 
+// Subscription key for tracking active subscriptions
+type SubscriptionKey = string;
+
 export class WebSocketClient {
   private ws: WebSocket | null = null;
   private url: string;
@@ -32,6 +35,10 @@ export class WebSocketClient {
 
   private messageQueue: ClientMessage[] = [];
   private handlers = new Map<MessageType, Set<MessageHandler>>();
+
+  // Track active subscriptions to prevent duplicates
+  // Key format: "channel:marketId" or "channel:userAddress"
+  private activeSubscriptions = new Map<SubscriptionKey, number>(); // ref count
 
   constructor(config: WebSocketClientConfig) {
     this.url = config.url;
@@ -54,6 +61,9 @@ export class WebSocketClient {
         this.isConnected = true;
         this.reconnectAttempt = 0;
         this.lastPongTime = Date.now();
+
+        // Re-subscribe to all active subscriptions after reconnect
+        this.resubscribeAll();
 
         // Send queued messages
         while (this.messageQueue.length > 0) {
@@ -109,35 +119,76 @@ export class WebSocketClient {
   }
 
   /**
-   * Subscribe to a channel
+   * Subscribe to a channel (with reference counting to prevent duplicates)
    */
   subscribe(
     channel: SubscriptionChannel,
     params?: { marketId?: string; userAddress?: string }
   ): void {
-    const message: ClientMessage = {
-      type: 'subscribe',
-      channel,
-      market_id: params?.marketId,
-      user_address: params?.userAddress,
-    };
-    this.send(message);
+    const key = this.getSubscriptionKey(channel, params);
+    const currentCount = this.activeSubscriptions.get(key) || 0;
+
+    // Only send subscribe message if this is the first subscription
+    if (currentCount === 0) {
+      console.log(`[WebSocket] Subscribing to ${key}`);
+      const message: ClientMessage = {
+        type: 'subscribe',
+        channel,
+        market_id: params?.marketId,
+        user_address: params?.userAddress,
+      };
+      this.send(message);
+    } else {
+      console.log(`[WebSocket] Already subscribed to ${key} (count: ${currentCount}), incrementing ref count`);
+    }
+
+    // Increment reference count
+    this.activeSubscriptions.set(key, currentCount + 1);
   }
 
   /**
-   * Unsubscribe from a channel
+   * Unsubscribe from a channel (with reference counting)
    */
   unsubscribe(
     channel: SubscriptionChannel,
     params?: { marketId?: string; userAddress?: string }
   ): void {
-    const message: ClientMessage = {
-      type: 'unsubscribe',
-      channel,
-      market_id: params?.marketId,
-      user_address: params?.userAddress,
-    };
-    this.send(message);
+    const key = this.getSubscriptionKey(channel, params);
+    const currentCount = this.activeSubscriptions.get(key) || 0;
+
+    if (currentCount === 0) {
+      console.warn(`[WebSocket] Attempted to unsubscribe from ${key} but no active subscription found`);
+      return;
+    }
+
+    const newCount = currentCount - 1;
+
+    // Only send unsubscribe message when ref count reaches 0
+    if (newCount === 0) {
+      console.log(`[WebSocket] Unsubscribing from ${key}`);
+      const message: ClientMessage = {
+        type: 'unsubscribe',
+        channel,
+        market_id: params?.marketId,
+        user_address: params?.userAddress,
+      };
+      this.send(message);
+      this.activeSubscriptions.delete(key);
+    } else {
+      console.log(`[WebSocket] Decrementing ref count for ${key} (count: ${newCount})`);
+      this.activeSubscriptions.set(key, newCount);
+    }
+  }
+
+  /**
+   * Get subscription key for tracking
+   */
+  private getSubscriptionKey(
+    channel: SubscriptionChannel,
+    params?: { marketId?: string; userAddress?: string }
+  ): SubscriptionKey {
+    const identifier = params?.marketId || params?.userAddress || 'global';
+    return `${channel}:${identifier}`;
   }
 
   /**
@@ -262,5 +313,32 @@ export class WebSocketClient {
       clearInterval(this.pingTimer);
       this.pingTimer = null;
     }
+  }
+
+  /**
+   * Re-subscribe to all active subscriptions (used after reconnect)
+   */
+  private resubscribeAll(): void {
+    if (this.activeSubscriptions.size === 0) {
+      return;
+    }
+
+    console.log(`[WebSocket] Re-subscribing to ${this.activeSubscriptions.size} subscriptions`);
+
+    // Parse subscription keys and send subscribe messages
+    this.activeSubscriptions.forEach((count, key) => {
+      const [channel, identifier] = key.split(':') as [SubscriptionChannel, string];
+
+      const message: ClientMessage = {
+        type: 'subscribe',
+        channel,
+        // Determine if it's a market or user subscription
+        market_id: channel === 'trades' || channel === 'orderbook' ? identifier : undefined,
+        user_address: channel === 'user' ? identifier : undefined,
+      };
+
+      this.send(message);
+      console.log(`[WebSocket] Re-subscribed to ${key}`);
+    });
   }
 }

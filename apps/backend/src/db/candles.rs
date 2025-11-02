@@ -2,7 +2,7 @@ use crate::db::Db;
 use crate::errors::{ExchangeError, Result};
 use crate::models::{
     api::ApiCandle,
-    db::{CandleRow, ClickHouseTradeRow},
+    db::{CandleInsertRow, CandleRow, ClickHouseTradeRow},
     domain::{Candle, Trade},
 };
 use chrono::{DateTime, Utc};
@@ -41,9 +41,10 @@ impl Db {
         interval: String,
         ohlcv: (u128, u128, u128, u128, u128), // (open, high, low, close, volume)
     ) -> Result<()> {
-        let candle_row = CandleRow {
+        let candle_row = CandleInsertRow {
             market_id,
             timestamp: timestamp.timestamp() as u32,
+            trade_time: timestamp.timestamp() as u32, // Use same timestamp for manual inserts
             interval,
             open: ohlcv.0,
             high: ohlcv.1,
@@ -52,7 +53,7 @@ impl Db {
             volume: ohlcv.4,
         };
 
-        let mut insert = self.clickhouse.insert::<CandleRow>("candles").await?;
+        let mut insert = self.clickhouse.insert::<CandleInsertRow>("candles").await?;
         insert.write(&candle_row).await?;
         insert.end().await?;
 

@@ -51,12 +51,22 @@ async fn init_schema(client: &Client) -> anyhow::Result<()> {
 
     // Split by statements and execute each
     for statement in schema.split(';') {
-        // Remove comment lines and trim
+        // Remove comment lines and inline comments
         let cleaned: String = statement
             .lines()
-            .filter(|line| {
+            .filter_map(|line| {
                 let trimmed = line.trim();
-                !trimmed.is_empty() && !trimmed.starts_with("--")
+                // Skip empty lines and lines that start with --
+                if trimmed.is_empty() || trimmed.starts_with("--") {
+                    return None;
+                }
+                // Remove inline comments (everything after --)
+                let without_inline_comment = if let Some(pos) = line.find("--") {
+                    &line[..pos]
+                } else {
+                    line
+                };
+                Some(without_inline_comment)
             })
             .collect::<Vec<&str>>()
             .join("\n");

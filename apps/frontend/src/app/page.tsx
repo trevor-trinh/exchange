@@ -16,11 +16,14 @@ export default function Home() {
 
   // Auto-select BTC/USDC market when markets load
   useEffect(() => {
+    console.log("[Home] useEffect - markets:", markets.length, "selectedMarketId:", selectedMarketId);
     if (markets.length > 0 && !selectedMarketId) {
       const btcUsdcMarket = markets.find((m) => m.id === "BTC/USDC");
       if (btcUsdcMarket) {
+        console.log("[Home] Auto-selecting BTC/USDC market");
         selectMarket(btcUsdcMarket.id);
       } else {
+        console.log("[Home] Auto-selecting first market:", markets[0]?.id);
         selectMarket(markets[0]?.id || "");
       }
     }

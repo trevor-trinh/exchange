@@ -1,6 +1,6 @@
 /// Tests to verify ClickHouse schema matches Rust structs
 /// These tests catch schema mismatches that cause runtime panics
-use backend::models::db::{CandleRow, ClickHouseTradeRow};
+use backend::models::db::{CandleInsertRow, ClickHouseTradeRow};
 use exchange_test_utils::TestContainers;
 
 #[tokio::test]
@@ -46,10 +46,11 @@ async fn test_clickhouse_candles_schema_matches_struct() {
         .expect("Failed to setup containers");
     let db = containers.db_clone();
 
-    // Try to insert a dummy candle row
-    let candle = CandleRow {
+    // Try to insert a dummy candle row using CandleInsertRow
+    let candle = CandleInsertRow {
         market_id: "BTC/USDC".to_string(),
         timestamp: 1234567890,
+        trade_time: 1234567890,
         interval: "1m".to_string(),
         open: 95000000000,
         high: 95100000000,
@@ -61,7 +62,7 @@ async fn test_clickhouse_candles_schema_matches_struct() {
     // This will panic if schema doesn't match struct
     let result = db
         .clickhouse
-        .insert::<CandleRow>("candles")
+        .insert::<CandleInsertRow>("candles")
         .await
         .unwrap()
         .write(&candle)

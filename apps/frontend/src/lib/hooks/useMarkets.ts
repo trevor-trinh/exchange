@@ -14,9 +14,11 @@ export function useMarkets() {
 
     async function fetchData() {
       try {
+        console.log('[useMarkets] Fetching markets and tokens...');
         const [marketsData, tokensData] = await Promise.all([exchange.getMarkets(), exchange.getTokens()]);
 
         if (mounted) {
+          console.log('[useMarkets] Got data:', marketsData.length, 'markets,', tokensData.length, 'tokens');
           // Enrich markets with decimal information from tokens
           const enrichedMarkets = marketsData.map((market: any) => {
             const baseToken = tokensData.find((t: any) => t.ticker === market.base_ticker);
@@ -29,8 +31,10 @@ export function useMarkets() {
             };
           });
 
+          console.log('[useMarkets] Setting markets and tokens in store');
           setMarkets(enrichedMarkets);
           setTokens(tokensData);
+          console.log('[useMarkets] Done!');
         }
       } catch (error) {
         console.error("Failed to fetch markets:", error);
@@ -42,7 +46,8 @@ export function useMarkets() {
     return () => {
       mounted = false;
     };
-  }, [setMarkets, setTokens]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount - setMarkets/setTokens are stable but we don't need them in deps
 
   return {
     markets,

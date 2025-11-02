@@ -15,6 +15,7 @@ export function useOrderbook(marketId: string | null) {
   useEffect(() => {
     if (!marketId) return;
 
+    console.log('[useOrderbook] Subscribing to orderbook for', marketId);
     const client = getExchangeClient();
     setOrderbookLoading(true);
 
@@ -24,8 +25,12 @@ export function useOrderbook(marketId: string | null) {
     });
 
     // Cleanup
-    return unsubscribe;
-  }, [marketId, updateOrderbook, setOrderbookLoading]);
+    return () => {
+      console.log('[useOrderbook] Cleaning up subscription for', marketId);
+      unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [marketId]); // Only re-subscribe when marketId changes - store functions are stable
 
   return {
     bids,
