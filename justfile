@@ -60,8 +60,9 @@ bench:
 
 # ================================
 
-openapi:
+types:
   cd apps/backend && cargo run --bin generate_openapi
+  cd apps/backend && cargo test export_websocket_types
   bun run openapi
 
 fmt:
@@ -80,10 +81,12 @@ clean:
   cargo clean
 
 ci:
-  just openapi
+  just install
+  just types
   just fmt
   just lint
   just db-prepare
 
-
+sort:
+  cargo sort -g -w
 

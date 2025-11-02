@@ -93,6 +93,7 @@ fn engine_event_to_message(event: EngineEvent) -> ServerMessage {
                 seller_order_id: trade.seller_order_id.to_string(),
                 price: trade.price.to_string(),
                 size: trade.size.to_string(),
+                side: trade.side,
                 timestamp: trade.timestamp.timestamp(),
             },
         },

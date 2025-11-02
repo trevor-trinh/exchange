@@ -31,8 +31,8 @@ exchange/
 │       └── public/vendor/trading-view/  # TradingView integration
 ├── packages/
 │   └── shared/           # Shared schemas and types
-│       ├── openapi.json  # REST API schema
-│       └── websocket-schema.json  # WebSocket message schema
+│       ├── openapi.json  # REST API schema (auto-generated)
+│       └── websocket.ts  # WebSocket types (auto-generated from Rust via ts-rs)
 └── justfile             # Build commands
 ```
 
@@ -53,9 +53,9 @@ exchange/
 
 ### Development Workflow
 
-- **Backend**: `just run-backend` or `cargo run`
-- **Frontend**: `just run-frontend` or `bun run dev`
-- **Schema Generation**: `cargo run --bin generate-openapi`
+- **Backend**: `just backend` or `cargo run`
+- **Frontend**: `just frontend` or `bun run dev`
+- **Type Generation**: `just types` (generates both REST and WebSocket types)
 
 ## Common Tasks
 
@@ -64,14 +64,14 @@ exchange/
 1. **Create handler function** in `apps/backend/src/api/rest/`
 2. **Add route** in `apps/backend/src/api/rest/mod.rs`
 3. **Update OpenAPI** in `apps/backend/src/lib.rs`
-4. **Regenerate schema**: `cargo run --bin generate-openapi`
+4. **Regenerate types**: `just types`
 
 ### Adding WebSocket Messages
 
-1. **Define message types** in `apps/backend/src/models.rs`
+1. **Define message types** in `apps/backend/src/models/api.rs` with `#[derive(TS)]`
 2. **Create handler** in `apps/backend/src/api/ws/`
-3. **Update schema** in `packages/shared/websocket-schema.json`
-4. **Generate TypeScript types** for frontend
+3. **Regenerate types**: `just types`
+4. TypeScript types are auto-generated from Rust via ts-rs!
 
 ### Database Operations
 
@@ -114,8 +114,8 @@ const ws = new WebSocket("ws://localhost:8001/ws");
 
 ```bash
 # Development
-just run-backend          # Start backend server
-just run-frontend         # Start frontend dev server
+just backend              # Start backend server
+just frontend             # Start frontend dev server
 just install              # Install all dependencies
 
 # Building
@@ -124,6 +124,6 @@ just lint                 # Lint all code
 just test                 # Run all tests
 just clean                # Clean build artifacts
 
-# Schema generation
-cargo run --bin generate-openapi  # Generate OpenAPI spec
+# Type generation
+just types                # Generate TypeScript types (REST + WebSocket)
 ```

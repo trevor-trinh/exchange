@@ -26,6 +26,7 @@ thiserror.workspace = true
 tokio.workspace = true
 toml.workspace = true
 tower-http.workspace = true
+ts-rs.workspace = true
 utoipa.workspace = true
 utoipa-swagger-ui.workspace = true
 uuid.workspace = true

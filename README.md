@@ -145,6 +145,10 @@ missing production
 - add cancel_all for better bot management
 - started using dbeaver
 - lots of twiddling with types, candles, configs
+- add turnkey wallet kit
+- refactor sdk to handle token cache and enhanced types (decimal conversions, etc)
+- refactor to bun monorepo
+- use ts-rs for ws types
 
 - add trading signatures
 - add full-fledged frontend

@@ -20,6 +20,7 @@ async fn test_clickhouse_trades_schema_matches_struct() {
         seller_order_id: "seller-order-id".to_string(),
         price: 95000000000,
         size: 1000000,
+        side: "buy".to_string(),
         timestamp: 1234567890,
     };
 
@@ -170,6 +171,7 @@ async fn test_trades_roundtrip() {
         seller_order_id: "seller-order-1".to_string(),
         price: 95000000000,
         size: 1000000,
+        side: "buy".to_string(),
         timestamp: 1234567890,
     };
 

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display};
 use std::str::FromStr;
 use tokio::sync::oneshot;
+use ts_rs::TS;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -12,21 +13,24 @@ use crate::models::api::{OrderCancelled, OrderPlaced, OrdersCancelled};
 // ENUMS
 // ============================================================================
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, TS)]
+#[ts(export, export_to = "../../../packages/shared/websocket.ts")]
 #[serde(rename_all = "lowercase")]
 pub enum Side {
     Buy,
     Sell,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, TS)]
+#[ts(export, export_to = "../../../packages/shared/websocket.ts")]
 #[serde(rename_all = "lowercase")]
 pub enum OrderType {
     Limit,
     Market,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, TS)]
+#[ts(export, export_to = "../../../packages/shared/websocket.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum OrderStatus {
     Pending,
