@@ -132,10 +132,12 @@ impl OrderbookMirrorBot {
     async fn sync_orderbook(&mut self) -> Result<()> {
         let (bids, asks) = self.orderbook.get_top_levels(self.config.depth_levels);
 
-        // Cancel all existing orders
-        self.cancel_all_orders().await?;
+        // Store old orders before placing new ones
+        // This ensures we maintain liquidity during the transition
+        let old_orders = self.active_orders.clone();
+        self.active_orders.clear();
 
-        // Place new bid orders
+        // Place new bid orders FIRST (before cancelling old ones)
         for level in bids {
             let price = level.price.to_string();
             let size = level.quantity.to_string();
@@ -199,6 +201,43 @@ impl OrderbookMirrorBot {
                     self.auto_faucet_on_error(&err_msg).await;
                 }
             }
+        }
+
+        // Now cancel the old orders (after new ones are placed)
+        self.cancel_old_orders(old_orders).await?;
+
+        Ok(())
+    }
+
+    /// Cancel specific old orders (used after placing new orders)
+    async fn cancel_old_orders(&self, old_orders: HashMap<String, Uuid>) -> Result<()> {
+        if old_orders.is_empty() {
+            return Ok(());
+        }
+
+        let mut cancelled_count = 0;
+        for (_key, order_id) in old_orders {
+            match self
+                .exchange_client
+                .cancel_order(
+                    self.config.user_address.clone(),
+                    order_id.to_string(),
+                    "orderbook_mirror".to_string(),
+                )
+                .await
+            {
+                Ok(_) => {
+                    cancelled_count += 1;
+                }
+                Err(e) => {
+                    // It's okay if order is already filled/cancelled
+                    warn!("Failed to cancel old order {}: {}", order_id, e);
+                }
+            }
+        }
+
+        if cancelled_count > 0 {
+            info!("Cancelled {} old orders", cancelled_count);
         }
 
         Ok(())

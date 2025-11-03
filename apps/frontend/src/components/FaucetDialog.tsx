@@ -12,13 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTurnkey } from "@turnkey/react-wallet-kit";
@@ -74,7 +68,16 @@ export function FaucetDialog() {
           Faucet
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-muted/40 backdrop-blur-xl border-border/50 dither data-[state=open]:slide-in-from-bottom-4 data-[state=closed]:slide-out-to-bottom-4">
+      <DialogContent
+        className="sm:max-w-md bg-card/95 backdrop-blur-xl border-border/50"
+        style={{
+          backgroundImage: `
+            url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h1v1H0zM2 2h1v1H2z' fill='%23000000' fill-opacity='0.1'/%3E%3Cpath d='M1 0h1v1H1zM3 2h1v1H3zM0 2h1v1H0zM2 0h1v1H2zM1 2h1v1H1zM3 0h1v1H3z' fill='%23ffffff' fill-opacity='0.05'/%3E%3C/svg%3E"),
+            repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 2px)
+          `,
+          backgroundBlendMode: 'overlay, normal'
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="text-xl text-foreground">Token Faucet</DialogTitle>
           <DialogDescription className="text-muted-foreground">
@@ -90,10 +93,7 @@ export function FaucetDialog() {
               You need to connect your wallet before you can use the faucet
             </p>
             <Button
-              onClick={() => {
-                setOpen(false);
-                handleLogin();
-              }}
+              onClick={() => handleLogin()}
               className="bg-primary/90 hover:bg-primary border border-primary/30 shadow-lg transition-all"
             >
               Connect Wallet
@@ -106,10 +106,13 @@ export function FaucetDialog() {
                 Select Token
               </Label>
               <Select value={selectedToken} onValueChange={setSelectedToken}>
-                <SelectTrigger id="token-select" className="w-full bg-background/60 border-border/40 hover:bg-background/80 hover:border-border/60 transition-colors">
+                <SelectTrigger
+                  id="token-select"
+                  className="w-full bg-background/60 border-border/40 hover:bg-background/80 hover:border-border/60 transition-colors"
+                >
                   <SelectValue placeholder="Choose a token..." />
                 </SelectTrigger>
-                <SelectContent className="bg-muted/95 backdrop-blur-xl border-border/50 dither">
+                <SelectContent className="bg-muted/95 backdrop-blur-xl border-border/50">
                   {tokens.map((token) => (
                     <SelectItem key={token.ticker} value={token.ticker} className="hover:bg-accent/50">
                       <div className="flex items-center gap-2">
