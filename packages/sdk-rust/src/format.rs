@@ -77,7 +77,7 @@ fn add_commas(s: &str) -> String {
     for (i, c) in bytes.iter().enumerate() {
         result.push(*c);
         let pos = len - i - 1;
-        if pos > 0 && pos % 3 == 0 {
+        if pos > 0 && pos.is_multiple_of(3) {
             result.push(',');
         }
     }

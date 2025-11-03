@@ -23,7 +23,9 @@ fn main() {
     }
 
     // Add ServerMessage as a top-level definition
-    combined.definitions.insert("ServerMessage".to_string(), server_schema.schema.into());
+    combined
+        .definitions
+        .insert("ServerMessage".to_string(), server_schema.schema.into());
 
     // Write combined schema to websocket.json
     let file_path = output_dir.join("websocket.json");

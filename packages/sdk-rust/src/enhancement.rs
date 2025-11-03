@@ -117,13 +117,15 @@ impl EnhancementService {
         })?;
 
         // Parse price and size
-        let price = trade.price.parse::<u128>().map_err(|e| {
-            SdkError::Enhancement(format!("Failed to parse price: {}", e))
-        })?;
+        let price = trade
+            .price
+            .parse::<u128>()
+            .map_err(|e| SdkError::Enhancement(format!("Failed to parse price: {}", e)))?;
 
-        let size = trade.size.parse::<u128>().map_err(|e| {
-            SdkError::Enhancement(format!("Failed to parse size: {}", e))
-        })?;
+        let size = trade
+            .size
+            .parse::<u128>()
+            .map_err(|e| SdkError::Enhancement(format!("Failed to parse size: {}", e)))?;
 
         Ok(EnhancedTrade {
             id: trade.id,
@@ -145,10 +147,12 @@ impl EnhancementService {
 
     /// Enhance an order with display values
     pub fn enhance_order(&self, order: ApiOrder, market_id: &str) -> SdkResult<EnhancedOrder> {
-        let market = self
-            .cache
-            .get_market(market_id)
-            .ok_or_else(|| SdkError::Enhancement(format!("Market {} not found in cache. Call get_markets() first.", market_id)))?;
+        let market = self.cache.get_market(market_id).ok_or_else(|| {
+            SdkError::Enhancement(format!(
+                "Market {} not found in cache. Call get_markets() first.",
+                market_id
+            ))
+        })?;
 
         let base_token = self.cache.get_token(&market.base_ticker).ok_or_else(|| {
             SdkError::Enhancement(format!(
@@ -165,17 +169,20 @@ impl EnhancementService {
         })?;
 
         // Parse values
-        let price = order.price.parse::<u128>().map_err(|e| {
-            SdkError::Enhancement(format!("Failed to parse price: {}", e))
-        })?;
+        let price = order
+            .price
+            .parse::<u128>()
+            .map_err(|e| SdkError::Enhancement(format!("Failed to parse price: {}", e)))?;
 
-        let size = order.size.parse::<u128>().map_err(|e| {
-            SdkError::Enhancement(format!("Failed to parse size: {}", e))
-        })?;
+        let size = order
+            .size
+            .parse::<u128>()
+            .map_err(|e| SdkError::Enhancement(format!("Failed to parse size: {}", e)))?;
 
-        let filled_size = order.filled_size.parse::<u128>().map_err(|e| {
-            SdkError::Enhancement(format!("Failed to parse filled_size: {}", e))
-        })?;
+        let filled_size = order
+            .filled_size
+            .parse::<u128>()
+            .map_err(|e| SdkError::Enhancement(format!("Failed to parse filled_size: {}", e)))?;
 
         Ok(EnhancedOrder {
             id: order.id,
@@ -208,13 +215,15 @@ impl EnhancementService {
         })?;
 
         // Parse values
-        let amount = balance.amount.parse::<u128>().map_err(|e| {
-            SdkError::Enhancement(format!("Failed to parse amount: {}", e))
-        })?;
+        let amount = balance
+            .amount
+            .parse::<u128>()
+            .map_err(|e| SdkError::Enhancement(format!("Failed to parse amount: {}", e)))?;
 
-        let open_interest = balance.open_interest.parse::<u128>().map_err(|e| {
-            SdkError::Enhancement(format!("Failed to parse open_interest: {}", e))
-        })?;
+        let open_interest = balance
+            .open_interest
+            .parse::<u128>()
+            .map_err(|e| SdkError::Enhancement(format!("Failed to parse open_interest: {}", e)))?;
 
         Ok(EnhancedBalance {
             user_address: balance.user_address,
@@ -235,10 +244,12 @@ impl EnhancementService {
         level: &OrderbookLevel,
         market_id: &str,
     ) -> SdkResult<EnhancedOrderbookLevel> {
-        let market = self
-            .cache
-            .get_market(market_id)
-            .ok_or_else(|| SdkError::Enhancement(format!("Market {} not found in cache. Call get_markets() first.", market_id)))?;
+        let market = self.cache.get_market(market_id).ok_or_else(|| {
+            SdkError::Enhancement(format!(
+                "Market {} not found in cache. Call get_markets() first.",
+                market_id
+            ))
+        })?;
 
         let base_token = self.cache.get_token(&market.base_ticker).ok_or_else(|| {
             SdkError::Enhancement(format!(
@@ -317,7 +328,7 @@ mod tests {
             buyer_order_id: "order1".to_string(),
             seller_order_id: "order2".to_string(),
             price: "50000000000".to_string(), // 50000 USDC (6 decimals)
-            size: "100000000".to_string(),     // 1 BTC (8 decimals)
+            size: "100000000".to_string(),    // 1 BTC (8 decimals)
             side: backend::models::domain::Side::Buy,
             timestamp: Utc::now(),
         };
@@ -337,7 +348,7 @@ mod tests {
         let balance = ApiBalance {
             user_address: "user1".to_string(),
             token_ticker: "BTC".to_string(),
-            amount: "100000000".to_string(),      // 1 BTC
+            amount: "100000000".to_string(),       // 1 BTC
             open_interest: "50000000".to_string(), // 0.5 BTC locked
             updated_at: Utc::now(),
         };
