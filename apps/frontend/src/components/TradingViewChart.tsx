@@ -29,9 +29,7 @@ export function TradingViewChart() {
   const selectedMarketId = useExchangeStore((state) => state.selectedMarketId);
 
   useEffect(() => {
-    console.log("[TradingView] useEffect triggered - selectedMarketId:", selectedMarketId);
     if (!containerRef.current || !selectedMarketId) {
-      console.log("[TradingView] Early return - no container or marketId");
       return;
     }
 
@@ -45,12 +43,8 @@ export function TradingViewChart() {
 
     // Create datafeed once and reuse
     if (!datafeedRef.current) {
-      console.log("[TradingView] Creating datafeed");
       datafeedRef.current = new ExchangeDatafeed();
     }
-
-    console.log("[TradingView] Initializing chart for market:", selectedMarketId);
-    console.log("[TradingView] TradingView object:", typeof TradingView, Object.keys(TradingView));
 
     const widgetOptions: ChartingLibraryWidgetOptions = {
       symbol: selectedMarketId,
@@ -124,15 +118,11 @@ export function TradingViewChart() {
       },
     };
 
-    console.log("[TradingView] Creating widget...");
     try {
       const widget = new TradingView.widget(widgetOptions);
-      console.log("[TradingView] Widget created successfully");
       widgetRef.current = widget;
 
       widget.onChartReady(() => {
-        console.log("[TradingView] Chart is ready!");
-
         // Force candlestick chart style
         widget.activeChart().setChartType(1); // 1 = Candles
       });

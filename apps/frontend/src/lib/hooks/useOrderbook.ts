@@ -15,8 +15,6 @@ export function useOrderbook(marketId: string | null) {
   useEffect(() => {
     if (!marketId) return;
 
-    console.log("[useOrderbook] Subscribing to orderbook for", marketId);
-
     // Subscribe to orderbook updates using SDK convenience method
     const unsubscribe = client.onOrderbook(marketId, ({ bids, asks }) => {
       updateOrderbook(marketId, bids, asks);
@@ -24,7 +22,6 @@ export function useOrderbook(marketId: string | null) {
 
     // Cleanup
     return () => {
-      console.log("[useOrderbook] Cleaning up subscription for", marketId);
       unsubscribe();
     };
   }, [marketId, client, updateOrderbook]);

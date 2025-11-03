@@ -1,4 +1,5 @@
-use crate::models::api::{AdminErrorResponse, AdminRequest, AdminResponse};
+use crate::errors::{ErrorResponse, ExchangeError, Result};
+use crate::models::api::{AdminRequest, AdminResponse};
 use crate::AppState;
 use axum::{extract::State, Json};
 
@@ -14,31 +15,22 @@ use axum::{extract::State, Json};
     request_body = AdminRequest,
     responses(
         (status = 200, description = "Admin operation successful", body = AdminResponse),
-        (status = 400, description = "Bad request"),
-        (status = 500, description = "Internal server error")
+        (status = 400, description = "Bad request", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
     tag = "admin"
 )]
 pub async fn admin_handler(
     State(state): State<AppState>,
     Json(request): Json<AdminRequest>,
-) -> Result<Json<AdminResponse>, Json<AdminErrorResponse>> {
+) -> Result<Json<AdminResponse>> {
     match request {
         AdminRequest::CreateToken {
             ticker,
             decimals,
             name,
         } => {
-            let token = state
-                .db
-                .create_token(ticker, decimals, name)
-                .await
-                .map_err(|e| {
-                    Json(AdminErrorResponse {
-                        error: e.to_string(),
-                        code: "CREATE_TOKEN_ERROR".to_string(),
-                    })
-                })?;
+            let token = state.db.create_token(ticker, decimals, name).await?;
 
             Ok(Json(AdminResponse::CreateToken { token }))
         }
@@ -53,26 +45,9 @@ pub async fn admin_handler(
             taker_fee_bps,
         } => {
             // Parse string values to u128
-            let tick_size_u128 = tick_size.parse::<u128>().map_err(|e| {
-                Json(AdminErrorResponse {
-                    error: format!("Invalid tick_size: {}", e),
-                    code: "INVALID_TICK_SIZE".to_string(),
-                })
-            })?;
-
-            let lot_size_u128 = lot_size.parse::<u128>().map_err(|e| {
-                Json(AdminErrorResponse {
-                    error: format!("Invalid lot_size: {}", e),
-                    code: "INVALID_LOT_SIZE".to_string(),
-                })
-            })?;
-
-            let min_size_u128 = min_size.parse::<u128>().map_err(|e| {
-                Json(AdminErrorResponse {
-                    error: format!("Invalid min_size: {}", e),
-                    code: "INVALID_MIN_SIZE".to_string(),
-                })
-            })?;
+            let tick_size_u128 = tick_size.parse::<u128>()?;
+            let lot_size_u128 = lot_size.parse::<u128>()?;
+            let min_size_u128 = min_size.parse::<u128>()?;
 
             let market = state
                 .db
@@ -85,13 +60,7 @@ pub async fn admin_handler(
                     maker_fee_bps,
                     taker_fee_bps,
                 )
-                .await
-                .map_err(|e| {
-                    Json(AdminErrorResponse {
-                        error: e.to_string(),
-                        code: "CREATE_MARKET_ERROR".to_string(),
-                    })
-                })?;
+                .await?;
 
             Ok(Json(AdminResponse::CreateMarket {
                 market: market.into(),
@@ -105,12 +74,9 @@ pub async fn admin_handler(
             signature: _,
         } => {
             // Parse amount string to u128
-            let amount_u128 = amount.parse::<u128>().map_err(|e| {
-                Json(AdminErrorResponse {
-                    error: format!("Invalid amount: {}", e),
-                    code: "INVALID_AMOUNT".to_string(),
-                })
-            })?;
+            let amount_u128 = amount
+                .parse::<u128>()
+                .map_err(|_| ExchangeError::InvalidAmount)?;
 
             // Create user if doesn't exist
             let _ = state.db.create_user(user_address.clone()).await;
@@ -119,13 +85,7 @@ pub async fn admin_handler(
             let balance = state
                 .db
                 .add_balance(&user_address, &token_ticker, amount_u128)
-                .await
-                .map_err(|e| {
-                    Json(AdminErrorResponse {
-                        error: e.to_string(),
-                        code: "FAUCET_ERROR".to_string(),
-                    })
-                })?;
+                .await?;
 
             Ok(Json(AdminResponse::Faucet {
                 user_address,

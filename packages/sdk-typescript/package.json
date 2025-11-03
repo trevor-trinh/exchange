@@ -11,16 +11,17 @@
     }
   },
   "scripts": {
-    "generate": "openapi-typescript ../../packages/shared/openapi.json -o src/types/generated.ts",
+    "generate:openapi": "openapi-typescript ../../packages/shared/openapi.json -o src/types/generated.ts",
+    "generate:websocket": "bun ./scripts/generate-types.ts",
+    "generate": "bun run generate:openapi && bun run generate:websocket",
     "build": "bun run generate && tsc",
     "dev": "bun run generate && tsc --watch",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "json-schema-to-typescript": "^15.0.4",
     "openapi-typescript": "^7.4.4",
     "typescript": "^5.6.3"
   },
-  "dependencies": {
-    "@exchange/types": "workspace:*"
-  }
+  "dependencies": {}
 }

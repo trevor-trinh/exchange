@@ -5,12 +5,13 @@ import { compileFromFile } from "json-schema-to-typescript";
 
 // Use import.meta.dir which is Bun-specific
 const SCRIPT_DIR = import.meta.dir;
-const SCHEMA_DIR = join(SCRIPT_DIR, "../schema");
-const OUTPUT_DIR = join(SCRIPT_DIR, "../generated");
+// Schema files are in the workspace root
+const SCHEMA_DIR = join(SCRIPT_DIR, "../../../packages/shared/schema");
+// Output to SDK's src/types/generated
+const OUTPUT_DIR = join(SCRIPT_DIR, "../src/types/generated");
 
 async function main() {
   try {
-    console.log("Script dir:", SCRIPT_DIR);
     console.log("Schema dir:", SCHEMA_DIR);
     console.log("Output dir:", OUTPUT_DIR);
 
@@ -54,20 +55,6 @@ async function main() {
     const outputFile = join(OUTPUT_DIR, "websocket.ts");
     await writeFile(outputFile, combinedTypes);
     console.log(`✓ Generated websocket.ts (${typeMap.size} unique types)`);
-
-    // Create index file that re-exports everything from websocket.ts
-    const indexContent = `/**
- * @exchange/types - Auto-generated types from Rust backend
- *
- * This package exports TypeScript types generated from Rust using schemars.
- * Types are automatically synchronized when you run \`just types\`.
- */
-
-export * from "./generated/websocket";
-`;
-
-    await writeFile(join(__dirname, "../index.ts"), indexContent);
-    console.log(`✓ Generated index.ts`);
 
     console.log(`\n✅ Successfully generated TypeScript types in ${OUTPUT_DIR}`);
   } catch (error) {

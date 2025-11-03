@@ -39,10 +39,24 @@
             }
           },
           "400": {
-            "description": "Bad request"
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "500": {
-            "description": "Internal server error"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -118,7 +132,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DripErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -128,7 +142,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DripErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -138,7 +152,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DripErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -148,7 +162,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DripErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -209,7 +223,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InfoErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -219,7 +233,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InfoErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -229,7 +243,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InfoErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -270,7 +284,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TradeErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -280,7 +294,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TradeErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -290,7 +304,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TradeErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -300,7 +314,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TradeErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -341,7 +355,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -351,7 +365,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -361,7 +375,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -372,21 +386,6 @@
   },
   "components": {
     "schemas": {
-      "AdminErrorResponse": {
-        "type": "object",
-        "required": [
-          "error",
-          "code"
-        ],
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "error": {
-            "type": "string"
-          }
-        }
-      },
       "AdminRequest": {
         "oneOf": [
           {
@@ -843,21 +842,6 @@
           }
         }
       },
-      "DripErrorResponse": {
-        "type": "object",
-        "required": [
-          "error",
-          "code"
-        ],
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "error": {
-            "type": "string"
-          }
-        }
-      },
       "DripRequest": {
         "oneOf": [
           {
@@ -928,7 +912,7 @@
         ],
         "description": "Drip response with type discriminator"
       },
-      "InfoErrorResponse": {
+      "ErrorResponse": {
         "type": "object",
         "required": [
           "error",
@@ -1139,21 +1123,6 @@
           }
         }
       },
-      "TradeErrorResponse": {
-        "type": "object",
-        "required": [
-          "error",
-          "code"
-        ],
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "error": {
-            "type": "string"
-          }
-        }
-      },
       "TradeRequest": {
         "oneOf": [
           {
@@ -1328,21 +1297,6 @@
           }
         ],
         "description": "Trade response with type discriminator"
-      },
-      "UserErrorResponse": {
-        "type": "object",
-        "required": [
-          "error",
-          "code"
-        ],
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "error": {
-            "type": "string"
-          }
-        }
       },
       "UserRequest": {
         "oneOf": [

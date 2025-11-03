@@ -102,10 +102,8 @@ export class ExchangeDatafeed implements IBasicDataFeed {
    * Resolve symbol info
    */
   resolveSymbol(symbolName: string, onResolve: ResolveCallback, onError: ErrorCallback): void {
-    console.log("[TradingView Datafeed] resolveSymbol called for:", symbolName);
     Promise.all([exchange.getMarkets(), exchange.getTokens()])
       .then(([markets, tokens]) => {
-        console.log("[TradingView Datafeed] Got markets and tokens");
         this.marketsCache = markets; // Cache markets for later use
         this.tokensCache = tokens; // Cache tokens for later use
         const market = markets.find((m) => m.id === symbolName);
@@ -149,7 +147,6 @@ export class ExchangeDatafeed implements IBasicDataFeed {
           format: "price",
         };
 
-        console.log("[TradingView Datafeed] Symbol resolved:", symbolInfo.name);
         onResolve(symbolInfo);
       })
       .catch((error) => {
@@ -173,7 +170,6 @@ export class ExchangeDatafeed implements IBasicDataFeed {
     onResult: HistoryCallback,
     onError: ErrorCallback
   ): void {
-    console.log("[TradingView Datafeed] getBars called for:", symbolInfo.name, resolution);
     const { from, to, countBack: _countBack } = periodParams;
     const interval = resolutionMap[resolution] || "1m";
 
@@ -258,8 +254,6 @@ export class ExchangeDatafeed implements IBasicDataFeed {
       Array.from(this.subscriptions.values()).filter((sub) => sub.symbolInfo.name === marketId).length === 1;
 
     if (isFirstSubscription) {
-      console.log(`[TradingView] Subscribing to trades for ${marketId}`);
-
       // Subscribe using SDK convenience method (receives enhanced trades)
       const unsubscribe = this.client.onTrades(marketId, (enhancedTrade) => {
         this.handleEnhancedTrade(enhancedTrade);
@@ -267,8 +261,6 @@ export class ExchangeDatafeed implements IBasicDataFeed {
 
       this.tradeUnsubscribers.set(marketId, unsubscribe);
     }
-
-    console.log(`[TradingView] Subscribed to bars: ${marketId} ${resolution}`);
   }
 
   /**
@@ -289,15 +281,12 @@ export class ExchangeDatafeed implements IBasicDataFeed {
     );
 
     if (!hasOtherSubscriptions) {
-      console.log(`[TradingView] Unsubscribing from trades for ${marketId}`);
       const unsubscribe = this.tradeUnsubscribers.get(marketId);
       if (unsubscribe) {
         unsubscribe();
         this.tradeUnsubscribers.delete(marketId);
       }
     }
-
-    console.log(`[TradingView] Unsubscribed from bars: ${listenerGuid}`);
   }
 
   /**

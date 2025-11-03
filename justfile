@@ -64,8 +64,25 @@ bench:
 types:
   cd apps/backend && cargo run --bin generate_openapi
   cargo run -p schema-generator
-  bun ./packages/shared/scripts/generate-types.ts
-  bun run openapi
+  bun --filter @exchange/sdk generate
+  just types-python
+
+types-python:
+  #!/usr/bin/env bash
+  cd packages/sdk-python && \
+  mkdir -p exchange_sdk/generated && \
+  uv run --with datamodel-code-generator[http] datamodel-codegen \
+    --input ../../packages/shared/schema \
+    --input-file-type jsonschema \
+    --output exchange_sdk/generated \
+    --output-model-type pydantic_v2.BaseModel \
+    --use-union-operator \
+    --field-constraints \
+    --use-standard-collections \
+    --target-python-version 3.10 && \
+  echo "# Generated WebSocket types" > exchange_sdk/generated/__init__.py && \
+  echo "from .ClientMessage import *" >> exchange_sdk/generated/__init__.py && \
+  echo "from .ServerMessage import *" >> exchange_sdk/generated/__init__.py
 
 fmt:
   bun run format

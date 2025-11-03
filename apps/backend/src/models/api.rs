@@ -61,12 +61,6 @@ pub enum InfoResponse {
     AllTokens { tokens: Vec<Token> },
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct InfoErrorResponse {
-    pub error: String,
-    pub code: String,
-}
-
 // ============================================================================
 // USER API TYPES
 // ============================================================================
@@ -98,12 +92,6 @@ pub enum UserResponse {
     Orders { orders: Vec<ApiOrder> },
     Balances { balances: Vec<ApiBalance> },
     Trades { trades: Vec<ApiTrade> },
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct UserErrorResponse {
-    pub error: String,
-    pub code: String,
 }
 
 // ============================================================================
@@ -152,12 +140,6 @@ pub enum TradeResponse {
     },
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct TradeErrorResponse {
-    pub error: String,
-    pub code: String,
-}
-
 // ============================================================================
 // DRIP API TYPES
 // ============================================================================
@@ -184,12 +166,6 @@ pub enum DripResponse {
         amount: String,
         new_balance: String,
     },
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct DripErrorResponse {
-    pub error: String,
-    pub code: String,
 }
 
 // ============================================================================
@@ -238,12 +214,6 @@ pub enum AdminResponse {
         amount: String,
         new_balance: String,
     },
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct AdminErrorResponse {
-    pub error: String,
-    pub code: String,
 }
 
 // ============================================================================

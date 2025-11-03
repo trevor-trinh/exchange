@@ -29,7 +29,7 @@ jobs:
         run: |
           just types
           if ! git diff --exit-code packages/shared/; then
-            echo "::error::Generated TypeScript types are out of sync with Rust code!"
+            echo "::error::Generated types are out of sync!"
             echo "Please run 'just types' locally and commit the changes."
             exit 1
           fi

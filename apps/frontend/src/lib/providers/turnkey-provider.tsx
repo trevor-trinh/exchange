@@ -13,9 +13,6 @@ export function TurnkeyProviderWrapper({ children }: { children: React.ReactNode
       config={turnkeyConfig}
       callbacks={{
         onError: (error) => console.error("Turnkey error:", error),
-        onAuthenticationSuccess: (params) => {
-          console.log("Authentication successful:", params);
-        },
       }}
     >
       {children}

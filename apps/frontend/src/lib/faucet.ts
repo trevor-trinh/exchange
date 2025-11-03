@@ -19,14 +19,12 @@ export async function autoFaucet(userAddress: string, tokens: Array<{ ticker: st
           amount,
           signature: `${userAddress}:${Date.now()}`,
         });
-        console.log(`Auto-faucet: gave ${amount} ${token.ticker} to ${userAddress}`);
       } catch (err) {
         console.error(`Auto-faucet error for ${token.ticker}:`, err);
       }
     });
 
     await Promise.all(faucetPromises);
-    console.log(`Auto-faucet completed for ${userAddress}`);
   } catch (err) {
     console.error("Auto-faucet error:", err);
   }

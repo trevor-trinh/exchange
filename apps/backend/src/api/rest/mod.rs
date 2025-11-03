@@ -34,26 +34,23 @@ pub mod user;
     components(
         schemas(
             ApiResponse,
+            // Unified error response
+            crate::errors::ErrorResponse,
             // Info types
             crate::models::api::InfoRequest,
             crate::models::api::InfoResponse,
-            crate::models::api::InfoErrorResponse,
             // User types
             crate::models::api::UserRequest,
             crate::models::api::UserResponse,
-            crate::models::api::UserErrorResponse,
             // Trade types
             crate::models::api::TradeRequest,
             crate::models::api::TradeResponse,
-            crate::models::api::TradeErrorResponse,
             // Drip types
             crate::models::api::DripRequest,
             crate::models::api::DripResponse,
-            crate::models::api::DripErrorResponse,
             // Admin types
             crate::models::api::AdminRequest,
             crate::models::api::AdminResponse,
-            crate::models::api::AdminErrorResponse,
             // Candles types
             crate::models::api::CandlesRequest,
             crate::models::api::ApiCandle,

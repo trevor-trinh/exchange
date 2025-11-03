@@ -184,18 +184,22 @@ export const useExchangeStore = create<ExchangeState>()(
             const amountValue = Number(BigInt(totalAmount)) / divisor;
             const lockedValue = Number(BigInt(locked)) / divisor;
 
-            // Update balance with enhanced values
-            state.balances[existingIndex] = {
-              token_ticker: existing.token_ticker,
-              user_address: existing.user_address,
-              amount: totalAmount,
-              open_interest: locked,
-              updated_at: new Date(),
-              amountDisplay: amountValue.toFixed(token.decimals),
-              lockedDisplay: lockedValue.toFixed(token.decimals),
-              amountValue,
-              lockedValue,
-            };
+            // Immutable update: create a new array with the updated balance
+            state.balances = state.balances.map((balance, index) =>
+              index === existingIndex
+                ? {
+                    token_ticker: existing.token_ticker,
+                    user_address: existing.user_address,
+                    amount: totalAmount,
+                    open_interest: locked,
+                    updated_at: new Date(),
+                    amountDisplay: amountValue.toFixed(token.decimals),
+                    lockedDisplay: lockedValue.toFixed(token.decimals),
+                    amountValue,
+                    lockedValue,
+                  }
+                : balance
+            );
           }
         }),
 

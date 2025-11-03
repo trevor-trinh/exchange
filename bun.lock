@@ -47,19 +47,10 @@
     "packages/sdk-typescript": {
       "name": "@exchange/sdk",
       "version": "0.1.0",
-      "dependencies": {
-        "@exchange/types": "workspace:*",
-      },
-      "devDependencies": {
-        "openapi-typescript": "^7.4.4",
-        "typescript": "^5.6.3",
-      },
-    },
-    "packages/shared": {
-      "name": "@exchange/types",
-      "version": "0.1.0",
       "devDependencies": {
         "json-schema-to-typescript": "^15.0.4",
+        "openapi-typescript": "^7.4.4",
+        "typescript": "^5.6.3",
       },
     },
   },
@@ -99,8 +90,6 @@
     "@eslint/plugin-kit": ["@eslint/plugin-kit@0.4.1", "", { "dependencies": { "@eslint/core": "^0.17.0", "levn": "^0.4.1" } }, "sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA=="],
 
     "@exchange/sdk": ["@exchange/sdk@workspace:packages/sdk-typescript"],
-
-    "@exchange/types": ["@exchange/types@workspace:packages/shared"],
 
     "@floating-ui/core": ["@floating-ui/core@1.7.3", "", { "dependencies": { "@floating-ui/utils": "^0.2.10" } }, "sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w=="],
 
