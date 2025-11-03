@@ -24,4 +24,7 @@ pub enum SdkError {
 
     #[error("Invalid response: {0}")]
     InvalidResponse(String),
+
+    #[error("Enhancement error: {0}")]
+    Enhancement(String),
 }

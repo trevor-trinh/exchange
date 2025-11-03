@@ -6,6 +6,7 @@ edition.workspace = true
 [dependencies]
 anyhow.workspace = true
 backend.workspace = true
+chrono.workspace = true
 futures-util.workspace = true
 reqwest.workspace = true
 rust_decimal.workspace = true

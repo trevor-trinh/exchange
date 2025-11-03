@@ -26,7 +26,7 @@ from .format import (
     format_number,
 )
 
-# Types
+# Types from REST API
 from .types import (
     Side,
     OrderType,
@@ -38,6 +38,17 @@ from .types import (
     Balance,
     SubscriptionChannel,
     Candle,
+)
+
+# Generated WebSocket types (Stripe-like - baked into SDK)
+from .generated import (
+    ClientMessage,
+    ServerMessage,
+    TradeData,
+    OrderbookData,
+    PriceLevel,
+    # Note: SubscriptionChannel already exported from .types
+    # Note: Side already exported from .types
 )
 
 # Exceptions
@@ -74,7 +85,7 @@ __all__ = [
     "format_price",
     "format_size",
     "format_number",
-    # Domain types
+    # REST API domain types
     "Side",
     "OrderType",
     "OrderStatus",
@@ -85,6 +96,12 @@ __all__ = [
     "Balance",
     "SubscriptionChannel",
     "Candle",
+    # Generated WebSocket types (baked into SDK)
+    "ClientMessage",
+    "ServerMessage",
+    "TradeData",
+    "OrderbookData",
+    "PriceLevel",
     # Exceptions
     "ExchangeError",
     "APIError",

@@ -20,6 +20,17 @@ export type ClientMessage =
 
 export type SubscriptionChannel = "trades" | "orderbook" | "user";
 
+export interface OrderbookData {
+  asks: PriceLevel[];
+  bids: PriceLevel[];
+  market_id: string;
+}
+
+export interface PriceLevel {
+  price: string;
+  size: string;
+}
+
 export type ServerMessage =
   | {
       channel: SubscriptionChannel;
@@ -91,15 +102,4 @@ export interface TradeData {
   side: Side;
   size: string;
   timestamp: number;
-}
-
-export interface OrderbookData {
-  asks: PriceLevel[];
-  bids: PriceLevel[];
-  market_id: string;
-}
-
-export interface PriceLevel {
-  price: string;
-  size: string;
 }

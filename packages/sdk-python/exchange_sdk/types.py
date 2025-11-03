@@ -60,7 +60,7 @@ class Token(BaseModel):
 class Market(BaseModel):
     """Market information."""
 
-    id: int
+    id: str
     base_ticker: str
     quote_ticker: str
     tick_size: str

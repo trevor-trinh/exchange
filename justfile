@@ -72,21 +72,21 @@ types-python:
   cd packages/sdk-python && \
   mkdir -p exchange_sdk/generated && \
   uv run --with datamodel-code-generator[http] datamodel-codegen \
-    --input ../../packages/shared/schema \
+    --input ../../packages/shared/websocket.json \
     --input-file-type jsonschema \
-    --output exchange_sdk/generated \
+    --output exchange_sdk/generated/websocket.py \
     --output-model-type pydantic_v2.BaseModel \
     --use-union-operator \
     --field-constraints \
     --use-standard-collections \
     --target-python-version 3.10 && \
   echo "# Generated WebSocket types" > exchange_sdk/generated/__init__.py && \
-  echo "from .ClientMessage import *" >> exchange_sdk/generated/__init__.py && \
-  echo "from .ServerMessage import *" >> exchange_sdk/generated/__init__.py
+  echo "from .websocket import *" >> exchange_sdk/generated/__init__.py
 
 fmt:
   bun run format
   cargo fmt --all
+  just sort
 
 lint:
   bun run lint

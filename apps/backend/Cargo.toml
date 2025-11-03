@@ -9,6 +9,10 @@ default-run = "backend"
 name = "backend"
 path = "src/main.rs"
 
+[features]
+# Enable JSON schema generation for WebSocket types
+schema = ["dep:schemars"]
+
 [dependencies]
 anyhow.workspace = true
 axum.workspace = true
@@ -19,6 +23,7 @@ dotenvy.workspace = true
 env_logger.workspace = true
 futures.workspace = true
 log.workspace = true
+schemars = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true
 sqlx.workspace = true
@@ -29,7 +34,6 @@ tower-http.workspace = true
 utoipa.workspace = true
 utoipa-swagger-ui.workspace = true
 uuid.workspace = true
-schemars = { workspace = true, optional = true }
 
 [dev-dependencies]
 criterion.workspace = true
@@ -50,7 +54,3 @@ harness = false
 [[bench]]
 name = "latency_benchmarks"
 harness = false
-
-[features]
-# Enable JSON schema generation for WebSocket types
-schema = ["dep:schemars"]
