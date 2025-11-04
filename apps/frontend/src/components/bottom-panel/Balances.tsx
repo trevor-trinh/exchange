@@ -7,6 +7,15 @@ import { useBalances } from "@/lib/hooks";
 import { DataTable } from "@/components/ui/data-table";
 import type { Balance } from "@/lib/types/exchange";
 
+// Mock USD prices - in a real app, fetch from an API
+const USD_PRICES: Record<string, number> = {
+  BTC: 65000,
+  ETH: 3200,
+  USDC: 1,
+  USDT: 1,
+  SOL: 145,
+};
+
 export function Balances() {
   const userAddress = useExchangeStore((state) => state.userAddress);
   const isAuthenticated = useExchangeStore((state) => state.isAuthenticated);
@@ -18,37 +27,51 @@ export function Balances() {
       {
         accessorKey: "token_ticker",
         header: "Asset",
-        cell: ({ row }) => <div className="font-semibold text-foreground">{row.getValue("token_ticker")}</div>,
+        cell: ({ row }) => (
+          <div className="font-medium text-foreground/90">{row.getValue("token_ticker")}</div>
+        ),
         size: 100,
       },
       {
-        accessorKey: "available",
-        header: () => <div className="text-right">Available</div>,
+        accessorKey: "amountDisplay",
+        header: () => <div className="text-right">Total Balance</div>,
         cell: ({ row }) => {
           const balance = row.original;
-          const available = balance.amountValue - balance.lockedValue;
-          const token = tokens.find((t) => t.ticker === balance.token_ticker);
-          const decimals = token?.decimals ?? 8;
-          return <div className="text-right font-mono text-sm">{available.toFixed(decimals)}</div>;
+          return (
+            <div className="text-right font-medium text-foreground/90">
+              {balance.amountValue.toFixed(2)}
+            </div>
+          );
         },
         size: 150,
       },
       {
-        accessorKey: "lockedDisplay",
-        header: () => <div className="text-right">In Orders</div>,
-        cell: ({ row }) => (
-          <div className="text-right font-mono text-sm text-muted-foreground">{row.getValue("lockedDisplay")}</div>
-        ),
+        accessorKey: "available",
+        header: () => <div className="text-right">Available Balance</div>,
+        cell: ({ row }) => {
+          const balance = row.original;
+          const available = balance.amountValue - balance.lockedValue;
+          return (
+            <div className="text-right text-muted-foreground/80">
+              {available.toFixed(2)}
+            </div>
+          );
+        },
         size: 150,
       },
       {
-        accessorKey: "amountDisplay",
-        header: () => <div className="text-right">Total</div>,
-        cell: ({ row }) => (
-          <div className="text-right font-mono text-sm font-semibold text-foreground">
-            {row.getValue("amountDisplay")}
-          </div>
-        ),
+        accessorKey: "usdValue",
+        header: () => <div className="text-right">USD Value</div>,
+        cell: ({ row }) => {
+          const balance = row.original;
+          const price = USD_PRICES[balance.token_ticker] ?? 0;
+          const usdValue = balance.amountValue * price;
+          return (
+            <div className="text-right font-medium text-foreground/90">
+              ${usdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          );
+        },
         size: 150,
       },
     ],

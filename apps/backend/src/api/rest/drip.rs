@@ -2,6 +2,7 @@ use axum::{extract::State, response::Json};
 
 use crate::errors::{ErrorResponse, ExchangeError, Result};
 use crate::models::api::{DripRequest, DripResponse};
+use crate::models::domain::EngineEvent;
 
 /// Drip tokens to users (testing/development faucet)
 #[utoipa::path(
@@ -46,6 +47,11 @@ pub async fn drip(
                 .db
                 .add_balance(&user_address, &token_ticker, amount_value)
                 .await?;
+
+            // Broadcast balance update to WebSocket clients
+            let _ = state.event_tx.send(EngineEvent::BalanceUpdated {
+                balance: new_balance.clone(),
+            });
 
             Ok(Json(DripResponse::Faucet {
                 user_address,

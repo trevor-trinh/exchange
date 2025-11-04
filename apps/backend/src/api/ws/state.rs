@@ -55,25 +55,32 @@ impl SubscriptionSet {
     pub(crate) fn wants_event(&self, event: &EngineEvent) -> bool {
         match event {
             EngineEvent::TradeExecuted { trade } => {
+                // Send to market trades subscription
                 self.subs.contains(&Subscription::Trades {
                     market_id: trade.market_id.clone(),
-                }) || self.subs.contains(&Subscription::User {
+                })
+                // OR send to buyer's user fills subscription
+                || self.subs.contains(&Subscription::UserFills {
                     user_address: trade.buyer_address.clone(),
-                }) || self.subs.contains(&Subscription::User {
+                })
+                // OR send to seller's user fills subscription
+                || self.subs.contains(&Subscription::UserFills {
                     user_address: trade.seller_address.clone(),
                 })
             }
-            EngineEvent::OrderPlaced { order } => self.subs.contains(&Subscription::User {
-                user_address: order.user_address.clone(),
-            }),
+            EngineEvent::OrderPlaced { order } => {
+                self.subs.contains(&Subscription::UserOrders {
+                    user_address: order.user_address.clone(),
+                })
+            }
             EngineEvent::OrderCancelled { user_address, .. } => {
-                self.subs.contains(&Subscription::User {
+                self.subs.contains(&Subscription::UserOrders {
                     user_address: user_address.clone(),
                 })
             }
-            EngineEvent::BalanceUpdated { user_address, .. } => {
-                self.subs.contains(&Subscription::User {
-                    user_address: user_address.clone(),
+            EngineEvent::BalanceUpdated { balance } => {
+                self.subs.contains(&Subscription::UserBalances {
+                    user_address: balance.user_address.clone(),
                 })
             }
             EngineEvent::OrderbookSnapshot { orderbook } => {

@@ -2,8 +2,9 @@
 
 use crate::db::Db;
 use crate::errors::Result;
-use crate::models::domain::{Market, Match, Order, OrderStatus, Side, Trade};
+use crate::models::domain::{EngineEvent, Market, Match, Order, OrderStatus, Side, Trade};
 use chrono::Utc;
+use tokio::sync::broadcast;
 use uuid::Uuid;
 
 pub struct Executor;
@@ -14,6 +15,7 @@ impl Executor {
     /// - Updates order fill status
     /// - Calculates and applies fees
     /// - Unlocks and transfers balances
+    /// - Broadcasts balance update events for all affected users
     /// - Persists everything to database atomically
     ///   Returns the executed trades
     pub async fn execute(
@@ -21,10 +23,15 @@ impl Executor {
         matches: Vec<Match>,
         taker_order: &Order,
         market: &Market,
+        event_tx: &broadcast::Sender<EngineEvent>,
     ) -> Result<Vec<Trade>> {
         if matches.is_empty() {
             return Ok(vec![]);
         }
+
+        // Get base token decimals for proper quote amount calculation
+        let base_token = db.get_token(&market.base_ticker).await?;
+        let base_decimals_divisor = 10u128.pow(base_token.decimals as u32);
 
         // Begin transaction for atomic execution
         let mut tx = db.begin_transaction().await?;
@@ -66,11 +73,14 @@ impl Executor {
             };
 
             // Calculate trade value in quote tokens
-            let quote_amount = m.price.checked_mul(m.size).ok_or_else(|| {
-                crate::errors::ExchangeError::InvalidParameter {
-                    message: "Trade value overflow".to_string(),
-                }
-            })?;
+            // quote_amount = (price_atoms * size_atoms) / 10^base_decimals
+            let quote_amount = m
+                .price
+                .checked_mul(m.size)
+                .and_then(|v| v.checked_div(base_decimals_divisor))
+                .ok_or_else(|| crate::errors::ExchangeError::InvalidParameter {
+                    message: "Trade value overflow or calculation error".to_string(),
+                })?;
 
             // Calculate fees (charged on what each party receives)
             // Buyer receives base tokens (size), pays taker fee if taker, maker fee if maker
@@ -183,6 +193,28 @@ impl Executor {
         // Commit transaction - all or nothing!
         tx.commit().await?;
 
+        // Broadcast balance updates for all affected users
+        // Collect unique user-token pairs that need balance updates
+        let mut balance_updates = std::collections::HashSet::new();
+        for trade in &trades {
+            // Buyer balances (base and quote tokens)
+            balance_updates.insert((trade.buyer_address.clone(), market.base_ticker.clone()));
+            balance_updates.insert((trade.buyer_address.clone(), market.quote_ticker.clone()));
+
+            // Seller balances (base and quote tokens)
+            balance_updates.insert((trade.seller_address.clone(), market.base_ticker.clone()));
+            balance_updates.insert((trade.seller_address.clone(), market.quote_ticker.clone()));
+
+            // System fee recipient balances (base and quote tokens)
+            balance_updates.insert(("system".to_string(), market.base_ticker.clone()));
+            balance_updates.insert(("system".to_string(), market.quote_ticker.clone()));
+        }
+
+        // Broadcast all balance updates
+        for (user_address, token_ticker) in balance_updates {
+            let _ = Self::broadcast_balance_update(&db, event_tx, &user_address, &token_ticker).await;
+        }
+
         // Insert trades into ClickHouse asynchronously (after commit)
         // This is non-critical, so failures won't affect the core trade execution
         for trade in &trades {
@@ -194,5 +226,22 @@ impl Executor {
         }
 
         Ok(trades)
+    }
+
+    /// Broadcast balance update for a user's token balance
+    /// Queries current balance from DB and sends BalanceUpdated event
+    async fn broadcast_balance_update(
+        db: &Db,
+        event_tx: &broadcast::Sender<EngineEvent>,
+        user_address: &str,
+        token_ticker: &str,
+    ) -> Result<()> {
+        let balance = db.get_balance(user_address, token_ticker).await?;
+
+        let _ = event_tx.send(EngineEvent::BalanceUpdated {
+            balance: balance.clone(),
+        });
+
+        Ok(())
     }
 }

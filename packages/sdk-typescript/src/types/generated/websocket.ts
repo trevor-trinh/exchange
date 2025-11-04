@@ -18,7 +18,7 @@ export type ClientMessage =
  * Channel types for WebSocket subscriptions
  */
 
-export type SubscriptionChannel = "trades" | "orderbook" | "user";
+export type SubscriptionChannel = "trades" | "orderbook" | "user_fills" | "user_orders" | "user_balances";
 
 export interface OrderbookData {
   asks: PriceLevel[];
@@ -63,6 +63,8 @@ export type ServerMessage =
       locked: string;
       token_ticker: string;
       type: "balance";
+      updated_at: number;
+      user_address: string;
     }
   | {
       close: string;

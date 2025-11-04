@@ -140,8 +140,8 @@ export class WebSocketClient {
       const message: ClientMessage = {
         type: "subscribe",
         channel,
-        market_id: params?.marketId ?? null,
-        user_address: params?.userAddress ?? null,
+        ...(params?.marketId && { market_id: params.marketId }),
+        ...(params?.userAddress && { user_address: params.userAddress }),
       };
       this.send(message);
     } else {
@@ -172,8 +172,8 @@ export class WebSocketClient {
       const message: ClientMessage = {
         type: "unsubscribe",
         channel,
-        market_id: params?.marketId ?? null,
-        user_address: params?.userAddress ?? null,
+        ...(params?.marketId && { market_id: params.marketId }),
+        ...(params?.userAddress && { user_address: params.userAddress }),
       };
       this.send(message);
       this.activeSubscriptions.delete(key);
@@ -330,9 +330,9 @@ export class WebSocketClient {
       const message: ClientMessage = {
         type: "subscribe",
         channel,
-        // Determine if it's a market or user subscription
-        market_id: channel === "trades" || channel === "orderbook" ? identifier : null,
-        user_address: channel === "user" ? identifier : null,
+        // Determine if it's a market or user subscription - only include the relevant field
+        ...(channel === "trades" || channel === "orderbook" ? { market_id: identifier } : {}),
+        ...(channel === "user" ? { user_address: identifier } : {}),
       };
 
       this.send(message);
@@ -460,6 +460,11 @@ export class WebSocketClient {
 
     const removeHandler = this.on("trade", (msg) => {
       if (msg.type !== "trade") return;
+
+      // Only process trades where the user is the buyer or seller
+      if (msg.trade.buyer_address !== userAddress && msg.trade.seller_address !== userAddress) {
+        return;
+      }
 
       if (!this.cache.isReady()) {
         this.logger.warn("Trade received before cache initialized, skipping");

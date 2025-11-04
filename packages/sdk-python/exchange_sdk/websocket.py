@@ -472,12 +472,17 @@ class WebSocketClient:
             if msg.get("type") != "trade":
                 return
 
+            trade_data = msg.get("trade", {})
+
+            # Only process trades where the user is the buyer or seller
+            if trade_data.get("buyer_address") != user_address and trade_data.get("seller_address") != user_address:
+                return
+
             if not self.cache.is_ready():
                 self.logger.warn("Trade received before cache initialized, skipping")
                 return
 
             try:
-                trade_data = msg.get("trade", {})
                 ws_trade: WsTradeData = {
                     "id": trade_data["id"],
                     "market_id": trade_data["market_id"],

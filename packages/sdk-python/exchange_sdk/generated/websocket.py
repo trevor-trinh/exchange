@@ -65,6 +65,8 @@ class ServerMessage6(BaseModel):
     locked: str
     token_ticker: str
     type: Type8
+    updated_at: int
+    user_address: str
 
 
 class Type9(Enum):
@@ -107,7 +109,9 @@ class Side(Enum):
 class SubscriptionChannel(Enum):
     trades = 'trades'
     orderbook = 'orderbook'
-    user = 'user'
+    user_fills = 'user_fills'
+    user_orders = 'user_orders'
+    user_balances = 'user_balances'
 
 
 class TradeData(BaseModel):

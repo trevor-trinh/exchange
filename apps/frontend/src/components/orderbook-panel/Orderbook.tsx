@@ -29,8 +29,8 @@ export function Orderbook() {
     );
   }
   return (
-    <Card className="flex flex-col h-full gap-0 py-0 overflow-hidden">
-      <Tabs defaultValue="orderbook" className="flex-1 flex flex-col gap-0 min-h-0">
+    <Card className="flex flex-col h-full gap-0 py-0 overflow-hidden min-w-0">
+      <Tabs defaultValue="orderbook" className="flex-1 flex flex-col gap-0 min-h-0 min-w-0">
         <TabsList className="w-full justify-start rounded-none border-b border-border h-auto p-0 bg-card/50 backdrop-blur-sm shrink-0 z-10">
           <TabsTrigger value="orderbook" className="flex-1 rounded-none">
             Orderbook
@@ -148,7 +148,7 @@ function OrderbookHeader({ columns }: { columns: string[] }) {
         const isSecond = i === 1;
         const rightAlign = columns.length === 3 ? isSecond || isLast : isLast;
         return (
-          <span key={i} className={rightAlign ? "text-right" : undefined}>
+          <span key={i} className={`${rightAlign ? "text-right" : ""} whitespace-nowrap truncate`}>
             {col}
           </span>
         );

@@ -24,7 +24,14 @@ export function DataTable<TData, TValue>({
   emptyMessage = "No data available.",
   headerAction,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const getDefaultSortColumn = () => {
+    const firstColumn = columns[0] as any;
+    return firstColumn?.accessorKey || firstColumn?.id || "";
+  };
+
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: getDefaultSortColumn(), desc: true },
+  ]);
 
   const table = useReactTable({
     data,
@@ -32,6 +39,8 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
+    enableSortingRemoval: false,
+    enableMultiSort: false,
     state: {
       sorting,
     },
@@ -54,7 +63,7 @@ export function DataTable<TData, TValue>({
                       <div
                         className={
                           header.column.getCanSort()
-                            ? "cursor-pointer select-none flex items-center justify-between gap-1 hover:text-primary transition-colors w-full"
+                            ? "cursor-pointer select-none flex items-center justify-between gap-1 hover:text-primary transition-colors w-full group"
                             : "w-full"
                         }
                         onClick={header.column.getToggleSortingHandler()}
@@ -62,12 +71,17 @@ export function DataTable<TData, TValue>({
                         <div className="flex-1">
                           {flexRender(header.column.columnDef.header, header.getContext())}
                         </div>
-                        {header.column.getCanSort() && (
-                          <span className="text-muted-foreground text-xs shrink-0">
-                            {{
-                              asc: " ↑",
-                              desc: " ↓",
-                            }[header.column.getIsSorted() as string] ?? " ↕"}
+                        {header.column.getCanSort() && header.column.getIsSorted() && (
+                          <span className="relative shrink-0 w-3 h-3 flex items-center justify-center">
+                            <span
+                              className={`absolute text-xs transition-all duration-300 ease-out ${
+                                header.column.getIsSorted() === "asc"
+                                  ? "rotate-0 text-primary"
+                                  : "rotate-180 text-primary"
+                              }`}
+                            >
+                              ↑
+                            </span>
                           </span>
                         )}
                       </div>

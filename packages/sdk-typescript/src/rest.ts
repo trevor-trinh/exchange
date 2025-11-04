@@ -137,11 +137,8 @@ export class RestClient {
       throw new ApiError("Invalid response type", 500);
     }
 
-    // Enhance orders with display values
-    if (!params.marketId) {
-      throw new Error("marketId is required for data enhancement");
-    }
-    return response.orders.map((order) => this.enhancer.enhanceOrder(order, params.marketId!));
+    // Enhance orders with display values using each order's market_id
+    return response.orders.map((order) => this.enhancer.enhanceOrder(order, order.market_id));
   }
 
   async getBalances(userAddress: string): Promise<EnhancedBalance[]> {

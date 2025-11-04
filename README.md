@@ -166,3 +166,7 @@ bun dev
 just db-run
 just db-setup
 cargo run --release
+
+blog
+npm package
+railway

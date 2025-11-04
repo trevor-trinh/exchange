@@ -32,19 +32,19 @@ export default function Home() {
         <MarketHeader />
 
         {/* Main Trading Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4">
           {/* Chart - Takes up most of the space */}
-          <div className="md:col-span-2 lg:col-span-8 h-[500px] md:h-[600px]">
+          <div className="lg:col-span-8 h-[500px] lg:h-[600px]">
             <TradingViewChart />
           </div>
 
           {/* Orderbook with Trades tab */}
-          <div className="md:col-span-1 lg:col-span-2 h-[500px] md:h-[600px]">
+          <div className="lg:col-span-2 h-[500px] lg:h-[600px] min-w-0">
             <Orderbook />
           </div>
 
           {/* Trade Panel */}
-          <div className="md:col-span-1 lg:col-span-2 h-[500px] md:h-[600px]">
+          <div className="lg:col-span-2 h-[500px] lg:h-[600px] min-w-0">
             <TradePanel />
           </div>
         </div>

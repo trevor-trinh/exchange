@@ -281,7 +281,9 @@ pub enum ClientMessage {
 pub enum SubscriptionChannel {
     Trades,
     Orderbook,
-    User,
+    UserFills,
+    UserOrders,
+    UserBalances,
 }
 
 // ============================================================================
@@ -321,9 +323,11 @@ pub enum ServerMessage {
         filled_size: String,
     },
     Balance {
+        user_address: String,
         token_ticker: String,
         available: String,
         locked: String,
+        updated_at: i64, // Unix timestamp
     },
     Candle {
         market_id: String,

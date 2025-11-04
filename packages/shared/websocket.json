@@ -249,7 +249,9 @@
             "available",
             "locked",
             "token_ticker",
-            "type"
+            "type",
+            "updated_at",
+            "user_address"
           ],
           "properties": {
             "available": {
@@ -266,6 +268,13 @@
               "enum": [
                 "balance"
               ]
+            },
+            "updated_at": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "user_address": {
+              "type": "string"
             }
           }
         },
@@ -359,7 +368,9 @@
       "enum": [
         "trades",
         "orderbook",
-        "user"
+        "user_fills",
+        "user_orders",
+        "user_balances"
       ]
     },
     "TradeData": {

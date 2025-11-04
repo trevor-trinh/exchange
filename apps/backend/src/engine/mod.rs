@@ -96,7 +96,7 @@ impl MatchingEngine {
 
             // Execute trades if we have matches (also updates order status in DB)
             let trades = if !matches.is_empty() {
-                Executor::execute(self.db.clone(), matches.clone(), &order, &market).await?
+                Executor::execute(self.db.clone(), matches.clone(), &order, &market, &self.event_tx).await?
             } else {
                 vec![]
             };
@@ -107,10 +107,37 @@ impl MatchingEngine {
             (matches, trades)
         };
 
-        // Broadcast events
+        // Broadcast trade events
         for trade in &trades {
             let _ = self.event_tx.send(EngineEvent::TradeExecuted {
                 trade: trade.clone(),
+            });
+        }
+
+        // Broadcast order fill updates for maker orders
+        for m in &matches {
+            let maker_order = &m.maker_order;
+            let maker_new_filled = maker_order.filled_size + m.size;
+            let maker_status = if maker_new_filled >= maker_order.size {
+                OrderStatus::Filled
+            } else {
+                OrderStatus::PartiallyFilled
+            };
+
+            let _ = self.event_tx.send(EngineEvent::OrderPlaced {
+                order: crate::models::domain::Order {
+                    id: maker_order.id,
+                    user_address: maker_order.user_address.clone(),
+                    market_id: maker_order.market_id.clone(),
+                    side: maker_order.side,
+                    order_type: maker_order.order_type,
+                    price: maker_order.price,
+                    size: maker_order.size,
+                    filled_size: maker_new_filled,
+                    status: maker_status,
+                    created_at: maker_order.created_at,
+                    updated_at: chrono::Utc::now(),
+                },
             });
         }
 
@@ -123,14 +150,23 @@ impl MatchingEngine {
             order.status = OrderStatus::PartiallyFilled;
         }
 
+        // Broadcast taker order update if it got filled or partially filled
+        if total_matched > 0 {
+            let _ = self.event_tx.send(EngineEvent::OrderPlaced {
+                order: order.clone(),
+            });
+        }
+
         // Handle unfilled/partially filled orders based on order type
         if order.filled_size < order.size {
             match order.order_type {
                 crate::models::domain::OrderType::Market => {
                     // Market orders that don't fully fill are cancelled
                     // (IOC - Immediate or Cancel behavior)
+                    // Market orders that execute (even partially) are marked as Filled
+                    // since they cannot remain on the book
                     order.status = if total_matched > 0 {
-                        OrderStatus::PartiallyFilled
+                        OrderStatus::Filled
                     } else {
                         OrderStatus::Cancelled
                     };
@@ -161,6 +197,13 @@ impl MatchingEngine {
                         self.db
                             .unlock_balance(&order.user_address, &token_to_unlock, amount_to_unlock)
                             .await?;
+
+                        // Broadcast balance update after unlock
+                        if let Ok(balance) = self.db.get_balance(&order.user_address, &token_to_unlock).await {
+                            let _ = self.event_tx.send(EngineEvent::BalanceUpdated {
+                                balance,
+                            });
+                        }
                     }
                 }
                 crate::models::domain::OrderType::Limit => {
@@ -219,6 +262,13 @@ impl MatchingEngine {
             self.db
                 .unlock_balance(&user_address, &token_to_unlock, amount_to_unlock)
                 .await?;
+
+            // Broadcast balance update after unlock
+            if let Ok(balance) = self.db.get_balance(&user_address, &token_to_unlock).await {
+                let _ = self.event_tx.send(EngineEvent::BalanceUpdated {
+                    balance,
+                });
+            }
         }
 
         // Update order status in database
@@ -274,18 +324,19 @@ impl MatchingEngine {
 
             if unfilled_size > 0 {
                 // Determine which token and amount to unlock based on order side
-                let unlock_result = match cancelled_order.side {
+                let (token_to_unlock, unlock_result) = match cancelled_order.side {
                     crate::models::domain::Side::Buy => {
                         // Buy order: unlock quote tokens (price * unfilled_size)
                         match cancelled_order.price.checked_mul(unfilled_size) {
                             Some(quote_amount) => {
-                                self.db
+                                let result = self.db
                                     .unlock_balance(
                                         &user_address,
                                         &market.quote_ticker,
                                         quote_amount,
                                     )
-                                    .await
+                                    .await;
+                                (market.quote_ticker.clone(), result)
                             }
                             None => {
                                 log::error!(
@@ -298,15 +349,23 @@ impl MatchingEngine {
                     }
                     crate::models::domain::Side::Sell => {
                         // Sell order: unlock base tokens (unfilled_size)
-                        self.db
+                        let result = self.db
                             .unlock_balance(&user_address, &market.base_ticker, unfilled_size)
-                            .await
+                            .await;
+                        (market.base_ticker.clone(), result)
                     }
                 };
 
                 // Log unlock failures but continue processing
                 if let Err(e) = unlock_result {
                     log::error!("Failed to unlock balance for order {}: {}", order_id, e);
+                } else {
+                    // Broadcast balance update after successful unlock
+                    if let Ok(balance) = self.db.get_balance(&user_address, &token_to_unlock).await {
+                        let _ = self.event_tx.send(EngineEvent::BalanceUpdated {
+                            balance,
+                        });
+                    }
                 }
             }
 

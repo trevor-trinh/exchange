@@ -27,8 +27,8 @@ export function OrderbookRow({ price, priceValue, size, cumulative, maxCumulativ
         className={`absolute left-0 top-0 bottom-0 ${bgClass} transition-all duration-300 ease-out`}
         style={{ width: `${depthPercentage}%` }}
       />
-      <span className={`relative z-10 ${colorClass} font-semibold`}>{price}</span>
-      <span className="relative z-10 text-muted-foreground text-right">{size}</span>
+      <span className={`relative z-10 ${colorClass} font-semibold whitespace-nowrap`}>{price}</span>
+      <span className="relative z-10 text-muted-foreground text-right whitespace-nowrap">{size}</span>
     </div>
   );
 }

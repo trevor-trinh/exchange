@@ -60,19 +60,31 @@ export function RecentOrders() {
     }
   };
 
+  const hasOpenOrders = orders.some((o) => o.status === "pending" || o.status === "partially_filled");
+
   const columns = useMemo<ColumnDef<Order>[]>(
     () => [
       {
+        accessorKey: "created_at",
+        header: "Time",
+        cell: ({ row }) => (
+          <div className="text-muted-foreground/80 text-xs">
+            {(row.getValue("created_at") as Date).toLocaleTimeString()}
+          </div>
+        ),
+        size: 90,
+      },
+      {
         accessorKey: "market_id",
         header: "Market",
-        cell: ({ row }) => <div className="font-semibold text-foreground">{row.getValue("market_id")}</div>,
+        cell: ({ row }) => <div className="font-medium text-foreground/90">{row.getValue("market_id")}</div>,
         size: 100,
       },
       {
         accessorKey: "side",
         header: "Side",
         cell: ({ row }) => (
-          <span className={`font-bold ${row.getValue("side") === "buy" ? "text-green-500" : "text-red-500"}`}>
+          <span className={`font-semibold ${row.getValue("side") === "buy" ? "text-green-500" : "text-red-500"}`}>
             {row.getValue("side") === "buy" ? "Buy" : "Sell"}
           </span>
         ),
@@ -82,29 +94,29 @@ export function RecentOrders() {
         accessorKey: "order_type",
         header: "Type",
         cell: ({ row }) => (
-          <span className="text-muted-foreground">{row.getValue("order_type") === "limit" ? "Limit" : "Market"}</span>
+          <span className="text-muted-foreground/80">{row.getValue("order_type") === "limit" ? "Limit" : "Market"}</span>
         ),
         size: 70,
       },
       {
         accessorKey: "priceDisplay",
-        header: "Price",
-        cell: ({ row }) => <div className="font-mono text-sm">{row.getValue("priceDisplay")}</div>,
-        size: 100,
+        header: () => <div className="text-right">Price</div>,
+        cell: ({ row }) => <div className="text-right font-medium text-foreground/90">{row.getValue("priceDisplay")}</div>,
+        size: 120,
       },
       {
         accessorKey: "sizeDisplay",
-        header: "Size",
-        cell: ({ row }) => <div className="font-mono text-sm text-muted-foreground">{row.getValue("sizeDisplay")}</div>,
-        size: 100,
+        header: () => <div className="text-right">Size</div>,
+        cell: ({ row }) => <div className="text-right text-muted-foreground/80">{row.getValue("sizeDisplay")}</div>,
+        size: 120,
       },
       {
         id: "filled",
-        header: "Filled",
+        header: () => <div className="text-right">Filled</div>,
         cell: ({ row }) => {
           const order = row.original;
           const filledPercent = order.sizeValue > 0 ? (order.filledValue / order.sizeValue) * 100 : 0;
-          return <div className="font-mono text-sm text-muted-foreground">{filledPercent.toFixed(1)}%</div>;
+          return <div className="text-right text-muted-foreground/80">{filledPercent.toFixed(1)}%</div>;
         },
         size: 80,
       },
@@ -115,37 +127,43 @@ export function RecentOrders() {
           const status = row.getValue("status") as string;
           return (
             <span
-              className={`text-xs px-2 py-1 font-semibold uppercase tracking-wide rounded ${
+              className={`inline-flex items-center text-xs px-2 py-1 font-medium rounded ${
                 status === "filled"
                   ? "bg-green-500/10 text-green-500 border border-green-500/20"
                   : status === "partially_filled"
                     ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
                     : status === "cancelled"
-                      ? "bg-muted text-muted-foreground border border-border"
+                      ? "bg-muted text-muted-foreground/70 border border-border/40"
                       : status === "pending"
                         ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
                         : "bg-gray-500/10 text-gray-500 border border-gray-500/20"
               }`}
             >
-              {status === "pending" ? "open" : status.replace("_", " ")}
+              {status === "pending" ? "Open" : status === "partially_filled" ? "Partial" : status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
           );
         },
-        size: 110,
-      },
-      {
-        accessorKey: "created_at",
-        header: "Time",
-        cell: ({ row }) => (
-          <div className="text-muted-foreground text-xs">
-            {(row.getValue("created_at") as Date).toLocaleTimeString()}
-          </div>
-        ),
-        size: 90,
+        size: 100,
       },
       {
         id: "actions",
-        header: "",
+        header: () => (
+          <div className="flex justify-center">
+            {hasOpenOrders ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancelAll}
+                disabled={cancellingAll}
+                className="text-red-500 hover:text-red-600 hover:bg-red-500/10 h-7"
+              >
+                {cancellingAll ? "Cancelling..." : "Cancel All"}
+              </Button>
+            ) : (
+              <span>Cancel</span>
+            )}
+          </div>
+        ),
         cell: ({ row }) => {
           const order = row.original;
           const canCancel = order.status === "pending" || order.status === "partially_filled";
@@ -153,21 +171,23 @@ export function RecentOrders() {
 
           const isCancelling = cancellingOrders.has(order.id);
           return (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleCancelOrder(order.id)}
-              disabled={isCancelling}
-              className="h-7 w-7 p-0 text-muted-foreground hover:text-red-500"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex justify-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleCancelOrder(order.id)}
+                disabled={isCancelling}
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-red-500"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           );
         },
-        size: 50,
+        size: 80,
       },
     ],
-    [cancellingOrders]
+    [cancellingOrders, hasOpenOrders, cancellingAll]
   );
 
   if (!selectedMarketId || !selectedMarket) {
@@ -186,28 +206,9 @@ export function RecentOrders() {
     );
   }
 
-  const hasOpenOrders = orders.some((o) => o.status === "pending" || o.status === "partially_filled");
-
   return (
     <div className="h-full">
-      <DataTable
-        columns={columns}
-        data={orders}
-        emptyMessage="No orders found"
-        headerAction={
-          hasOpenOrders ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCancelAll}
-              disabled={cancellingAll}
-              className="text-red-500 hover:text-red-600 hover:bg-red-500/10 h-7"
-            >
-              {cancellingAll ? "Cancelling..." : "Cancel All"}
-            </Button>
-          ) : null
-        }
-      />
+      <DataTable columns={columns} data={orders} emptyMessage="No orders found" />
     </div>
   );
 }

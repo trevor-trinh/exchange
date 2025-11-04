@@ -114,7 +114,7 @@ export function TradePanel() {
     : (formData.side === "buy" ? bestAsk : bestBid) || lastTradePrice;
 
   return (
-    <Card className="h-full flex flex-col gap-0 py-0 overflow-hidden shadow-lg border-border/50 bg-gradient-to-b from-card to-card/80">
+    <Card className="h-full flex flex-col gap-0 py-0 overflow-hidden shadow-lg border-border/50 bg-gradient-to-b from-card to-card/80 min-w-0">
       <OrderTypeSelector value={formData.orderType} onChange={(value) => updateField("orderType", value)} />
 
       <CardContent className="p-4 space-y-4 flex-1">

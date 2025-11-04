@@ -107,15 +107,16 @@ fn engine_event_to_message(event: EngineEvent) -> ServerMessage {
             status: "cancelled".to_string(),
             filled_size: "0".to_string(),
         },
-        EngineEvent::BalanceUpdated {
-            token_ticker,
-            available,
-            locked,
-            ..
-        } => ServerMessage::Balance {
-            token_ticker,
-            available: available.to_string(),
-            locked: locked.to_string(),
+        EngineEvent::BalanceUpdated { balance } => ServerMessage::Balance {
+            user_address: balance.user_address,
+            token_ticker: balance.token_ticker,
+            available: balance
+                .amount
+                .checked_sub(balance.open_interest)
+                .unwrap_or(0)
+                .to_string(),
+            locked: balance.open_interest.to_string(),
+            updated_at: balance.updated_at.timestamp(),
         },
         EngineEvent::OrderbookSnapshot { orderbook } => ServerMessage::Orderbook {
             orderbook: OrderbookData {

@@ -271,10 +271,7 @@ pub enum EngineEvent {
         user_address: String,
     },
     BalanceUpdated {
-        user_address: String,
-        token_ticker: String,
-        available: u128,
-        locked: u128,
+        balance: Balance,
     },
     OrderbookSnapshot {
         orderbook: OrderbookSnapshot,
@@ -291,7 +288,9 @@ pub enum Subscription {
     Trades { market_id: String },
     Orderbook { market_id: String },
     Candles { market_id: String },
-    User { user_address: String },
+    UserFills { user_address: String },
+    UserOrders { user_address: String },
+    UserBalances { user_address: String },
 }
 
 impl Subscription {
@@ -318,9 +317,21 @@ impl Subscription {
                         market_id: id.clone(),
                     })
                 }
-                SubscriptionChannel::User => user_address.as_ref().map(|addr| Subscription::User {
-                    user_address: addr.clone(),
-                }),
+                SubscriptionChannel::UserFills => {
+                    user_address.as_ref().map(|addr| Subscription::UserFills {
+                        user_address: addr.clone(),
+                    })
+                }
+                SubscriptionChannel::UserOrders => {
+                    user_address.as_ref().map(|addr| Subscription::UserOrders {
+                        user_address: addr.clone(),
+                    })
+                }
+                SubscriptionChannel::UserBalances => {
+                    user_address.as_ref().map(|addr| Subscription::UserBalances {
+                        user_address: addr.clone(),
+                    })
+                }
             },
             ClientMessage::Ping => None,
         }

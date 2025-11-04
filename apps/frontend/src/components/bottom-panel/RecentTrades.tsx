@@ -31,9 +31,19 @@ export function RecentTrades() {
   const columns = useMemo<ColumnDef<EnhancedTrade>[]>(
     () => [
       {
+        accessorKey: "timestamp",
+        header: "Time",
+        cell: ({ row }) => (
+          <div className="text-muted-foreground/80 text-xs">
+            {(row.getValue("timestamp") as Date).toLocaleTimeString()}
+          </div>
+        ),
+        size: 90,
+      },
+      {
         accessorKey: "market_id",
         header: "Market",
-        cell: ({ row }) => <div className="font-semibold text-foreground">{row.getValue("market_id")}</div>,
+        cell: ({ row }) => <div className="font-medium text-foreground/90">{row.getValue("market_id")}</div>,
         size: 100,
       },
       {
@@ -43,7 +53,7 @@ export function RecentTrades() {
           const side = row.getValue("side") as string;
           return (
             <span
-              className={`text-xs px-2 py-1 font-semibold uppercase tracking-wide rounded ${
+              className={`inline-flex items-center text-xs px-2 py-1 font-medium rounded ${
                 side === "buy"
                   ? "bg-green-500/10 text-green-500 border border-green-500/20"
                   : "bg-red-500/10 text-red-500 border border-red-500/20"
@@ -53,36 +63,26 @@ export function RecentTrades() {
             </span>
           );
         },
-        size: 90,
+        size: 80,
       },
       {
         accessorKey: "priceDisplay",
-        header: "Price",
+        header: () => <div className="text-right">Price</div>,
         cell: ({ row }) => {
           const side = row.getValue("side") as string;
           return (
-            <div className={`font-mono text-sm font-semibold ${side === "buy" ? "text-green-500" : "text-red-500"}`}>
+            <div className={`text-right font-medium ${side === "buy" ? "text-green-500" : "text-red-500"}`}>
               {row.getValue("priceDisplay")}
             </div>
           );
         },
-        size: 110,
+        size: 120,
       },
       {
         accessorKey: "sizeDisplay",
-        header: "Size",
-        cell: ({ row }) => <div className="font-mono text-sm text-muted-foreground">{row.getValue("sizeDisplay")}</div>,
-        size: 110,
-      },
-      {
-        accessorKey: "timestamp",
-        header: "Time",
-        cell: ({ row }) => (
-          <div className="text-muted-foreground text-xs">
-            {(row.getValue("timestamp") as Date).toLocaleTimeString()}
-          </div>
-        ),
-        size: 90,
+        header: () => <div className="text-right">Size</div>,
+        cell: ({ row }) => <div className="text-right text-muted-foreground/80">{row.getValue("sizeDisplay")}</div>,
+        size: 120,
       },
     ],
     []
