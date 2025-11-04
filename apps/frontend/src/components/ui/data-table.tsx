@@ -55,7 +55,16 @@ export function DataTable<TData, TValue>({
   return (
     <div className="h-full overflow-auto relative">
       <table className="w-full caption-bottom text-sm">
-        <TableHeader className="sticky top-0 bg-card z-10 border-b border-border/50">
+        <TableHeader
+          className="sticky top-0 z-10 border-b border-border/50 bg-neutral-800"
+          style={{
+            backgroundImage: `
+                    url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h1v1H0zM2 2h1v1H2z' fill='%23000000' fill-opacity='0.1'/%3E%3Cpath d='M1 0h1v1H1zM3 2h1v1H3zM0 2h1v1H0zM2 0h1v1H2zM1 2h1v1H1zM3 0h1v1H3z' fill='%23ffffff' fill-opacity='0.05'/%3E%3C/svg%3E"),
+                    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 2px)
+                  `,
+            backgroundBlendMode: "overlay, normal",
+          }}
+        >
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="border-none hover:bg-transparent relative">
               {headerGroup.headers.map((header) => {

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useExchangeStore } from "@/lib/store";
 import { useExchangeClient } from "@/lib/hooks/useExchangeClient";
+import { useOrders } from "@/lib/hooks/useOrders";
 import { ExchangeDatafeed } from "@/lib/tradingview-datafeed";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -13,7 +14,6 @@ import type {
   ChartingLibraryWidgetOptions,
   ResolutionString,
   IOrderLineAdapter,
-  IExecutionLineAdapter,
 } from "../../public/vendor/trading-view/charting_library";
 
 // Extend window to include TradingView
@@ -36,13 +36,14 @@ export function TradingViewChart() {
   // Track when chart is ready for drawing overlays
   const [isChartReady, setIsChartReady] = useState(false);
 
-  // Track created order lines and execution shapes for cleanup
+  // Track created order lines for cleanup
   const orderLinesRef = useRef<Map<string, IOrderLineAdapter>>(new Map());
-  const executionShapesRef = useRef<Map<string, IExecutionLineAdapter>>(new Map());
 
-  // Subscribe to user orders and trades
+  // Fetch and subscribe to user orders (this ensures orders are always loaded)
+  useOrders();
+
+  // Get orders from store (populated by useOrders hook above)
   const userOrders = useExchangeStore((state) => state.userOrders);
-  const userTrades = useExchangeStore((state) => state.userTrades);
 
   useEffect(() => {
     if (!containerRef.current || !selectedMarketId) {
@@ -78,10 +79,10 @@ export function TradingViewChart() {
       enabled_features: ["study_templates", "side_toolbar_in_fullscreen_mode"],
       fullscreen: false,
       autosize: true,
-      theme: "dark",
+      theme: "Dark",
       custom_css_url: "/tradingview-custom.css",
       loading_screen: {
-        backgroundColor: "#0d0a14",
+        backgroundColor: "#1a1a1a",
         foregroundColor: "#9d7efa",
       },
       // Customize trading primitives
@@ -105,20 +106,9 @@ export function TradingViewChart() {
         },
       },
       settings_overrides: {
-        // Background - Match card background (hsl(260, 30%, 8%))
-        "paneProperties.background": "#0d0a14",
+        // Background - Simple gray
+        "paneProperties.background": "#1a1a1a",
         "paneProperties.backgroundType": "solid",
-        "paneProperties.backgroundGradientStartColor": "#0d0a14",
-        "paneProperties.backgroundGradientEndColor": "#0d0a14",
-
-        // Grid lines - subtle purple tint to match theme
-        "paneProperties.vertGridProperties.color": "rgba(157, 126, 250, 0.08)",
-        "paneProperties.horzGridProperties.color": "rgba(157, 126, 250, 0.08)",
-        "paneProperties.vertGridProperties.style": 0,
-        "paneProperties.horzGridProperties.style": 0,
-
-        // Separators - purple accent
-        "paneProperties.separatorColor": "rgba(157, 126, 250, 0.2)",
 
         // Chart style - 1 for candles
         "mainSeriesProperties.style": 1,
@@ -147,13 +137,8 @@ export function TradingViewChart() {
         "crosshairProperties.width": 1,
         "crosshairProperties.style": 2,
 
-        // Scale text color and background - match muted foreground
-        "scalesProperties.textColor": "#a295c1",
-        "scalesProperties.backgroundColor": "#0d0a14",
-        "scalesProperties.lineColor": "rgba(157, 126, 250, 0.2)",
-
-        // Session breaks
-        "sessionBreakColor": "rgba(157, 126, 250, 0.15)",
+        // Scale background
+        "scalesProperties.backgroundColor": "#1a1a1a",
       },
       studies_overrides: {
         "volume.volume.color.0": "#ef4444",
@@ -196,9 +181,8 @@ export function TradingViewChart() {
         widgetRef.current.remove();
         widgetRef.current = null;
       }
-      // Clear all order lines and execution shapes
+      // Clear all order lines
       orderLinesRef.current.clear();
-      executionShapesRef.current.clear();
       // Reset chart ready state
       setIsChartReady(false);
     };
@@ -235,20 +219,29 @@ export function TradingViewChart() {
     for (const order of marketOrders) {
       if (!orderLinesRef.current.has(order.id)) {
         try {
-          const color = order.side === "buy" ? "#22c55e" : "#ef4444";
-          const sideText = order.side === "buy" ? "BUY" : "SELL";
+          const isBuy = order.side === "buy";
+          const lineColor = isBuy ? "#22c55e" : "#ef4444";
+          const bgColor = isBuy ? "rgba(34, 197, 94, 0.12)" : "rgba(239, 68, 68, 0.12)";
+          const sideText = isBuy ? "BUY" : "SELL";
 
           const line = chart.createOrderLine();
           line
             .setPrice(order.priceValue)
             .setText(`${sideText} ${order.priceDisplay} × ${order.sizeDisplay}`)
             .setQuantity(order.sizeDisplay)
-            .setLineColor(color)
-            .setBodyBorderColor(color)
-            .setBodyTextColor(color)
-            .setQuantityBorderColor(color)
-            .setQuantityTextColor(color)
+            .setLineColor(lineColor)
+            .setLineWidth(2)
+            .setBodyBorderColor(lineColor)
+            .setBodyBackgroundColor(bgColor)
+            .setBodyTextColor(isBuy ? "#bbf7d0" : "#fecaca")
+            .setQuantityBorderColor(lineColor)
+            .setQuantityBackgroundColor(bgColor)
+            .setQuantityTextColor(isBuy ? "#bbf7d0" : "#fecaca")
+            .setCancelButtonBorderColor("#ef4444")
+            .setCancelButtonBackgroundColor("rgba(239, 68, 68, 0.2)")
+            .setCancelButtonIconColor("#ef4444")
             .setCancelTooltip("Cancel Order")
+            .setTooltip(`${sideText} Order: ${order.sizeDisplay} @ ${order.priceDisplay}`)
             .onCancel(async () => {
               if (!userAddress) {
                 console.warn("[TradingView] Cannot cancel order: user not authenticated");
@@ -273,57 +266,7 @@ export function TradingViewChart() {
         }
       }
     }
-  }, [userOrders, selectedMarketId, isChartReady]);
-
-  // Manage execution shapes for user trades
-  useEffect(() => {
-    if (!widgetRef.current || !selectedMarketId || !isChartReady) return;
-
-    const chart = widgetRef.current.activeChart();
-    if (!chart) return;
-
-    // Filter trades for current market (limit to last 50 for performance)
-    const marketTrades = userTrades.filter((trade) => trade.market_id === selectedMarketId).slice(0, 50);
-
-    // Remove shapes for trades that are no longer in the list
-    const tradeIds = new Set(marketTrades.map((t) => t.id));
-    for (const [tradeId, shape] of executionShapesRef.current) {
-      if (!tradeIds.has(tradeId)) {
-        try {
-          shape.remove();
-        } catch (err) {
-          console.warn("[TradingView] Failed to remove execution shape:", err);
-        }
-        executionShapesRef.current.delete(tradeId);
-      }
-    }
-
-    // Create shapes for new trades
-    for (const trade of marketTrades) {
-      if (!executionShapesRef.current.has(trade.id)) {
-        try {
-          const color = trade.side === "buy" ? "#22c55e" : "#ef4444";
-          const direction = trade.side === "buy" ? "buy" : "sell";
-
-          // Convert timestamp to Unix seconds
-          const timeSeconds = Math.floor(trade.timestamp.getTime() / 1000);
-
-          const shape = chart.createExecutionShape();
-          shape
-            .setPrice(trade.priceValue)
-            .setTime(timeSeconds)
-            .setDirection(direction)
-            .setText(trade.sizeDisplay)
-            .setArrowColor(color)
-            .setTextColor(color);
-
-          executionShapesRef.current.set(trade.id, shape);
-        } catch (err) {
-          console.warn("[TradingView] Failed to create execution shape:", err);
-        }
-      }
-    }
-  }, [userTrades, selectedMarketId, isChartReady]);
+  }, [userOrders, selectedMarketId, isChartReady, userAddress, client]);
 
   if (!selectedMarketId) {
     return (

@@ -9,38 +9,29 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 export function BottomPanel() {
   return (
     <div className="w-full h-[600px]">
-      <Card className="py-0 overflow-hidden w-full h-full flex flex-col">
+      <Card className="p-0 overflow-hidden w-full h-full flex flex-col">
         <Tabs defaultValue="balances" className="flex flex-col h-full">
           <TabsList className="justify-start rounded-none border-b border-border h-auto p-0 bg-card backdrop-blur-sm shrink-0">
-            <TabsTrigger
-              value="balances"
-              className="rounded-none px-4 py-2 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-            >
+            <TabsTrigger value="balances" className="rounded-none px-4 text-sm">
               Balances
             </TabsTrigger>
-            <TabsTrigger
-              value="orders"
-              className="rounded-none px-4 py-2 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-            >
+            <TabsTrigger value="orders" className="rounded-none px-4 text-sm ">
               Orders
             </TabsTrigger>
-            <TabsTrigger
-              value="trades"
-              className="rounded-none px-4 py-2 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-            >
+            <TabsTrigger value="trades" className="rounded-none px-4 text-sm ">
               Trades
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="balances" className="focus-visible:outline-none flex-1 overflow-hidden m-0">
+          <TabsContent value="balances">
             <Balances />
           </TabsContent>
 
-          <TabsContent value="orders" className="focus-visible:outline-none flex-1 overflow-hidden m-0">
+          <TabsContent value="orders">
             <RecentOrders />
           </TabsContent>
 
-          <TabsContent value="trades" className="focus-visible:outline-none flex-1 overflow-hidden m-0">
+          <TabsContent value="trades">
             <RecentTrades />
           </TabsContent>
         </Tabs>

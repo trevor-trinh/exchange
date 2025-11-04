@@ -1,9 +1,9 @@
-/* Custom TradingView theme to match dark purple theme with dither effect */
+/* Custom TradingView theme to match dark gray theme with dither effect */
 
 /* Toolbar background - match card background */
 .chart-page .chart-container,
 .layout__area--top {
-  background-color: #0d0a14 !important;
+  background-color: #1a1a1a !important;
 }
 
 /* Toolbar buttons and controls - match muted foreground */
@@ -31,7 +31,7 @@
 /* Dropdown menus */
 .menuWrap-Kq3ruQo8,
 .menu-Kq3ruQo8 {
-  background-color: #0d0a14 !important;
+  background-color: #1a1a1a !important;
   border-color: #333333 !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
 }
@@ -50,7 +50,7 @@
 /* Time axis and price axis */
 .price-axis,
 .time-axis {
-  background-color: #0d0a14 !important;
+  background-color: #1a1a1a !important;
 }
 
 /* Scrollbar styling - match app theme */
@@ -60,7 +60,7 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #0d0a14 !important;
+  background: #1a1a1a !important;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -75,7 +75,7 @@
 
 /* Context menu */
 .menuBox-biWYdsXC {
-  background-color: #0d0a14 !important;
+  background-color: #1a1a1a !important;
   border-color: #333333 !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
 }
@@ -103,7 +103,7 @@ input[type="number"]:focus {
 /* Remove any white backgrounds */
 .chart-gui-wrapper,
 .chart-container-border {
-  background-color: #0d0a14 !important;
+  background-color: #1a1a1a !important;
 }
 
 /* Dither effect overlay for chart canvas */
@@ -119,21 +119,21 @@ input[type="number"]:focus {
 
 /* Tooltip styling */
 .tv-lightweight-charts-tooltip {
-  background-color: rgba(13, 10, 20, 0.95) !important;
+  background-color: rgba(26, 26, 26, 0.95) !important;
   border: 1px solid #333333 !important;
   color: #a295c1 !important;
   backdrop-filter: blur(8px);
 }
 
-/* Drawing tools - match purple theme */
+/* Drawing tools - match gray theme */
 .drawing-toolbar {
-  background-color: #0d0a14 !important;
+  background-color: #1a1a1a !important;
   border-color: #333333 !important;
 }
 
 /* Panel background */
 .panel-nX4VbaC0 {
-  background-color: #0d0a14 !important;
+  background-color: #1a1a1a !important;
 }
 
 /* Selected item highlight */
@@ -148,6 +148,20 @@ input[type="number"]:focus {
 }
 
 .tab-1ydBmW6T.isActive-1ydBmW6T {
-  color: #9d7efa !important;
-  border-bottom-color: #9d7efa !important;
+  color: #ffffff !important;
+  border-bottom-color: #ffffff !important;
+}
+
+/* Ensure dither effect is visible */
+.dither::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, 0.03) 1px, rgba(255, 255, 255, 0.03) 2px);
+  pointer-events: none;
+  z-index: 1;
 }
