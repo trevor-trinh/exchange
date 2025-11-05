@@ -46,59 +46,63 @@ class Type6(Enum):
 
 
 class Type7(Enum):
-    order = 'order'
-
-
-class ServerMessage5(BaseModel):
-    filled_size: str
-    order_id: str
-    status: str
-    type: Type7
-
-
-class Type8(Enum):
-    balance = 'balance'
-
-
-class ServerMessage6(BaseModel):
-    available: str
-    locked: str
-    token_ticker: str
-    type: Type8
-    updated_at: int
-    user_address: str
-
-
-class Type9(Enum):
     candle = 'candle'
 
 
-class ServerMessage7(BaseModel):
+class ServerMessage5(BaseModel):
     close: str
     high: str
     low: str
     market_id: str
     open: str
     timestamp: int
-    type: Type9
+    type: Type7
     volume: str
 
 
+class Type8(Enum):
+    user_fill = 'user_fill'
+
+
+class Type9(Enum):
+    user_order = 'user_order'
+
+
+class ServerMessage7(BaseModel):
+    filled_size: str
+    order_id: str
+    status: str
+    type: Type9
+
+
 class Type10(Enum):
-    error = 'error'
+    user_balance = 'user_balance'
 
 
 class ServerMessage8(BaseModel):
-    message: str
+    available: str
+    locked: str
+    token_ticker: str
     type: Type10
+    updated_at: int
+    user_address: str
 
 
 class Type11(Enum):
-    pong = 'pong'
+    error = 'error'
 
 
 class ServerMessage9(BaseModel):
+    message: str
     type: Type11
+
+
+class Type12(Enum):
+    pong = 'pong'
+
+
+class ServerMessage10(BaseModel):
+    type: Type12
 
 
 class Side(Enum):
@@ -175,6 +179,11 @@ class ServerMessage4(BaseModel):
     type: Type6
 
 
+class ServerMessage6(BaseModel):
+    trade: TradeData
+    type: Type8
+
+
 class ServerMessage(
     RootModel[
         ServerMessage1
@@ -186,6 +195,7 @@ class ServerMessage(
         | ServerMessage7
         | ServerMessage8
         | ServerMessage9
+        | ServerMessage10
     ]
 ):
     root: (
@@ -198,4 +208,5 @@ class ServerMessage(
         | ServerMessage7
         | ServerMessage8
         | ServerMessage9
+        | ServerMessage10
     ) = Field(..., title='ServerMessage')

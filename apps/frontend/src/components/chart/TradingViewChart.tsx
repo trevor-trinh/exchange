@@ -53,11 +53,7 @@ export function TradingViewChart() {
       datafeedRef.current = new ExchangeDatafeed();
     }
 
-    const widgetOptions = getChartConfig(
-      selectedMarketId,
-      datafeedRef.current,
-      containerRef.current
-    );
+    const widgetOptions = getChartConfig(selectedMarketId, datafeedRef.current, containerRef.current);
 
     try {
       const widget = new TradingView.widget(widgetOptions);

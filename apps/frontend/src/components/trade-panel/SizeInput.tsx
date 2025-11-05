@@ -68,8 +68,11 @@ export function SizeInput({
           Size ({baseToken.ticker})
         </Label>
         {isAuthenticated && (
-          <span className="text-xs text-muted-foreground font-medium text-right truncate min-w-0" title={`Available: ${formatNumberWithCommas(side === "buy" ? availableQuote : availableBase, 4)} ${side === "buy" ? quoteToken.ticker : baseToken.ticker}`}>
-            <span className="text-[10px] opacity-70">Avail: </span>
+          <span
+            className="text-xs text-muted-foreground font-medium text-right truncate min-w-0"
+            title={`Available: ${formatNumberWithCommas(side === "buy" ? availableQuote : availableBase, 4)} ${side === "buy" ? quoteToken.ticker : baseToken.ticker}`}
+          >
+            <span className="text-[10px] opacity-70">Available: </span>
             {formatNumberWithCommas(side === "buy" ? availableQuote : availableBase, 2)}{" "}
             <span className="text-[10px]">{side === "buy" ? quoteToken.ticker : baseToken.ticker}</span>
           </span>

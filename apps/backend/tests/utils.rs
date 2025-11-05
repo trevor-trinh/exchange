@@ -197,11 +197,25 @@ impl TestDb {
         base_ticker: &str,
         quote_ticker: &str,
     ) -> anyhow::Result<backend::models::domain::Market> {
-        // Create tokens first
-        self.create_test_token(base_ticker, 18, &format!("{} Token", base_ticker))
-            .await?;
-        self.create_test_token(quote_ticker, 18, &format!("{} Token", quote_ticker))
-            .await?;
+        // Create tokens with realistic decimals
+        // Base tokens (crypto assets) typically use 8 decimals
+        // Quote tokens (stablecoins) typically use 6 decimals
+        // This prevents integer truncation issues in price calculations
+        let base_decimals = 8;
+        let quote_decimals = 6;
+
+        self.create_test_token(
+            base_ticker,
+            base_decimals,
+            &format!("{} Token", base_ticker),
+        )
+        .await?;
+        self.create_test_token(
+            quote_ticker,
+            quote_decimals,
+            &format!("{} Token", quote_ticker),
+        )
+        .await?;
 
         // Then create the market
         self.create_test_market(base_ticker, quote_ticker).await
@@ -249,22 +263,65 @@ impl TestEngine {
     pub async fn new_with_users(test_db: &TestDb, create_users: bool) -> Self {
         // Create common test users for engine tests only
         if create_users {
-            let _ = test_db.create_test_user("buyer").await;
-            let _ = test_db.create_test_user("seller").await;
-            let _ = test_db.create_test_user("seller1").await;
-            let _ = test_db.create_test_user("seller2").await;
-            let _ = test_db.create_test_user("seller3").await;
-            let _ = test_db.create_test_user("buyer1").await;
-            let _ = test_db.create_test_user("buyer2").await;
-            let _ = test_db.create_test_user("buyer3").await;
-            let _ = test_db.create_test_user("alice").await;
-            let _ = test_db.create_test_user("bob").await;
-            let _ = test_db.create_test_user("charlie").await;
-            let _ = test_db.create_test_user("dave").await;
-            let _ = test_db.create_test_user("user1").await;
-            let _ = test_db.create_test_user("user2").await;
-            let _ = test_db.create_test_user("attacker").await;
-            let _ = test_db.create_test_user("big_buyer").await;
+            let users = vec![
+                "buyer",
+                "seller",
+                "seller1",
+                "seller2",
+                "seller3",
+                "buyer1",
+                "buyer2",
+                "buyer3",
+                "alice",
+                "bob",
+                "charlie",
+                "dave",
+                "user1",
+                "user2",
+                "attacker",
+                "big_buyer",
+            ];
+
+            for user in &users {
+                let _ = test_db.create_test_user(user).await;
+            }
+
+            // Give each user generous balances for various common test tokens
+            // Using realistic decimals: 8 for base tokens, 6 for quote tokens
+            let test_tokens = vec![
+                ("BTC", 8, 1_000_000_000u128),     // 10 BTC
+                ("ETH", 8, 10_000_000_000),        // 100 ETH
+                ("SOL", 8, 100_000_000_000),       // 1,000 SOL
+                ("LINK", 8, 1_000_000_000_000),    // 10,000 LINK
+                ("ADA", 8, 10_000_000_000_000),    // 100,000 ADA
+                ("MATIC", 8, 100_000_000_000_000), // 1,000,000 MATIC
+                ("ATOM", 8, 10_000_000_000_000),   // 100,000 ATOM
+                ("AVAX", 8, 10_000_000_000_000),   // 100,000 AVAX
+                ("DOT", 8, 10_000_000_000_000),    // 100,000 DOT
+                ("UNI", 8, 10_000_000_000_000),    // 100,000 UNI
+                ("USDC", 6, 10_000_000_000_000),   // 10,000,000 USDC
+                ("USDT", 6, 10_000_000_000_000),   // 10,000,000 USDT
+                ("DAI", 6, 10_000_000_000_000),    // 10,000,000 DAI
+            ];
+
+            for user in &users {
+                for (ticker, _decimals, amount) in &test_tokens {
+                    // Create token if it doesn't exist (ignore errors if it already exists)
+                    if test_db.db.get_token(ticker).await.is_err() {
+                        let _ = test_db
+                            .db
+                            .create_token(
+                                ticker.to_string(),
+                                *_decimals,
+                                format!("{} Token", ticker),
+                            )
+                            .await;
+                    }
+
+                    // Add balance to user
+                    let _ = test_db.db.add_balance(user, ticker, *amount).await;
+                }
+            }
         }
 
         let (engine_tx, engine_rx) = mpsc::channel::<EngineRequest>(100);

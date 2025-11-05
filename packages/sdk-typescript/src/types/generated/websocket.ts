@@ -53,20 +53,6 @@ export type ServerMessage =
       type: "orderbook";
     }
   | {
-      filled_size: string;
-      order_id: string;
-      status: string;
-      type: "order";
-    }
-  | {
-      available: string;
-      locked: string;
-      token_ticker: string;
-      type: "balance";
-      updated_at: number;
-      user_address: string;
-    }
-  | {
       close: string;
       high: string;
       low: string;
@@ -75,6 +61,24 @@ export type ServerMessage =
       timestamp: number;
       type: "candle";
       volume: string;
+    }
+  | {
+      trade: TradeData;
+      type: "user_fill";
+    }
+  | {
+      filled_size: string;
+      order_id: string;
+      status: string;
+      type: "user_order";
+    }
+  | {
+      available: string;
+      locked: string;
+      token_ticker: string;
+      type: "user_balance";
+      updated_at: number;
+      user_address: string;
     }
   | {
       message: string;

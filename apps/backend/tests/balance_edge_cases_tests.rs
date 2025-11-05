@@ -176,12 +176,12 @@ async fn test_multiple_orders_lock_balance() {
         .await
         .expect("Failed to create market");
 
-    // Tokens have 18 decimals
-    // Calculate amounts: (price * size) / 10^18 = quote_amount needed
-    // First order: 30000000000 * 10000000000 / 10^18 = 300 atoms
-    // Second order: 40000000000 * 10000000000 / 10^18 = 400 atoms
-    // Give user exactly 700 atoms to allow both orders
-    drip_tokens(&server.address, "buyer", "USDC", "700").await;
+    // Tokens: AVAX has 8 decimals, USDC has 6 decimals
+    // Calculate amounts: (price * size) / 10^base_decimals = quote_amount needed
+    // First order: 30000000000 * 10000000000 / 10^8 = 3000000000000 atoms
+    // Second order: 40000000000 * 10000000000 / 10^8 = 4000000000000 atoms
+    // Give user exactly 7000000000000 atoms to allow both orders
+    drip_tokens(&server.address, "buyer", "USDC", "7000000000000").await;
 
     // Place first order
     place_order(
@@ -237,11 +237,11 @@ async fn test_cancel_order_unlocks_balance() {
         .await
         .expect("Failed to create market");
 
-    // Tokens have 18 decimals
-    // First order needs: 10000000000 * 40000000000 / 10^18 = 400 atoms
-    // Second order needs: 10000000000 * 20000000000 / 10^18 = 200 atoms
+    // Tokens: DOT has 8 decimals, USDC has 6 decimals
+    // First order needs: 10000000000 * 40000000000 / 10^8 = 4000000000000 atoms
+    // Second order needs: 10000000000 * 20000000000 / 10^8 = 2000000000000 atoms
     // Give user enough for first order only
-    drip_tokens(&server.address, "buyer", "USDC", "400").await;
+    drip_tokens(&server.address, "buyer", "USDC", "4000000000000").await;
 
     // Place first order
     let order1 = place_order(

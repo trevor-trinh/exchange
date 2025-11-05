@@ -144,7 +144,7 @@ async fn test_balance_events_on_limit_order_placement() {
         .expect("Failed to receive balance message");
 
     match msg {
-        ServerMessage::Balance {
+        ServerMessage::UserBalance {
             user_address,
             token_ticker,
             available: _,
@@ -262,7 +262,7 @@ async fn test_balance_events_on_limit_order_fill() {
     // Receive multiple messages (might be order status + balance events)
     for _ in 0..10 {
         match timeout(Duration::from_secs(2), receive_message(&mut ws)).await {
-            Ok(Ok(ServerMessage::Balance {
+            Ok(Ok(ServerMessage::UserBalance {
                 user_address,
                 token_ticker,
                 available,
@@ -281,15 +281,19 @@ async fn test_balance_events_on_limit_order_fill() {
                     assert_eq!(locked, "0", "BTC should not be locked");
                     btc_event_received = true;
                 } else if token_ticker == "USDC" {
-                    // Taker should have spent USDC
-                    let available_usdc = available.parse::<u128>().unwrap();
-                    assert!(
-                        available_usdc < 100_000_000_000,
-                        "Should have spent USDC: got {}",
-                        available_usdc
-                    );
-                    assert_eq!(locked, "0", "USDC should not be locked");
-                    usdc_event_received = true;
+                    // Skip the initial lock event - we only care about the final state after trade
+                    // After trade: USDC should be unlocked and balance should be reduced
+                    if locked == "0" {
+                        // This is the post-trade event
+                        let available_usdc = available.parse::<u128>().unwrap();
+                        assert!(
+                            available_usdc < 100_000_000_000,
+                            "Should have spent USDC: got {}",
+                            available_usdc
+                        );
+                        usdc_event_received = true;
+                    }
+                    // Otherwise this is the lock event, keep waiting for unlock event
                 }
 
                 if btc_event_received && usdc_event_received {
@@ -392,10 +396,13 @@ async fn test_balance_events_on_limit_order_cancellation() {
         .expect("Failed to cancel order");
 
     // Wait for balance unlock event
+    // Note: We may receive multiple balance events (lock then unlock)
+    // We only care about the final unlocked state
     let mut balance_unlocked = false;
+    let mut final_locked_amount = None;
     for _ in 0..5 {
         match timeout(Duration::from_secs(2), receive_message(&mut ws)).await {
-            Ok(Ok(ServerMessage::Balance {
+            Ok(Ok(ServerMessage::UserBalance {
                 user_address,
                 token_ticker,
                 available: _,
@@ -404,10 +411,14 @@ async fn test_balance_events_on_limit_order_cancellation() {
             })) => {
                 if token_ticker == "USDC" {
                     assert_eq!(user_address, user);
-                    assert_eq!(locked, "0", "Should have no locked balance");
                     assert!(updated_at > 0);
-                    balance_unlocked = true;
-                    break;
+                    // Track the most recent locked amount
+                    final_locked_amount = Some(locked.clone());
+                    // If we see an unlocked state, mark as successful
+                    if locked == "0" {
+                        balance_unlocked = true;
+                        break;
+                    }
                 }
             }
             Ok(Ok(_)) => {
@@ -420,6 +431,16 @@ async fn test_balance_events_on_limit_order_cancellation() {
             Err(_) => {
                 break;
             }
+        }
+    }
+
+    // Verify we eventually saw the unlocked state
+    if !balance_unlocked {
+        if let Some(locked_amt) = final_locked_amount {
+            panic!(
+                "Expected balance to be unlocked, but last event showed locked={}",
+                locked_amt
+            );
         }
     }
 
@@ -532,7 +553,7 @@ async fn test_balance_events_on_market_order_partial_fill() {
 
     for _ in 0..10 {
         match timeout(Duration::from_secs(2), receive_message(&mut ws)).await {
-            Ok(Ok(ServerMessage::Balance {
+            Ok(Ok(ServerMessage::UserBalance {
                 user_address,
                 token_ticker,
                 available,
@@ -550,17 +571,20 @@ async fn test_balance_events_on_market_order_partial_fill() {
                     assert_eq!(locked, "0");
                     btc_received = true;
                 } else if token_ticker == "USDC" {
-                    // Should have spent some USDC for 1 BTC
-                    // The unfilled 1 BTC should have been unlocked
-                    let available_usdc = available.parse::<u128>().unwrap();
-                    // Started with 200,000_000_000, spent ~50,000_000_000, should have some left
-                    assert!(
-                        available_usdc > 100_000_000_000 && available_usdc < 200_000_000_000,
-                        "Should have spent some USDC and unlocked remainder: got {}",
-                        available_usdc
-                    );
-                    assert_eq!(locked, "0", "No USDC should be locked");
-                    usdc_event_received = true;
+                    // Skip the initial lock event - only check the final state after trade
+                    // After partial fill: USDC should be unlocked and partially spent
+                    if locked == "0" {
+                        // This is the post-trade event
+                        let available_usdc = available.parse::<u128>().unwrap();
+                        // Should have spent some USDC for 1 BTC, rest unlocked
+                        assert!(
+                            available_usdc > 100_000_000_000 && available_usdc < 200_000_000_000,
+                            "Should have spent some USDC and unlocked remainder: got {}",
+                            available_usdc
+                        );
+                        usdc_event_received = true;
+                    }
+                    // Otherwise this is the lock event, keep waiting for unlock event
                 }
 
                 if btc_received && usdc_event_received {

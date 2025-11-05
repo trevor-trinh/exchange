@@ -16,6 +16,18 @@ async fn test_trades_persisted_to_clickhouse() {
 
     let engine = TestEngine::new(&test_db).await;
 
+    // Give seller BTC and buyer USDC
+    test_db
+        .db
+        .add_balance("seller", "BTC", 100_000_000) // 1 BTC with 8 decimals
+        .await
+        .expect("Failed to add BTC to seller");
+    test_db
+        .db
+        .add_balance("buyer", "USDC", 100_000_000_000) // 100,000 USDC with 6 decimals
+        .await
+        .expect("Failed to add USDC to buyer");
+
     // Execute a trade
     let sell_order = TestEngine::create_order(
         "seller",
@@ -77,6 +89,18 @@ async fn test_candles_generated_from_trades() {
         .expect("Failed to create market");
 
     let engine = TestEngine::new(&test_db).await;
+
+    // Give seller SOL and buyer USDC (enough for multiple trades)
+    test_db
+        .db
+        .add_balance("seller", "SOL", 10_000_000) // 0.1 SOL with 8 decimals (enough for 4 trades)
+        .await
+        .expect("Failed to add SOL to seller");
+    test_db
+        .db
+        .add_balance("buyer", "USDC", 500_000_000_000) // 500,000 USDC with 6 decimals
+        .await
+        .expect("Failed to add USDC to buyer");
 
     // Execute multiple trades to create OHLCV data
     let trades = vec![

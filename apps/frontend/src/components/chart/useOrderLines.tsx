@@ -4,19 +4,13 @@ import { useExchangeClient } from "@/lib/hooks/useExchangeClient";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import type {
-  IChartingLibraryWidget,
-  IOrderLineAdapter,
-} from "../../../public/vendor/trading-view/charting_library";
+import type { IChartingLibraryWidget, IOrderLineAdapter } from "../../../public/vendor/trading-view/charting_library";
 
 /**
  * Hook to manage order lines on the TradingView chart
  * Renders visual lines for open limit orders with cancel functionality
  */
-export function useOrderLines(
-  widgetRef: React.RefObject<IChartingLibraryWidget | null>,
-  isChartReady: boolean
-) {
+export function useOrderLines(widgetRef: React.RefObject<IChartingLibraryWidget | null>, isChartReady: boolean) {
   const selectedMarketId = useExchangeStore((state) => state.selectedMarketId);
   const userAddress = useExchangeStore((state) => state.userAddress);
   const userOrders = useExchangeStore((state) => state.userOrders);

@@ -310,24 +310,12 @@ pub enum ServerMessage {
         user_address: Option<String>,
     },
 
-    // Real-time data updates
+    // Market-wide real-time data updates
     Trade {
         trade: TradeData,
     },
     Orderbook {
         orderbook: OrderbookData,
-    },
-    Order {
-        order_id: String,
-        status: String,
-        filled_size: String,
-    },
-    Balance {
-        user_address: String,
-        token_ticker: String,
-        available: String,
-        locked: String,
-        updated_at: i64, // Unix timestamp
     },
     Candle {
         market_id: String,
@@ -337,6 +325,23 @@ pub enum ServerMessage {
         low: String,
         close: String,
         volume: String,
+    },
+
+    // User-specific real-time data updates
+    UserFill {
+        trade: TradeData,
+    },
+    UserOrder {
+        order_id: String,
+        status: String,
+        filled_size: String,
+    },
+    UserBalance {
+        user_address: String,
+        token_ticker: String,
+        available: String,
+        locked: String,
+        updated_at: i64, // Unix timestamp
     },
 
     // Connection management

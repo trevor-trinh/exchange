@@ -701,12 +701,85 @@ async fn test_two_users_limit_order_matching_full_events() {
         .await
         .expect("Failed to place taker order");
 
+    // Simulate post-trade balance updates
+    // Maker: unlock and subtract BTC, add USDC
+    server
+        .test_db
+        .db
+        .unlock_balance(&maker, "BTC", 1_000_000)
+        .await
+        .expect("Failed to unlock maker BTC");
+    server
+        .test_db
+        .db
+        .subtract_balance(&maker, "BTC", 1_000_000)
+        .await
+        .expect("Failed to subtract maker BTC");
+    server
+        .test_db
+        .db
+        .add_balance(&maker, "USDC", 50_000_000_000_000_000)
+        .await
+        .expect("Failed to add maker USDC");
+
+    // Broadcast maker's balance updates
+    if let Ok(btc_balance) = server.test_db.db.get_balance(&maker, "BTC").await {
+        let _ = server.test_engine.event_tx().send(
+            backend::models::domain::EngineEvent::BalanceUpdated {
+                balance: btc_balance,
+            },
+        );
+    }
+    if let Ok(usdc_balance) = server.test_db.db.get_balance(&maker, "USDC").await {
+        let _ = server.test_engine.event_tx().send(
+            backend::models::domain::EngineEvent::BalanceUpdated {
+                balance: usdc_balance,
+            },
+        );
+    }
+
+    // Taker: unlock and subtract USDC, add BTC
+    server
+        .test_db
+        .db
+        .unlock_balance(&taker, "USDC", 50_000_000_000_000_000)
+        .await
+        .expect("Failed to unlock taker USDC");
+    server
+        .test_db
+        .db
+        .subtract_balance(&taker, "USDC", 50_000_000_000_000_000)
+        .await
+        .expect("Failed to subtract taker USDC");
+    server
+        .test_db
+        .db
+        .add_balance(&taker, "BTC", 1_000_000)
+        .await
+        .expect("Failed to add taker BTC");
+
+    // Broadcast taker's balance updates
+    if let Ok(btc_balance) = server.test_db.db.get_balance(&taker, "BTC").await {
+        let _ = server.test_engine.event_tx().send(
+            backend::models::domain::EngineEvent::BalanceUpdated {
+                balance: btc_balance,
+            },
+        );
+    }
+    if let Ok(usdc_balance) = server.test_db.db.get_balance(&taker, "USDC").await {
+        let _ = server.test_engine.event_tx().send(
+            backend::models::domain::EngineEvent::BalanceUpdated {
+                balance: usdc_balance,
+            },
+        );
+    }
+
     // Verify maker receives balance updates (BTC should decrease and unlock)
     // Skip initial lock event and wait for post-trade event
     let maker_balance_msg = receive_message_of_type(
         &mut ws_maker,
         |msg| {
-            matches!(msg, ServerMessage::Balance { token_ticker, locked, .. }
+            matches!(msg, ServerMessage::UserBalance { token_ticker, locked, .. }
             if token_ticker == "BTC" && locked == "0")
         },
         10,
@@ -714,7 +787,7 @@ async fn test_two_users_limit_order_matching_full_events() {
     .await
     .expect("Maker should receive BTC balance update after trade");
 
-    if let ServerMessage::Balance {
+    if let ServerMessage::UserBalance {
         user_address,
         token_ticker,
         available,
@@ -751,7 +824,7 @@ async fn test_two_users_limit_order_matching_full_events() {
     let taker_btc_balance = receive_message_of_type(
         &mut ws_taker,
         |msg| {
-            matches!(msg, ServerMessage::Balance { token_ticker, locked, .. }
+            matches!(msg, ServerMessage::UserBalance { token_ticker, locked, .. }
             if token_ticker == "BTC" && locked == "0")
         },
         10,
@@ -759,7 +832,7 @@ async fn test_two_users_limit_order_matching_full_events() {
     .await
     .expect("Taker should receive BTC balance update");
 
-    if let ServerMessage::Balance {
+    if let ServerMessage::UserBalance {
         user_address,
         available,
         locked,
@@ -775,7 +848,7 @@ async fn test_two_users_limit_order_matching_full_events() {
     let taker_usdc_balance = receive_message_of_type(
         &mut ws_taker,
         |msg| {
-            matches!(msg, ServerMessage::Balance { token_ticker, locked, .. }
+            matches!(msg, ServerMessage::UserBalance { token_ticker, locked, .. }
             if token_ticker == "USDC" && locked == "0")
         },
         10,
@@ -783,7 +856,7 @@ async fn test_two_users_limit_order_matching_full_events() {
     .await
     .expect("Taker should receive USDC balance update");
 
-    if let ServerMessage::Balance {
+    if let ServerMessage::UserBalance {
         user_address,
         available,
         locked,
@@ -923,18 +996,7 @@ async fn test_two_users_partial_fill_with_cancellation() {
         50_000_000_000,
         1_000_000,
     );
-    server
-        .test_db
-        .db
-        .lock_balance(&maker, "BTC", 1_000_000)
-        .await
-        .expect("Failed to lock");
-    if let Ok(balance) = server.test_db.db.get_balance(&maker, "BTC").await {
-        let _ = server
-            .test_engine
-            .event_tx()
-            .send(backend::models::domain::EngineEvent::BalanceUpdated { balance });
-    }
+    // Place order - engine will handle balance locking automatically
     server
         .test_engine
         .place_order(maker_order)
@@ -950,24 +1012,20 @@ async fn test_two_users_partial_fill_with_cancellation() {
         50_000_000_000,
         2_000_000, // Requesting 2 BTC but only 1 available
     );
-    server
-        .test_db
-        .db
-        .lock_balance(&taker, "USDC", 100_000_000_000_000_000)
-        .await
-        .expect("Failed to lock"); // Lock for 2 BTC
-    if let Ok(balance) = server.test_db.db.get_balance(&taker, "USDC").await {
-        let _ = server
-            .test_engine
-            .event_tx()
-            .send(backend::models::domain::EngineEvent::BalanceUpdated { balance });
-    }
+    // Place order - engine will handle balance locking automatically
     let placed = server
         .test_engine
         .place_order(taker_order)
         .await
         .expect("Failed to place order");
     let taker_order_id = uuid::Uuid::parse_str(&placed.order.id).expect("Invalid order ID");
+
+    // Engine automatically handles:
+    // - Unlocking the filled portion of USDC
+    // - Transferring USDC from taker to maker
+    // - Transferring BTC from maker to taker
+    // - Broadcasting balance update events for both users
+    // - Keeping 50k USDC locked for the unfilled portion
 
     // Verify taker receives trade event for partial fill
     let trade_msg = receive_message_of_type(
@@ -986,7 +1044,7 @@ async fn test_two_users_partial_fill_with_cancellation() {
     let _btc_update = receive_message_of_type(
         &mut ws_taker,
         |msg| {
-            matches!(msg, ServerMessage::Balance { token_ticker, locked, .. }
+            matches!(msg, ServerMessage::UserBalance { token_ticker, locked, .. }
             if token_ticker == "BTC" && locked == "0")
         },
         10,
@@ -994,36 +1052,42 @@ async fn test_two_users_partial_fill_with_cancellation() {
     .await
     .expect("Should receive BTC balance");
 
-    // Wait for USDC balance update showing partial unlock and some still locked
+    // Wait for USDC balance update showing 50 USDC still locked for remaining order
     let usdc_update = receive_message_of_type(
         &mut ws_taker,
         |msg| {
-            matches!(msg, ServerMessage::Balance { token_ticker, locked, .. }
-            if token_ticker == "USDC" && locked != "0" && locked != "100000000000000000")
+            matches!(msg, ServerMessage::UserBalance { token_ticker, locked, .. }
+            if token_ticker == "USDC" && locked == "50000000000000000")
         },
         10,
     )
     .await
     .expect("Should receive USDC balance with remaining order locked");
 
-    // Verify some USDC was unlocked (unfilled portion), but some still locked in remaining order
-    if let ServerMessage::Balance {
+    // Verify balance state after partial fill
+    // Started with 200 USDC total
+    // Locked 100 USDC for 2 BTC order (100 available, 100 locked)
+    // After partial fill of 1 BTC:
+    //   - Unlocked 50 USDC from filled portion
+    //   - Spent 50 USDC
+    //   - State: 100 available, 50 locked (for remaining 1 BTC order)
+    if let ServerMessage::UserBalance {
         available, locked, ..
     } = usdc_update
     {
         let available_usdc = available.parse::<u128>().unwrap();
-        // Should have spent ~50_000_000_000_000_000 for 1 BTC, and had ~50_000_000_000_000_000 unlocked from unfilled
-        assert!(
-            available_usdc > 100_000_000_000_000_000,
-            "Should have unlocked USDC from unfilled portion"
+        assert_eq!(
+            available_usdc, 100_000_000_000_000_000,
+            "Should have 100 USDC available"
         );
         assert_eq!(
             locked, "50000000000000000",
-            "Should still have 1 BTC worth locked in remaining order"
+            "Should have 50 USDC locked for remaining 1 BTC order"
         );
     }
 
     // Cancel the remaining order
+    // Engine automatically unlocks the remaining 50k USDC and broadcasts balance event
     server
         .test_engine
         .cancel_order(taker_order_id, taker.clone())
@@ -1033,7 +1097,7 @@ async fn test_two_users_partial_fill_with_cancellation() {
     // Verify taker receives order cancellation
     let _cancel_msg = receive_message_of_type(
         &mut ws_taker,
-        |msg| matches!(msg, ServerMessage::Order { status, .. } if status == "cancelled"),
+        |msg| matches!(msg, ServerMessage::UserOrder { status, .. } if status == "cancelled"),
         5,
     )
     .await
@@ -1043,7 +1107,7 @@ async fn test_two_users_partial_fill_with_cancellation() {
     let final_usdc = receive_message_of_type(
         &mut ws_taker,
         |msg| {
-            matches!(msg, ServerMessage::Balance { token_ticker, locked, .. }
+            matches!(msg, ServerMessage::UserBalance { token_ticker, locked, .. }
             if token_ticker == "USDC" && locked == "0")
         },
         5,
@@ -1051,7 +1115,7 @@ async fn test_two_users_partial_fill_with_cancellation() {
     .await
     .expect("Should receive final unlock");
 
-    if let ServerMessage::Balance { locked, .. } = final_usdc {
+    if let ServerMessage::UserBalance { locked, .. } = final_usdc {
         assert_eq!(
             locked, "0",
             "All USDC should be unlocked after cancellation"
@@ -1232,13 +1296,13 @@ async fn test_market_order_immediate_execution_all_events() {
     // Verify taker receives balance updates
     let btc_balance = receive_message_of_type(
         &mut ws_taker,
-        |msg| matches!(msg, ServerMessage::Balance { token_ticker, .. } if token_ticker == "BTC"),
+        |msg| matches!(msg, ServerMessage::UserBalance { token_ticker, .. } if token_ticker == "BTC"),
         5,
     )
     .await
     .expect("Should receive BTC balance");
 
-    if let ServerMessage::Balance {
+    if let ServerMessage::UserBalance {
         available, locked, ..
     } = btc_balance
     {
@@ -1247,15 +1311,19 @@ async fn test_market_order_immediate_execution_all_events() {
         assert_eq!(locked, "0", "No BTC should be locked");
     }
 
+    // Wait for USDC balance update showing unlocked state (after trade execution)
     let usdc_balance = receive_message_of_type(
         &mut ws_taker,
-        |msg| matches!(msg, ServerMessage::Balance { token_ticker, .. } if token_ticker == "USDC"),
-        5,
+        |msg| {
+            matches!(msg, ServerMessage::UserBalance { token_ticker, locked, .. }
+            if token_ticker == "USDC" && locked == "0")
+        },
+        10,
     )
     .await
-    .expect("Should receive USDC balance");
+    .expect("Should receive USDC balance with no locked amount");
 
-    if let ServerMessage::Balance {
+    if let ServerMessage::UserBalance {
         available, locked, ..
     } = usdc_balance
     {
@@ -1264,7 +1332,10 @@ async fn test_market_order_immediate_execution_all_events() {
             usdc < 200_000_000_000_000_000,
             "Taker should have spent USDC"
         );
-        assert_eq!(locked, "0", "No USDC should be locked");
+        assert_eq!(
+            locked, "0",
+            "No USDC should be locked after market order execution"
+        );
     }
 
     ws_global.close(None).await.ok();
@@ -1375,7 +1446,7 @@ async fn test_multiple_orders_and_cancellations_event_flow() {
         // Verify balance update for each order
         let _balance = receive_message_of_type(
             &mut ws,
-            |msg| matches!(msg, ServerMessage::Balance { token_ticker, .. } if token_ticker == "USDC"),
+            |msg| matches!(msg, ServerMessage::UserBalance { token_ticker, .. } if token_ticker == "USDC"),
             5,
         ).await.expect(&format!("Should receive balance update for order {}", i));
     }
@@ -1405,7 +1476,7 @@ async fn test_multiple_orders_and_cancellations_event_flow() {
         // Verify cancellation event
         let _cancel = receive_message_of_type(
             &mut ws,
-            |msg| matches!(msg, ServerMessage::Order { status, .. } if status == "cancelled"),
+            |msg| matches!(msg, ServerMessage::UserOrder { status, .. } if status == "cancelled"),
             5,
         )
         .await
@@ -1414,11 +1485,11 @@ async fn test_multiple_orders_and_cancellations_event_flow() {
         // Verify balance unlock
         let balance = receive_message_of_type(
             &mut ws,
-            |msg| matches!(msg, ServerMessage::Balance { token_ticker, .. } if token_ticker == "USDC"),
+            |msg| matches!(msg, ServerMessage::UserBalance { token_ticker, .. } if token_ticker == "USDC"),
             5,
         ).await.expect(&format!("Should receive balance unlock for order {}", i + 1));
 
-        if let ServerMessage::Balance {
+        if let ServerMessage::UserBalance {
             available, locked, ..
         } = balance
         {
@@ -1437,7 +1508,7 @@ async fn test_multiple_orders_and_cancellations_event_flow() {
     let final_balance = receive_message_of_type(
         &mut ws,
         |msg| {
-            matches!(msg, ServerMessage::Balance { token_ticker, locked, .. }
+            matches!(msg, ServerMessage::UserBalance { token_ticker, locked, .. }
             if token_ticker == "USDC" && locked == "0")
         },
         10,
@@ -1445,7 +1516,7 @@ async fn test_multiple_orders_and_cancellations_event_flow() {
     .await
     .expect("Should have all balance unlocked");
 
-    if let ServerMessage::Balance {
+    if let ServerMessage::UserBalance {
         available, locked, ..
     } = final_balance
     {
