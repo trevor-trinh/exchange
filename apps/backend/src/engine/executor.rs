@@ -2,12 +2,15 @@
 
 use crate::db::Db;
 use crate::errors::Result;
-use crate::models::domain::{EngineEvent, Market, Match, Order, OrderStatus, Side, Trade};
+use crate::models::domain::{Market, Match, Order, OrderStatus, Side, Trade};
 use chrono::Utc;
-use tokio::sync::broadcast;
+use std::collections::HashSet;
 use uuid::Uuid;
 
 pub struct Executor;
+
+/// Tracks affected balances that need to be broadcast after request completes
+pub type AffectedBalances = HashSet<(String, String)>; // (user_address, token_ticker)
 
 impl Executor {
     /// Execute a vector of matches
@@ -15,18 +18,16 @@ impl Executor {
     /// - Updates order fill status
     /// - Calculates and applies fees
     /// - Unlocks and transfers balances
-    /// - Broadcasts balance update events for all affected users
     /// - Persists everything to database atomically
-    ///   Returns the executed trades
+    /// - Returns the executed trades and affected balances
     pub async fn execute(
         db: Db,
         matches: Vec<Match>,
         taker_order: &Order,
         market: &Market,
-        event_tx: &broadcast::Sender<EngineEvent>,
-    ) -> Result<Vec<Trade>> {
+    ) -> Result<(Vec<Trade>, AffectedBalances)> {
         if matches.is_empty() {
-            return Ok(vec![]);
+            return Ok((vec![], HashSet::new()));
         }
 
         // Get base token decimals for proper quote amount calculation
@@ -193,27 +194,20 @@ impl Executor {
         // Commit transaction - all or nothing!
         tx.commit().await?;
 
-        // Broadcast balance updates for all affected users
-        // Collect unique user-token pairs that need balance updates
-        let mut balance_updates = std::collections::HashSet::new();
+        // Collect affected balances (to be broadcast by engine after request completes)
+        let mut affected_balances = HashSet::new();
         for trade in &trades {
             // Buyer balances (base and quote tokens)
-            balance_updates.insert((trade.buyer_address.clone(), market.base_ticker.clone()));
-            balance_updates.insert((trade.buyer_address.clone(), market.quote_ticker.clone()));
+            affected_balances.insert((trade.buyer_address.clone(), market.base_ticker.clone()));
+            affected_balances.insert((trade.buyer_address.clone(), market.quote_ticker.clone()));
 
             // Seller balances (base and quote tokens)
-            balance_updates.insert((trade.seller_address.clone(), market.base_ticker.clone()));
-            balance_updates.insert((trade.seller_address.clone(), market.quote_ticker.clone()));
+            affected_balances.insert((trade.seller_address.clone(), market.base_ticker.clone()));
+            affected_balances.insert((trade.seller_address.clone(), market.quote_ticker.clone()));
 
             // System fee recipient balances (base and quote tokens)
-            balance_updates.insert(("system".to_string(), market.base_ticker.clone()));
-            balance_updates.insert(("system".to_string(), market.quote_ticker.clone()));
-        }
-
-        // Broadcast all balance updates
-        for (user_address, token_ticker) in balance_updates {
-            let _ =
-                Self::broadcast_balance_update(&db, event_tx, &user_address, &token_ticker).await;
+            affected_balances.insert(("system".to_string(), market.base_ticker.clone()));
+            affected_balances.insert(("system".to_string(), market.quote_ticker.clone()));
         }
 
         // Insert trades into ClickHouse asynchronously (after commit)
@@ -226,23 +220,6 @@ impl Executor {
             });
         }
 
-        Ok(trades)
-    }
-
-    /// Broadcast balance update for a user's token balance
-    /// Queries current balance from DB and sends BalanceUpdated event
-    async fn broadcast_balance_update(
-        db: &Db,
-        event_tx: &broadcast::Sender<EngineEvent>,
-        user_address: &str,
-        token_ticker: &str,
-    ) -> Result<()> {
-        let balance = db.get_balance(user_address, token_ticker).await?;
-
-        let _ = event_tx.send(EngineEvent::BalanceUpdated {
-            balance: balance.clone(),
-        });
-
-        Ok(())
+        Ok((trades, affected_balances))
     }
 }

@@ -906,16 +906,18 @@ async fn test_two_users_partial_fill_with_cancellation() {
         .expect("Failed to create taker");
 
     // Maker has 1 BTC, taker wants to buy 2 BTC
+    // BTC uses 8 decimals: 1 BTC = 100_000_000 atoms
+    // USDC uses 6 decimals: 1 USDC = 1_000_000 atoms
     server
         .test_db
         .db
-        .add_balance(&maker, "BTC", 1_000_000)
+        .add_balance(&maker, "BTC", 100_000_000) // 1 BTC
         .await
         .expect("Failed to add BTC");
     server
         .test_db
         .db
-        .add_balance(&taker, "USDC", 200_000_000_000_000_000)
+        .add_balance(&taker, "USDC", 200_000_000_000) // 200,000 USDC
         .await
         .expect("Failed to add USDC");
 

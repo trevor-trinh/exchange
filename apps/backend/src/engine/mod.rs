@@ -9,10 +9,11 @@ use crate::db::Db;
 use crate::errors::ExchangeError;
 use crate::models::api::{OrderCancelled, OrderPlaced, OrdersCancelled};
 use crate::models::domain::{EngineEvent, EngineRequest, OrderStatus};
-use executor::Executor;
+use executor::{AffectedBalances, Executor};
 use matcher::Matcher;
 use orderbook::Orderbooks;
 
+use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{broadcast, mpsc, RwLock};
@@ -46,26 +47,38 @@ impl MatchingEngine {
 
         // Main event loop - process incoming requests
         while let Some(request) = self.engine_rx.recv().await {
-            match request {
+            // Process request and collect affected balances
+            let affected = match request {
                 EngineRequest::PlaceOrder { order, response_tx } => {
-                    let result = self.handle_place_order(order).await;
+                    let (result, affected) = self.handle_place_order(order).await;
                     let _ = response_tx.send(result);
+                    affected
                 }
                 EngineRequest::CancelOrder {
                     order_id,
                     user_address,
                     response_tx,
                 } => {
-                    let result = self.handle_cancel_order(order_id, user_address).await;
+                    let (result, affected) = self.handle_cancel_order(order_id, user_address).await;
                     let _ = response_tx.send(result);
+                    affected
                 }
                 EngineRequest::CancelAllOrders {
                     user_address,
                     market_id,
                     response_tx,
                 } => {
-                    let result = self.handle_cancel_all_orders(user_address, market_id).await;
+                    let (result, affected) = self.handle_cancel_all_orders(user_address, market_id).await;
                     let _ = response_tx.send(result);
+                    affected
+                }
+            };
+
+            // Broadcast consolidated balance updates for all affected users
+            // This ensures only one update per user-token pair per request
+            for (user_address, token_ticker) in affected {
+                if let Ok(balance) = self.db.get_balance(&user_address, &token_ticker).await {
+                    let _ = self.event_tx.send(EngineEvent::BalanceUpdated { balance });
                 }
             }
         }
@@ -75,16 +88,47 @@ impl MatchingEngine {
     }
 
     /// Handle placing a new order
+    /// Returns the result and set of affected balances to broadcast
     async fn handle_place_order(
         &mut self,
         mut order: crate::models::domain::Order,
-    ) -> Result<OrderPlaced, ExchangeError> {
+    ) -> (Result<OrderPlaced, ExchangeError>, AffectedBalances) {
+        let mut affected = HashSet::new();
+
         // Validate order against market config
-        let market = self.db.get_market(&order.market_id).await?;
-        Self::validate_order(&order, &market)?;
+        let market = match self.db.get_market(&order.market_id).await {
+            Ok(m) => m,
+            Err(e) => return (Err(e), affected),
+        };
+        if let Err(e) = Self::validate_order(&order, &market) {
+            return (Err(e), affected);
+        }
+
+        // Calculate and lock balance (after validation, before matching)
+        let (token_to_lock, amount_to_lock) = match self.calculate_lock_amount(&order, &market).await {
+            Ok(v) => v,
+            Err(e) => return (Err(e), affected),
+        };
+
+        if let Err(e) = self.db
+            .lock_balance(&order.user_address, &token_to_lock, amount_to_lock)
+            .await
+        {
+            return (Err(e), affected);
+        }
+
+        // Track balance that was locked
+        affected.insert((order.user_address.clone(), token_to_lock.clone()));
 
         // Persist initial order to database
-        self.db.create_order(&order).await?;
+        // If this fails, unlock balance before returning error
+        if let Err(e) = self.db.create_order(&order).await {
+            let _ = self
+                .db
+                .unlock_balance(&order.user_address, &token_to_lock, amount_to_lock)
+                .await;
+            return (Err(e), affected);
+        }
 
         // Get matches from matcher and apply them
         let (matches, trades) = {
@@ -95,18 +139,31 @@ impl MatchingEngine {
             let matches = Matcher::match_order(&order, orderbook);
 
             // Execute trades if we have matches (also updates order status in DB)
-            let trades = if !matches.is_empty() {
-                Executor::execute(
+            let (trades, executor_affected) = if !matches.is_empty() {
+                match Executor::execute(
                     self.db.clone(),
                     matches.clone(),
                     &order,
                     &market,
-                    &self.event_tx,
                 )
-                .await?
+                .await
+                {
+                    Ok((trades, exec_affected)) => (trades, exec_affected),
+                    Err(e) => {
+                        // Execution failed - unlock the full order amount
+                        let _ = self
+                            .db
+                            .unlock_balance(&order.user_address, &token_to_lock, amount_to_lock)
+                            .await;
+                        return (Err(e), affected);
+                    }
+                }
             } else {
-                vec![]
+                (vec![], HashSet::new())
             };
+
+            // Track all balances affected by execution
+            affected.extend(executor_affected);
 
             // Update orderbook with executed trades
             orderbook.apply_trades(&order, &trades, &market);
@@ -179,40 +236,44 @@ impl MatchingEngine {
                     };
 
                     // Update database with final status
-                    self.db
+                    if let Err(e) = self.db
                         .update_order_fill(order.id, order.filled_size, order.status)
-                        .await?;
+                        .await
+                    {
+                        return (Err(e), affected);
+                    }
 
                     // Unlock the unfilled portion
                     let unfilled_size = order.size - order.filled_size;
                     if unfilled_size > 0 {
                         let (token_to_unlock, amount_to_unlock) = match order.side {
                             crate::models::domain::Side::Buy => {
-                                let quote_amount = order
+                                match order
                                     .price
                                     .checked_mul(unfilled_size)
-                                    .ok_or_else(|| ExchangeError::InvalidParameter {
-                                        message: "Unlock amount overflow".to_string(),
-                                    })?;
-                                (market.quote_ticker.clone(), quote_amount)
+                                {
+                                    Some(quote_amount) => (market.quote_ticker.clone(), quote_amount),
+                                    None => {
+                                        return (Err(ExchangeError::InvalidParameter {
+                                            message: "Unlock amount overflow".to_string(),
+                                        }), affected);
+                                    }
+                                }
                             }
                             crate::models::domain::Side::Sell => {
                                 (market.base_ticker.clone(), unfilled_size)
                             }
                         };
 
-                        self.db
+                        if let Err(e) = self.db
                             .unlock_balance(&order.user_address, &token_to_unlock, amount_to_unlock)
-                            .await?;
-
-                        // Broadcast balance update after unlock
-                        if let Ok(balance) = self
-                            .db
-                            .get_balance(&order.user_address, &token_to_unlock)
                             .await
                         {
-                            let _ = self.event_tx.send(EngineEvent::BalanceUpdated { balance });
+                            return (Err(e), affected);
                         }
+
+                        // Track unlocked balance
+                        affected.insert((order.user_address.clone(), token_to_unlock));
                     }
                 }
                 crate::models::domain::OrderType::Limit => {
@@ -224,26 +285,38 @@ impl MatchingEngine {
             }
         }
 
-        Ok(OrderPlaced {
-            order: order.into(),
-            trades: trades.into_iter().map(|t| t.into()).collect(),
-        })
+        (
+            Ok(OrderPlaced {
+                order: order.into(),
+                trades: trades.into_iter().map(|t| t.into()).collect(),
+            }),
+            affected,
+        )
     }
 
     /// Handle cancelling an order
+    /// Returns the result and set of affected balances to broadcast
     async fn handle_cancel_order(
         &mut self,
         order_id: uuid::Uuid,
         user_address: String,
-    ) -> Result<OrderCancelled, ExchangeError> {
+    ) -> (Result<OrderCancelled, ExchangeError>, AffectedBalances) {
+        let mut affected = HashSet::new();
+
         // Cancel order using orderbooks method (handles search and ownership verification)
         let cancelled_order = {
             let mut orderbooks = self.orderbooks.write().await;
-            orderbooks.cancel_order(order_id, &user_address)?
+            match orderbooks.cancel_order(order_id, &user_address) {
+                Ok(order) => order,
+                Err(e) => return (Err(e), affected),
+            }
         };
 
         // Get market config to determine which token to unlock
-        let market = self.db.get_market(&cancelled_order.market_id).await?;
+        let market = match self.db.get_market(&cancelled_order.market_id).await {
+            Ok(m) => m,
+            Err(e) => return (Err(e), affected),
+        };
 
         // Calculate unfilled amount that needs to be unlocked
         let unfilled_size = cancelled_order.size - cancelled_order.filled_size;
@@ -253,13 +326,17 @@ impl MatchingEngine {
             let (token_to_unlock, amount_to_unlock) = match cancelled_order.side {
                 crate::models::domain::Side::Buy => {
                     // Buy order: unlock quote tokens (price * unfilled_size)
-                    let quote_amount = cancelled_order
-                        .price
-                        .checked_mul(unfilled_size)
-                        .ok_or_else(|| ExchangeError::InvalidParameter {
-                            message: "Unlock amount overflow".to_string(),
-                        })?;
-                    (market.quote_ticker, quote_amount)
+                    match cancelled_order.price.checked_mul(unfilled_size) {
+                        Some(quote_amount) => (market.quote_ticker, quote_amount),
+                        None => {
+                            return (
+                                Err(ExchangeError::InvalidParameter {
+                                    message: "Unlock amount overflow".to_string(),
+                                }),
+                                affected,
+                            );
+                        }
+                    }
                 }
                 crate::models::domain::Side::Sell => {
                     // Sell order: unlock base tokens (unfilled_size)
@@ -268,24 +345,30 @@ impl MatchingEngine {
             };
 
             // Unlock the balance
-            self.db
+            if let Err(e) = self
+                .db
                 .unlock_balance(&user_address, &token_to_unlock, amount_to_unlock)
-                .await?;
-
-            // Broadcast balance update after unlock
-            if let Ok(balance) = self.db.get_balance(&user_address, &token_to_unlock).await {
-                let _ = self.event_tx.send(EngineEvent::BalanceUpdated { balance });
+                .await
+            {
+                return (Err(e), affected);
             }
+
+            // Track unlocked balance
+            affected.insert((user_address.clone(), token_to_unlock));
         }
 
         // Update order status in database
-        self.db
+        if let Err(e) = self
+            .db
             .update_order_fill(
                 order_id,
                 cancelled_order.filled_size,
                 OrderStatus::Cancelled,
             )
-            .await?;
+            .await
+        {
+            return (Err(e), affected);
+        }
 
         // Broadcast cancellation event
         let _ = self.event_tx.send(EngineEvent::OrderCancelled {
@@ -293,17 +376,22 @@ impl MatchingEngine {
             user_address: user_address.clone(),
         });
 
-        Ok(OrderCancelled {
-            order_id: order_id.to_string(),
-        })
+        (
+            Ok(OrderCancelled {
+                order_id: order_id.to_string(),
+            }),
+            affected,
+        )
     }
 
     /// Handle cancelling all orders for a user
+    /// Returns the result and set of affected balances to broadcast
     async fn handle_cancel_all_orders(
         &mut self,
         user_address: String,
         market_id: Option<String>,
-    ) -> Result<OrdersCancelled, ExchangeError> {
+    ) -> (Result<OrdersCancelled, ExchangeError>, AffectedBalances) {
+        let mut affected = HashSet::new();
         // Cancel all orders for the user using orderbooks method
         let cancelled_orders = {
             let mut orderbooks = self.orderbooks.write().await;
@@ -369,11 +457,8 @@ impl MatchingEngine {
                 if let Err(e) = unlock_result {
                     log::error!("Failed to unlock balance for order {}: {}", order_id, e);
                 } else {
-                    // Broadcast balance update after successful unlock
-                    if let Ok(balance) = self.db.get_balance(&user_address, &token_to_unlock).await
-                    {
-                        let _ = self.event_tx.send(EngineEvent::BalanceUpdated { balance });
-                    }
+                    // Track unlocked balance
+                    affected.insert((user_address.clone(), token_to_unlock));
                 }
             }
 
@@ -402,10 +487,13 @@ impl MatchingEngine {
 
         let count = cancelled_order_ids.len();
 
-        Ok(OrdersCancelled {
-            cancelled_order_ids,
-            count,
-        })
+        (
+            Ok(OrdersCancelled {
+                cancelled_order_ids,
+                count,
+            }),
+            affected,
+        )
     }
 
     /// Spawn a background task that periodically broadcasts orderbook snapshots
@@ -473,5 +561,34 @@ impl MatchingEngine {
         }
 
         Ok(())
+    }
+
+    /// Calculate which token and amount to lock for an order
+    /// Returns (token_ticker, amount_to_lock)
+    async fn calculate_lock_amount(
+        &self,
+        order: &crate::models::domain::Order,
+        market: &crate::models::domain::Market,
+    ) -> Result<(String, u128), ExchangeError> {
+        match order.side {
+            crate::models::domain::Side::Buy => {
+                // For buy orders, lock quote tokens
+                // quote_amount = (price_atoms * size_atoms) / 10^base_decimals
+                let base_token = self.db.get_token(&market.base_ticker).await?;
+                let divisor = 10u128.pow(base_token.decimals as u32);
+                let quote_amount = order
+                    .price
+                    .checked_mul(order.size)
+                    .and_then(|v| v.checked_div(divisor))
+                    .ok_or_else(|| ExchangeError::InvalidParameter {
+                        message: "Order value overflow when calculating lock amount".to_string(),
+                    })?;
+                Ok((market.quote_ticker.clone(), quote_amount))
+            }
+            crate::models::domain::Side::Sell => {
+                // For sell orders, lock base tokens
+                Ok((market.base_ticker.clone(), order.size))
+            }
+        }
     }
 }
