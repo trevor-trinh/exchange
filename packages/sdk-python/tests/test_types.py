@@ -91,11 +91,15 @@ class TestGeneratedTypes:
         # Should be an enum with correct values (uppercase)
         assert hasattr(SubscriptionChannel, "TRADES")
         assert hasattr(SubscriptionChannel, "ORDERBOOK")
-        assert hasattr(SubscriptionChannel, "USER")
+        assert hasattr(SubscriptionChannel, "USER_FILLS")
+        assert hasattr(SubscriptionChannel, "USER_ORDERS")
+        assert hasattr(SubscriptionChannel, "USER_BALANCES")
 
         assert SubscriptionChannel.TRADES.value == "trades"
         assert SubscriptionChannel.ORDERBOOK.value == "orderbook"
-        assert SubscriptionChannel.USER.value == "user"
+        assert SubscriptionChannel.USER_FILLS.value == "user_fills"
+        assert SubscriptionChannel.USER_ORDERS.value == "user_orders"
+        assert SubscriptionChannel.USER_BALANCES.value == "user_balances"
 
 
 class TestRestApiTypes:

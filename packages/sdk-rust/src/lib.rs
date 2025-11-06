@@ -14,25 +14,23 @@
 //! # Example
 //!
 //! ```no_run
-//! use exchange_sdk::{ExchangeClient, logger::{ConsoleLogger, LogLevel}};
-//! use std::sync::Arc;
+//! use exchange_sdk::ExchangeClient;
 //!
 //! #[tokio::main]
 //! async fn main() {
-//!     let logger = Arc::new(ConsoleLogger::new(LogLevel::Info));
-//!     let client = ExchangeClient::new("http://localhost:8001", logger);
+//!     let client = ExchangeClient::new("http://localhost:8001");
 //!
-//!     // REST API automatically populates cache
+//!     // Get all markets
 //!     let markets = client.get_markets().await.unwrap();
 //!
-//!     // Access cached data
-//!     let market = client.cache.get_market("BTC/USDC");
+//!     // Get specific market details
+//!     let market = client.get_market("BTC/USDC").await.unwrap();
+//!     println!("Market: {}/{}", market.base_ticker, market.quote_ticker);
 //!
-//!     // Get enhanced data with display values
-//!     let trades = client.get_trades("BTC/USDC", None).await.unwrap();
+//!     // Get user trades
+//!     let trades = client.get_trades("alice", Some("BTC/USDC".to_string())).await.unwrap();
 //!     for trade in trades {
-//!         let enhanced = client.enhancer.enhance_trade(trade).unwrap();
-//!         println!("Price: {}", enhanced.price_display);
+//!         println!("Trade: {} @ {}", trade.size, trade.price);
 //!     }
 //! }
 //! ```

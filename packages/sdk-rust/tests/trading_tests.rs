@@ -105,8 +105,8 @@ async fn test_complete_trading_workflow() {
     let usdc_balance = balances.iter().find(|b| b.token_ticker == "USDC");
     assert!(usdc_balance.is_some());
     let usdc = usdc_balance.unwrap();
-    // Alice gets: 50_000_000_000_000_000 USDC - 0.1% maker fee = ~49_950_000_000_000_000
-    assert!(usdc.amount > 49_900_000_000_000_000 && usdc.amount < 50_000_000_000_000_000);
+    // Alice gets: 50_000_000_000 USDC (6 decimals) - 0.1% maker fee = ~49_950_000_000
+    assert!(usdc.amount > 49_900_000_000 && usdc.amount < 50_000_000_000);
 
     // 8. Check Bob received BTC (minus fees)
     let balances = fixture
@@ -310,7 +310,7 @@ async fn test_market_info_endpoints() {
         .await
         .expect("Failed to get BTC token");
     assert_eq!(btc.ticker, "BTC");
-    assert_eq!(btc.decimals, 18);
+    assert_eq!(btc.decimals, 6); // Test fixture uses 6 decimals
 }
 
 #[tokio::test]
