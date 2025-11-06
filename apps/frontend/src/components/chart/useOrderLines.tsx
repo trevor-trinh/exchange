@@ -76,6 +76,7 @@ export function useOrderLines(widgetRef: React.RefObject<IChartingLibraryWidget 
             .setTooltip(`${sideText} Order: ${order.sizeDisplay} @ ${order.priceDisplay}`)
             .setEditable(true)
             .setModifyTooltip("Drag to modify price")
+            // eslint-disable-next-line react-hooks/unsupported-syntax
             .onMove(async function (this: { getPrice: () => number }) {
               if (!userAddress) {
                 console.warn("[OrderLines] Cannot modify: user not authenticated");
@@ -155,8 +156,16 @@ export function useOrderLines(widgetRef: React.RefObject<IChartingLibraryWidget 
 
   // Cleanup on unmount
   useEffect(() => {
+    const orderLines = orderLinesRef.current;
     return () => {
-      orderLinesRef.current.clear();
+      for (const line of orderLines.values()) {
+        try {
+          line.remove();
+        } catch (err) {
+          console.warn("[OrderLines] Failed to remove order line on cleanup:", err);
+        }
+      }
+      orderLines.clear();
     };
   }, []);
 }

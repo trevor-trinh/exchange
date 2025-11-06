@@ -20,7 +20,6 @@ export function Balances() {
   const userAddress = useExchangeStore((state) => state.userAddress);
   const isAuthenticated = useExchangeStore((state) => state.isAuthenticated);
   const balances = useUserBalances();
-  const tokens = useExchangeStore((state) => state.tokens);
 
   const columns = useMemo<ColumnDef<Balance>[]>(
     () => [
@@ -65,7 +64,7 @@ export function Balances() {
         size: 150,
       },
     ],
-    [tokens]
+    []
   );
 
   if (!isAuthenticated || !userAddress) {

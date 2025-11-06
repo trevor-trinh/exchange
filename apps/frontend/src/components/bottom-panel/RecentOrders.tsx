@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useExchangeStore, selectSelectedMarket } from "@/lib/store";
 import { useUserOrders, useCancelOrder } from "@/lib/hooks";
@@ -17,23 +17,26 @@ export function RecentOrders() {
   const orders = useUserOrders();
   const { cancelOrder, cancelAllOrders, cancellingOrders, cancellingAll } = useCancelOrder();
 
-  const handleCancelOrder = async (orderId: string) => {
-    if (!userAddress) return;
-    try {
-      await cancelOrder(userAddress, orderId);
-    } catch (err) {
-      // Error is already logged in the hook
-    }
-  };
+  const handleCancelOrder = useCallback(
+    async (orderId: string) => {
+      if (!userAddress) return;
+      try {
+        await cancelOrder(userAddress, orderId);
+      } catch {
+        // Error is already logged in the hook
+      }
+    },
+    [userAddress, cancelOrder]
+  );
 
-  const handleCancelAll = async () => {
+  const handleCancelAll = useCallback(async () => {
     if (!userAddress) return;
     try {
       await cancelAllOrders(userAddress, selectedMarketId || undefined);
-    } catch (err) {
+    } catch {
       // Error is already logged in the hook
     }
-  };
+  }, [userAddress, selectedMarketId, cancelAllOrders]);
 
   const hasOpenOrders = orders.some((o) => o.status === "pending" || o.status === "partially_filled");
 
@@ -115,32 +118,34 @@ export function RecentOrders() {
       },
       {
         accessorKey: "status",
-        header: "Status",
+        header: () => <div className="text-center">Status</div>,
         cell: ({ row }) => {
           const status = row.getValue("status") as string;
           return (
-            <span
-              className={`inline-flex items-center text-xs px-2 py-1 font-medium rounded ${
-                status === "filled"
-                  ? "bg-green-500/10 text-green-500 border border-green-500/20"
+            <div className="flex justify-center">
+              <span
+                className={`inline-flex items-center text-xs px-2 py-1 font-medium rounded ${
+                  status === "filled"
+                    ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                    : status === "partially_filled"
+                      ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                      : status === "cancelled"
+                        ? "bg-muted text-muted-foreground/70 border border-border/40"
+                        : status === "pending"
+                          ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                          : "bg-gray-500/10 text-gray-500 border border-gray-500/20"
+                }`}
+              >
+                {status === "pending"
+                  ? "Open"
                   : status === "partially_filled"
-                    ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
-                    : status === "cancelled"
-                      ? "bg-muted text-muted-foreground/70 border border-border/40"
-                      : status === "pending"
-                        ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
-                        : "bg-gray-500/10 text-gray-500 border border-gray-500/20"
-              }`}
-            >
-              {status === "pending"
-                ? "Open"
-                : status === "partially_filled"
-                  ? "Partial"
-                  : status.charAt(0).toUpperCase() + status.slice(1)}
-            </span>
+                    ? "Partial"
+                    : status.charAt(0).toUpperCase() + status.slice(1)}
+              </span>
+            </div>
           );
         },
-        size: 100,
+        size: 80,
       },
       {
         id: "actions",
@@ -179,7 +184,7 @@ export function RecentOrders() {
         size: 80,
       },
     ],
-    [cancellingOrders, hasOpenOrders, cancellingAll]
+    [cancellingOrders, hasOpenOrders, cancellingAll, handleCancelAll, handleCancelOrder]
   );
 
   if (!selectedMarketId || !selectedMarket) {
