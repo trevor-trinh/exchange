@@ -11,25 +11,70 @@ pub struct TestExchange {
     pub market_id: String,
     pub base_ticker: String,
     pub quote_ticker: String,
+    pub base_decimals: u32,
+    pub quote_decimals: u32,
 }
 
 impl TestExchange {
-    /// Create a new test exchange with BTC/USDC market
+    /// Create a new test exchange with BTC/USDC market (default: 6 decimals each)
+    ///
+    /// # Example - Using helper methods (recommended)
+    /// ```rust,ignore
+    /// let fixture = TestExchange::new().await?;
+    ///
+    /// // Use helper methods to convert human-readable amounts
+    /// fixture.create_user_with_balance(
+    ///     "alice",
+    ///     fixture.to_base_atoms(10.0),    // 10 BTC
+    ///     fixture.to_quote_atoms(50000.0) // 50,000 USDC
+    /// ).await?;
+    ///
+    /// // Place order with human-readable values
+    /// fixture.client.place_order(
+    ///     "alice".to_string(),
+    ///     fixture.market_id.clone(),
+    ///     Side::Sell,
+    ///     OrderType::Limit,
+    ///     fixture.price_to_atoms(50000.0).to_string(), // $50,000 per BTC
+    ///     fixture.to_base_atoms(1.0).to_string(),      // 1 BTC
+    ///     "sig".to_string(),
+    /// ).await?;
+    /// ```
+    ///
+    /// # Example - Using custom decimals
+    /// ```rust,ignore
+    /// // Create exchange with realistic decimals: BTC=8, USDC=6
+    /// let fixture = TestExchange::with_market_and_decimals("BTC", "USDC", 8, 6).await?;
+    ///
+    /// // Helper methods automatically use the correct decimals!
+    /// let one_btc = fixture.to_base_atoms(1.0);      // 100_000_000 atoms (8 decimals)
+    /// let fifty_k_usdc = fixture.to_quote_atoms(50000.0); // 50_000_000_000 atoms (6 decimals)
+    /// ```
     pub async fn new() -> anyhow::Result<Self> {
         Self::with_market("BTC", "USDC").await
     }
 
     /// Create a test exchange with a custom market
     pub async fn with_market(base: &str, quote: &str) -> anyhow::Result<Self> {
+        Self::with_market_and_decimals(base, quote, 6, 6).await
+    }
+
+    /// Create a test exchange with custom market and custom decimals
+    pub async fn with_market_and_decimals(
+        base: &str,
+        quote: &str,
+        base_decimals: u32,
+        quote_decimals: u32,
+    ) -> anyhow::Result<Self> {
         let server = TestServer::start().await?;
         let client = ExchangeClient::new(&server.base_url);
 
         // Setup tokens via admin API
         client
-            .admin_create_token(base.to_string(), 18, format!("{} Token", base))
+            .admin_create_token(base.to_string(), base_decimals as u8, format!("{} Token", base))
             .await?;
         client
-            .admin_create_token(quote.to_string(), 18, format!("{} Token", quote))
+            .admin_create_token(quote.to_string(), quote_decimals as u8, format!("{} Token", quote))
             .await?;
 
         // Setup market via admin API
@@ -51,10 +96,12 @@ impl TestExchange {
             market_id: market.id,
             base_ticker: base.to_string(),
             quote_ticker: quote.to_string(),
+            base_decimals,
+            quote_decimals,
         })
     }
 
-    /// Create a user with starting balance
+    /// Create a user with starting balance (in atoms)
     ///
     /// Uses the admin faucet API to give users tokens, which also creates them if needed.
     pub async fn create_user_with_balance(
@@ -84,6 +131,53 @@ impl TestExchange {
         }
 
         Ok(())
+    }
+
+    /// Convert human-readable base token amount to atoms
+    ///
+    /// Example: `to_base_atoms(10.5)` with 6 decimals = 10_500_000 atoms
+    ///
+    /// # Usage in tests
+    /// ```rust,ignore
+    /// let fixture = TestExchange::with_market_and_decimals("BTC", "USDC", 8, 6).await?;
+    ///
+    /// // Instead of hardcoding: 100_000_000 atoms
+    /// let btc_atoms = fixture.to_base_atoms(1.0); // Works with any decimal configuration!
+    ///
+    /// // Create user with 10 BTC
+    /// fixture.create_user_with_balance("alice", fixture.to_base_atoms(10.0), 0).await?;
+    /// ```
+    pub fn to_base_atoms(&self, amount: f64) -> u128 {
+        (amount * 10f64.powi(self.base_decimals as i32)) as u128
+    }
+
+    /// Convert human-readable quote token amount to atoms
+    ///
+    /// Example: `to_quote_atoms(50000.0)` with 6 decimals = 50_000_000_000 atoms
+    pub fn to_quote_atoms(&self, amount: f64) -> u128 {
+        (amount * 10f64.powi(self.quote_decimals as i32)) as u128
+    }
+
+    /// Convert base token atoms to human-readable amount
+    ///
+    /// Example: `from_base_atoms(10_500_000)` with 6 decimals = 10.5
+    pub fn from_base_atoms(&self, atoms: u128) -> f64 {
+        atoms as f64 / 10f64.powi(self.base_decimals as i32)
+    }
+
+    /// Convert quote token atoms to human-readable amount
+    ///
+    /// Example: `from_quote_atoms(50_000_000_000)` with 6 decimals = 50000.0
+    pub fn from_quote_atoms(&self, atoms: u128) -> f64 {
+        atoms as f64 / 10f64.powi(self.quote_decimals as i32)
+    }
+
+    /// Calculate price in atoms (quote atoms per whole base token)
+    ///
+    /// Example: `price_to_atoms(50000.0)` means 50000 USDC per 1 BTC
+    /// With base_decimals=6: returns 50_000_000_000
+    pub fn price_to_atoms(&self, price: f64) -> u128 {
+        (price * 10f64.powi(self.quote_decimals as i32)) as u128
     }
 }
 

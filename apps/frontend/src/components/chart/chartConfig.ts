@@ -1,9 +1,8 @@
 import type { ExchangeDatafeed } from "@/lib/tradingview-datafeed";
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import type {
   ChartingLibraryWidgetOptions,
+  CustomThemeColors,
   ResolutionString,
 } from "../../../public/vendor/trading-view/charting_library";
 
@@ -33,109 +32,27 @@ export function getChartConfig(
     fullscreen: false,
     autosize: true,
     theme: "dark",
-    custom_css_url: "/tradingview-custom.css",
     loading_screen: {
       backgroundColor: "#1a1a1a",
-      foregroundColor: "#ffffff",
+      foregroundColor: "#d4d4d4",
+    },
+    custom_themes: {
+      light: colors,
+      dark: colors,
     },
     overrides: {
-      // Background
-      "paneProperties.background": "#1a1a1a",
-      "paneProperties.backgroundType": "solid",
-      "paneProperties.vertGridProperties.color": "#262626",
-      "paneProperties.horzGridProperties.color": "#262626",
-      "paneProperties.vertGridProperties.style": 0,
-      "paneProperties.horzGridProperties.style": 0,
-
-      // Candle colors - Standard style
+      // Candle colors - Standard
       "mainSeriesProperties.candleStyle.upColor": "#16a34a",
       "mainSeriesProperties.candleStyle.downColor": "#dc2626",
       "mainSeriesProperties.candleStyle.wickUpColor": "#16a34a",
       "mainSeriesProperties.candleStyle.wickDownColor": "#dc2626",
       "mainSeriesProperties.candleStyle.borderUpColor": "#22c55e",
       "mainSeriesProperties.candleStyle.borderDownColor": "#ef4444",
-      "mainSeriesProperties.candleStyle.drawWick": true,
-      "mainSeriesProperties.candleStyle.drawBorder": true,
-      "mainSeriesProperties.candleStyle.drawBody": true,
-      "mainSeriesProperties.candleStyle.barColorsOnPrevClose": false,
-
-      // Hollow candles - with proper fill colors
-      "mainSeriesProperties.hollowCandleStyle.upColor": "#16a34a",
-      "mainSeriesProperties.hollowCandleStyle.downColor": "#dc2626",
-      "mainSeriesProperties.hollowCandleStyle.wickUpColor": "#16a34a",
-      "mainSeriesProperties.hollowCandleStyle.wickDownColor": "#dc2626",
-      "mainSeriesProperties.hollowCandleStyle.borderUpColor": "#22c55e",
-      "mainSeriesProperties.hollowCandleStyle.borderDownColor": "#ef4444",
-      "mainSeriesProperties.hollowCandleStyle.drawWick": true,
-      "mainSeriesProperties.hollowCandleStyle.drawBorder": true,
-
-      // Bars - with thicker lines
-      "mainSeriesProperties.barStyle.upColor": "#22c55e",
-      "mainSeriesProperties.barStyle.downColor": "#ef4444",
-      "mainSeriesProperties.barStyle.barColorsOnPrevClose": false,
-      "mainSeriesProperties.barStyle.dontDrawOpen": false,
-
-      // HeikinAshi style
-      "mainSeriesProperties.haStyle.upColor": "#16a34a",
-      "mainSeriesProperties.haStyle.downColor": "#dc2626",
-      "mainSeriesProperties.haStyle.wickUpColor": "#16a34a",
-      "mainSeriesProperties.haStyle.wickDownColor": "#dc2626",
-      "mainSeriesProperties.haStyle.borderUpColor": "#22c55e",
-      "mainSeriesProperties.haStyle.borderDownColor": "#ef4444",
-      "mainSeriesProperties.haStyle.drawWick": true,
-      "mainSeriesProperties.haStyle.drawBorder": true,
-
-      // Line
-      "mainSeriesProperties.lineStyle.color": "#ffffff",
-      "mainSeriesProperties.lineStyle.linewidth": 2,
-      "mainSeriesProperties.lineStyle.priceSource": "close",
-
-      // Area
-      "mainSeriesProperties.areaStyle.color1": "rgba(255, 255, 255, 0.1)",
-      "mainSeriesProperties.areaStyle.color2": "rgba(255, 255, 255, 0.02)",
-      "mainSeriesProperties.areaStyle.linecolor": "#ffffff",
-      "mainSeriesProperties.areaStyle.linewidth": 2,
-      "mainSeriesProperties.areaStyle.priceSource": "close",
-
-      // Baseline
-      "mainSeriesProperties.baselineStyle.topLineColor": "#22c55e",
-      "mainSeriesProperties.baselineStyle.bottomLineColor": "#ef4444",
-      "mainSeriesProperties.baselineStyle.topFillColor1": "rgba(34, 197, 94, 0.1)",
-      "mainSeriesProperties.baselineStyle.topFillColor2": "rgba(34, 197, 94, 0.02)",
-      "mainSeriesProperties.baselineStyle.bottomFillColor1": "rgba(239, 68, 68, 0.1)",
-      "mainSeriesProperties.baselineStyle.bottomFillColor2": "rgba(239, 68, 68, 0.02)",
-
-      // Scales and axes
-      "scalesProperties.backgroundColor": "#1a1a1a",
-      "scalesProperties.lineColor": "#262626",
-      "scalesProperties.textColor": "#a3a3a3",
-
-      // Chart borders and separators
-      "paneProperties.separatorColor": "#262626",
-      "scalesProperties.showSeriesLastValue": true,
-      "scalesProperties.showSymbolLabels": true,
-
-      // Crosshair
-      "crosshairProperties.color": "#737373",
-      "crosshairProperties.width": 1,
-      "crosshairProperties.style": 2,
-
-      // Legend
-      "paneProperties.legendProperties.showLegend": true,
-      "paneProperties.legendProperties.showStudyArguments": true,
-      "paneProperties.legendProperties.showStudyTitles": true,
-      "paneProperties.legendProperties.showStudyValues": true,
-      "paneProperties.legendProperties.showSeriesTitle": true,
-      "paneProperties.legendProperties.showSeriesOHLC": true,
-
-      // Margins
-      "paneProperties.topMargin": 10,
-      "paneProperties.bottomMargin": 10,
     },
     studies_overrides: {
       "volume.volume.color.0": "#ef4444",
       "volume.volume.color.1": "#22c55e",
-      "volume.volume.transparency": 65,
+      "volume.volume.transparency": 60,
     },
     time_frames: [
       { text: "1m", resolution: "1" as ResolutionString, description: "1 Minute" },
@@ -147,3 +64,163 @@ export function getChartConfig(
     ],
   };
 }
+
+const colors: CustomThemeColors = {
+  // White replacement: Light gray for text and UI elements
+  white: "#d4d4d4",
+  black: "#1a1a1a",
+  // color1 (Blue replacement): Gray scale for buttons and dialogs
+  color1: [
+    "#d4d4d4",
+    "#b8b8b8",
+    "#9c9c9c",
+    "#808080",
+    "#666666",
+    "#525252",
+    "#404040",
+    "#333333",
+    "#262626",
+    "#1f1f1f",
+    "#1a1a1a",
+    "#141414",
+    "#0f0f0f",
+    "#0a0a0a",
+    "#060606",
+    "#030303",
+    "#020202",
+    "#010101",
+    "#000000",
+  ],
+  // color2 (Grey replacement): Gray scale for toolbars, separators, backgrounds
+  color2: [
+    "#a6a6a6",
+    "#999999",
+    "#8c8c8c",
+    "#808080",
+    "#737373",
+    "#666666",
+    "#595959",
+    "#4d4d4d",
+    "#474747",
+    "#404040",
+    "#3a3a3a",
+    "#333333",
+    "#2e2e2e",
+    "#2a2a2a",
+    "#262626",
+    "#232323",
+    "#202020",
+    "#1d1d1d",
+    "#1a1a1a",
+  ],
+  // color3 (Red replacement): Keep red for sell/negative indicators
+  color3: [
+    "#fca5a5",
+    "#f87171",
+    "#ef4444",
+    "#dc2626",
+    "#b91c1c",
+    "#991b1b",
+    "#7f1d1d",
+    "#6b1818",
+    "#581414",
+    "#451010",
+    "#330c0c",
+    "#290a0a",
+    "#200808",
+    "#180606",
+    "#120404",
+    "#0e0303",
+    "#0a0202",
+    "#060101",
+    "#030000",
+  ],
+  // color4 (Green replacement): Keep green for buy/positive indicators
+  color4: [
+    "#86efac",
+    "#4ade80",
+    "#22c55e",
+    "#16a34a",
+    "#15803d",
+    "#166534",
+    "#14532d",
+    "#124529",
+    "#0f3823",
+    "#0c2b1c",
+    "#092016",
+    "#071811",
+    "#05110d",
+    "#040c09",
+    "#030806",
+    "#020604",
+    "#020403",
+    "#010202",
+    "#000101",
+  ],
+  // color5 (Orange replacement): Muted orange/amber for warnings
+  color5: [
+    "#fed7aa",
+    "#fdba74",
+    "#fb923c",
+    "#f97316",
+    "#ea580c",
+    "#c2410c",
+    "#9a3412",
+    "#7c2d12",
+    "#65240f",
+    "#4f1c0c",
+    "#3a140a",
+    "#2d0f08",
+    "#200b06",
+    "#160704",
+    "#0f0403",
+    "#0a0302",
+    "#060201",
+    "#030101",
+    "#010000",
+  ],
+  // color6 (Purple replacement): Vibrant purple for accents (matches your theme primary)
+  color6: [
+    "#e9d5ff",
+    "#d8b4fe",
+    "#c084fc",
+    "#a78bfa",
+    "#8b5cf6",
+    "#7c3aed",
+    "#6d28d9",
+    "#5b21b6",
+    "#4c1d95",
+    "#3b1a75",
+    "#2e1456",
+    "#220f3d",
+    "#1a0c2e",
+    "#130921",
+    "#0d0616",
+    "#09050f",
+    "#06030a",
+    "#040206",
+    "#020103",
+  ],
+  // color7 (Yellow replacement): Desaturated yellow for highlights
+  color7: [
+    "#fef08a",
+    "#fde047",
+    "#facc15",
+    "#eab308",
+    "#ca8a04",
+    "#a16207",
+    "#854d0e",
+    "#713f12",
+    "#5a320f",
+    "#44260c",
+    "#311b09",
+    "#251507",
+    "#1a0f05",
+    "#110a03",
+    "#0b0602",
+    "#070402",
+    "#040201",
+    "#020101",
+    "#010000",
+  ],
+};

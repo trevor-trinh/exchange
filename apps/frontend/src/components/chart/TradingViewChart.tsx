@@ -87,7 +87,7 @@ export function TradingViewChart() {
   }
 
   return (
-    <Card className="overflow-hidden h-full p-0 dither">
+    <Card className="overflow-hidden h-full p-0 border border-gray-800/40 shadow-lg shadow-primary/5">
       <div ref={containerRef} className="h-full w-full" />
     </Card>
   );
