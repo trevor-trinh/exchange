@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useExchangeStore } from "@/lib/store";
 import { useExchangeClient } from "@/lib/hooks/useExchangeClient";
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,12 @@ import { Droplet } from "lucide-react";
 export function FaucetDialog() {
   const client = useExchangeClient();
   const { handleLogin } = useTurnkey();
-  const tokens = useExchangeStore((state) => state.tokens);
+  const tokensRecord = useExchangeStore((state) => state.tokens);
   const userAddress = useExchangeStore((state) => state.userAddress);
   const isAuthenticated = useExchangeStore((state) => state.isAuthenticated);
+
+  // Convert Record to array with useMemo to avoid recreating on every render
+  const tokens = useMemo(() => Object.values(tokensRecord), [tokensRecord]);
   const [open, setOpen] = useState(false);
   const [selectedToken, setSelectedToken] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -72,7 +75,7 @@ export function FaucetDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="gap-2">
+        <Button size="sm" variant="outline" className="gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-md hover:bg-primary/5 hover:border-primary/50 active:scale-[0.98]">
           <Droplet className="h-4 w-4" />
           Faucet
         </Button>

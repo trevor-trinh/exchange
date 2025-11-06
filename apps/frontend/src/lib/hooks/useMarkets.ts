@@ -2,13 +2,20 @@
  * Hook for fetching and managing market data
  */
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useExchangeStore } from "../store";
 import { useExchangeClient } from "./useExchangeClient";
 
 export function useMarkets() {
   const client = useExchangeClient();
-  const { markets, tokens, setMarkets, setTokens } = useExchangeStore();
+  const setMarkets = useExchangeStore((state) => state.setMarkets);
+  const setTokens = useExchangeStore((state) => state.setTokens);
+  const marketsRecord = useExchangeStore((state) => state.markets);
+  const tokensRecord = useExchangeStore((state) => state.tokens);
+
+  // Convert Records to arrays with useMemo to avoid recreating on every render
+  const markets = useMemo(() => Object.values(marketsRecord), [marketsRecord]);
+  const tokens = useMemo(() => Object.values(tokensRecord), [tokensRecord]);
 
   useEffect(() => {
     let mounted = true;

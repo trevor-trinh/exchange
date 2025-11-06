@@ -1,4 +1,4 @@
-import type { ExchangeDatafeed } from "@/lib/tradingview-datafeed";
+import type { ExchangeDatafeed } from "@/components/chart/tradingview-datafeed";
 
 import type {
   ChartingLibraryWidgetOptions,

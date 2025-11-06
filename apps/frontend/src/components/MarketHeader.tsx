@@ -1,6 +1,6 @@
 "use client";
 
-import { useExchangeStore } from "@/lib/store";
+import { useExchangeStore, selectSelectedMarket } from "@/lib/store";
 import { useMarkets } from "@/lib/hooks";
 import { AuthButton } from "@/components/AuthButton";
 import { FaucetDialog } from "@/components/FaucetDialog";
@@ -12,14 +12,14 @@ export function MarketHeader() {
   const { markets, isLoading } = useMarkets();
   const selectedMarketId = useExchangeStore((state) => state.selectedMarketId);
   const selectMarket = useExchangeStore((state) => state.selectMarket);
-  const selectedMarket = useExchangeStore((state) => state.markets.find((m) => m.id === selectedMarketId));
+  const selectedMarket = useExchangeStore(selectSelectedMarket);
   const tokens = useExchangeStore((state) => state.tokens);
   const recentTrades = useExchangeStore((state) => state.recentTrades);
   const currentPrice = recentTrades.length > 0 ? (recentTrades[0]?.priceValue ?? null) : null;
 
-  // Look up tokens for the selected market
-  const baseToken = selectedMarket ? tokens.find((t) => t.ticker === selectedMarket.base_ticker) : null;
-  const quoteToken = selectedMarket ? tokens.find((t) => t.ticker === selectedMarket.quote_ticker) : null;
+  // Look up tokens for the selected market using O(1) Record access
+  const baseToken = selectedMarket ? tokens[selectedMarket.base_ticker] : null;
+  const quoteToken = selectedMarket ? tokens[selectedMarket.quote_ticker] : null;
 
   return (
     <>

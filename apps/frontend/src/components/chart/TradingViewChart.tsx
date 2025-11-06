@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useExchangeStore } from "@/lib/store";
-import { useOrders } from "@/lib/hooks/useOrders";
-import { ExchangeDatafeed } from "@/lib/tradingview-datafeed";
+import { useUserOrders } from "@/lib/hooks/useUserOrders";
+import { ExchangeDatafeed } from "@/components/chart/tradingview-datafeed";
 import { Card, CardContent } from "@/components/ui/card";
 import { useOrderLines } from "./useOrderLines";
 import { getChartConfig } from "./chartConfig";
@@ -31,7 +31,7 @@ export function TradingViewChart() {
   const [isChartReady, setIsChartReady] = useState(false);
 
   // Fetch and subscribe to orders
-  useOrders();
+  useUserOrders();
 
   // Manage order lines overlay
   useOrderLines(widgetRef, isChartReady);

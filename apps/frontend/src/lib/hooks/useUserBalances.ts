@@ -2,7 +2,7 @@
  * Hook for managing user balances with WebSocket subscriptions
  */
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useExchangeStore } from "../store";
 import { useExchangeClient } from "./useExchangeClient";
 
@@ -10,13 +10,16 @@ import { useExchangeClient } from "./useExchangeClient";
  * Hook that fetches initial balances via REST and subscribes to WebSocket updates
  * Balances are stored in Zustand store and automatically updated via WebSocket
  */
-export function useBalances() {
+export function useUserBalances() {
   const client = useExchangeClient();
   const userAddress = useExchangeStore((state) => state.userAddress);
   const isAuthenticated = useExchangeStore((state) => state.isAuthenticated);
   const setBalances = useExchangeStore((state) => state.setBalances);
   const updateBalance = useExchangeStore((state) => state.updateBalance);
-  const balances = useExchangeStore((state) => state.userBalances);
+  const balancesRecord = useExchangeStore((state) => state.userBalances);
+
+  // Convert Record to array with useMemo to avoid recreating on every render
+  const balances = useMemo(() => Object.values(balancesRecord), [balancesRecord]);
 
   useEffect(() => {
     if (!userAddress || !isAuthenticated) {

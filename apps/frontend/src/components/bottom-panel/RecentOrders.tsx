@@ -1,62 +1,37 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useExchangeStore, selectSelectedMarket } from "@/lib/store";
-import { useOrders } from "@/lib/hooks";
-import { useExchangeClient } from "@/lib/hooks/useExchangeClient";
+import { useUserOrders, useCancelOrder } from "@/lib/hooks";
 import type { Order } from "@/lib/types/exchange";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
 export function RecentOrders() {
-  const client = useExchangeClient();
   const selectedMarketId = useExchangeStore((state) => state.selectedMarketId);
   const selectedMarket = useExchangeStore(selectSelectedMarket);
   const userAddress = useExchangeStore((state) => state.userAddress);
   const isAuthenticated = useExchangeStore((state) => state.isAuthenticated);
-  const orders = useOrders();
-  const [cancellingOrders, setCancellingOrders] = useState<Set<string>>(new Set());
-  const [cancellingAll, setCancellingAll] = useState(false);
+  const orders = useUserOrders();
+  const { cancelOrder, cancelAllOrders, cancellingOrders, cancellingAll } = useCancelOrder();
 
   const handleCancelOrder = async (orderId: string) => {
     if (!userAddress) return;
-
-    setCancellingOrders((prev) => new Set(prev).add(orderId));
     try {
-      // TODO: Get signature from wallet
-      await client.cancelOrder({
-        userAddress,
-        orderId,
-        signature: "0x", // Placeholder - need wallet integration
-      });
+      await cancelOrder(userAddress, orderId);
     } catch (err) {
-      console.error("Failed to cancel order:", err);
-    } finally {
-      setCancellingOrders((prev) => {
-        const next = new Set(prev);
-        next.delete(orderId);
-        return next;
-      });
+      // Error is already logged in the hook
     }
   };
 
   const handleCancelAll = async () => {
     if (!userAddress) return;
-
-    setCancellingAll(true);
     try {
-      // TODO: Get signature from wallet
-      await client.cancelAllOrders({
-        userAddress,
-        marketId: selectedMarketId || undefined,
-        signature: "0x", // Placeholder - need wallet integration
-      });
+      await cancelAllOrders(userAddress, selectedMarketId || undefined);
     } catch (err) {
-      console.error("Failed to cancel all orders:", err);
-    } finally {
-      setCancellingAll(false);
+      // Error is already logged in the hook
     }
   };
 

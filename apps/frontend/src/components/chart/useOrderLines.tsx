@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useExchangeStore } from "@/lib/store";
 import { useExchangeClient } from "@/lib/hooks/useExchangeClient";
 
@@ -13,9 +13,12 @@ import type { IChartingLibraryWidget, IOrderLineAdapter } from "../../../public/
 export function useOrderLines(widgetRef: React.RefObject<IChartingLibraryWidget | null>, isChartReady: boolean) {
   const selectedMarketId = useExchangeStore((state) => state.selectedMarketId);
   const userAddress = useExchangeStore((state) => state.userAddress);
-  const userOrders = useExchangeStore((state) => state.userOrders);
+  const userOrdersRecord = useExchangeStore((state) => state.userOrders);
   const client = useExchangeClient();
   const orderLinesRef = useRef<Map<string, IOrderLineAdapter>>(new Map());
+
+  // Convert Record to array with useMemo to avoid recreating on every render
+  const userOrders = useMemo(() => Object.values(userOrdersRecord), [userOrdersRecord]);
 
   useEffect(() => {
     if (!widgetRef.current || !selectedMarketId || !isChartReady) return;

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useExchangeStore, selectSelectedMarket, selectOrderbookBids, selectOrderbookAsks } from "@/lib/store";
-import { useBalances } from "@/lib/hooks";
+import { useUserBalances } from "@/lib/hooks";
 import { Card, CardContent } from "@/components/ui/card";
 import { roundToTickSize, getDecimalPlaces } from "@/lib/format";
 import { OrderTypeSelector } from "./OrderTypeSelector";
@@ -24,11 +24,11 @@ export function TradePanel() {
   const asks = useExchangeStore(selectOrderbookAsks);
   const selectedPrice = useExchangeStore((state) => state.selectedPrice);
   const setSelectedPrice = useExchangeStore((state) => state.setSelectedPrice);
-  const balances = useBalances();
+  const balances = useUserBalances();
 
-  // Look up tokens for the selected market
-  const baseToken = selectedMarket ? tokens.find((t) => t.ticker === selectedMarket.base_ticker) : undefined;
-  const quoteToken = selectedMarket ? tokens.find((t) => t.ticker === selectedMarket.quote_ticker) : undefined;
+  // Look up tokens for the selected market using O(1) Record access
+  const baseToken = selectedMarket ? tokens[selectedMarket.base_ticker] : undefined;
+  const quoteToken = selectedMarket ? tokens[selectedMarket.quote_ticker] : undefined;
 
   // Get user balances for base and quote tokens
   const baseBalance = balances.find((b) => b.token_ticker === baseToken?.ticker);

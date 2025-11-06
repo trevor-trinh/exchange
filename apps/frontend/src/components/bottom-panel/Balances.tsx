@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useExchangeStore } from "@/lib/store";
-import { useBalances } from "@/lib/hooks";
+import { useUserBalances } from "@/lib/hooks";
 import { DataTable } from "@/components/ui/data-table";
 import type { Balance } from "@/lib/types/exchange";
 
@@ -19,7 +19,7 @@ const USD_PRICES: Record<string, number> = {
 export function Balances() {
   const userAddress = useExchangeStore((state) => state.userAddress);
   const isAuthenticated = useExchangeStore((state) => state.isAuthenticated);
-  const balances = useBalances();
+  const balances = useUserBalances();
   const tokens = useExchangeStore((state) => state.tokens);
 
   const columns = useMemo<ColumnDef<Balance>[]>(

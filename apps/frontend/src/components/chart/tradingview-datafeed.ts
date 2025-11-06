@@ -15,14 +15,14 @@ import type {
   ResolveCallback,
   SubscribeBarsCallback,
   SearchSymbolsCallback,
-} from "../../public/vendor/trading-view/charting_library";
+} from "../../../public/vendor/trading-view/charting_library";
 import { toDisplayValue } from "@exchange/sdk";
 
 // ErrorCallback is not exported from TradingView types, so we define it here
 type ErrorCallback = (reason: string) => void;
 
-import { exchange, getExchangeClient } from "./api";
-import type { Market, Token } from "./types/exchange";
+import { exchange, getExchangeClient } from "@/lib/api";
+import type { Market, Token } from "@/lib/types/exchange";
 
 // Resolution mapping from TradingView to our backend
 const resolutionMap: Record<string, string> = {

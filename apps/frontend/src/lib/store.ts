@@ -12,22 +12,22 @@ import type { Market, Token, Orderbook, Trade, OrderbookLevel, Balance, Order, O
 // ============================================================================
 
 interface ExchangeState {
-  // Market data
-  markets: Market[];
-  tokens: Token[];
+  // Market data (Records for O(1) lookup/insert/update)
+  markets: Record<string, Market>;
+  tokens: Record<string, Token>;
 
   // UI Data
   selectedMarketId: string | null;
   orderbook: Orderbook | null;
-  recentTrades: Trade[];
+  recentTrades: Trade[]; // Keep as array for chronological ordering
   selectedPrice: number | null;
 
   // User Data
   userAddress: string | null;
   isAuthenticated: boolean;
-  userBalances: Balance[];
-  userOrders: Order[];
-  userTrades: Trade[];
+  userBalances: Record<string, Balance>; // Keyed by token_ticker
+  userOrders: Record<string, Order>; // Keyed by order id
+  userTrades: Trade[]; // Keep as array for chronological ordering
 
   // Actions - Market Data
   setMarkets: (markets: Market[]) => void;
@@ -59,8 +59,8 @@ interface ExchangeState {
 
 const initialState = {
   // Market Data
-  markets: [],
-  tokens: [],
+  markets: {} as Record<string, Market>,
+  tokens: {} as Record<string, Token>,
 
   // UI Data
   selectedMarketId: null,
@@ -71,8 +71,8 @@ const initialState = {
   // User Data
   userAddress: null,
   isAuthenticated: false,
-  userBalances: [],
-  userOrders: [],
+  userBalances: {} as Record<string, Balance>,
+  userOrders: {} as Record<string, Order>,
   userTrades: [],
 };
 
@@ -91,12 +91,26 @@ export const useExchangeStore = create<ExchangeState>()(
 
       setMarkets: (markets) =>
         set((state) => {
-          state.markets = markets;
+          // Convert array to Record keyed by id
+          state.markets = markets.reduce(
+            (acc, market) => {
+              acc[market.id] = market;
+              return acc;
+            },
+            {} as Record<string, Market>
+          );
         }),
 
       setTokens: (tokens) =>
         set((state) => {
-          state.tokens = tokens;
+          // Convert array to Record keyed by ticker
+          state.tokens = tokens.reduce(
+            (acc, token) => {
+              acc[token.ticker] = token;
+              return acc;
+            },
+            {} as Record<string, Token>
+          );
         }),
 
       // ========================================================================
@@ -151,82 +165,86 @@ export const useExchangeStore = create<ExchangeState>()(
         set((state) => {
           state.userAddress = null;
           state.isAuthenticated = false;
-          state.userBalances = [];
-          state.userOrders = [];
+          state.userBalances = {};
+          state.userOrders = {};
           state.userTrades = [];
         }),
 
       setBalances: (balances) =>
         set((state) => {
-          state.userBalances = balances;
+          // Convert array to Record keyed by token_ticker
+          state.userBalances = balances.reduce(
+            (acc, balance) => {
+              acc[balance.token_ticker] = balance;
+              return acc;
+            },
+            {} as Record<string, Balance>
+          );
         }),
 
       updateBalance: (tokenTicker, available, locked) =>
         set((state) => {
-          const existingIndex = state.userBalances.findIndex((b) => b.token_ticker === tokenTicker);
+          const existing = state.userBalances[tokenTicker];
+          const totalAmount = (BigInt(available) + BigInt(locked)).toString();
+          const token = state.tokens[tokenTicker];
+          if (!token) return;
 
-          if (existingIndex >= 0 && state.userBalances[existingIndex]) {
-            const existing = state.userBalances[existingIndex];
-            const totalAmount = (BigInt(available) + BigInt(locked)).toString();
-            const token = state.tokens.find((t) => t.ticker === tokenTicker);
-            if (!token) return;
+          const divisor = Math.pow(10, token.decimals);
+          const amountValue = Number(BigInt(totalAmount)) / divisor;
+          const lockedValue = Number(BigInt(locked)) / divisor;
 
-            const divisor = Math.pow(10, token.decimals);
-            const amountValue = Number(BigInt(totalAmount)) / divisor;
-            const lockedValue = Number(BigInt(locked)) / divisor;
-
-            state.userBalances = state.userBalances.map((balance, index) =>
-              index === existingIndex
-                ? {
-                    token_ticker: existing.token_ticker,
-                    user_address: existing.user_address,
-                    amount: totalAmount,
-                    open_interest: locked,
-                    updated_at: new Date(),
-                    amountDisplay: amountValue.toFixed(token.decimals),
-                    lockedDisplay: lockedValue.toFixed(token.decimals),
-                    amountValue,
-                    lockedValue,
-                  }
-                : balance
-            );
-          }
+          // O(1) insert or update - handles both new and existing balances
+          state.userBalances[tokenTicker] = {
+            token_ticker: tokenTicker,
+            user_address: existing?.user_address || state.userAddress || "",
+            amount: totalAmount,
+            open_interest: locked,
+            updated_at: new Date(),
+            amountDisplay: amountValue.toFixed(token.decimals),
+            lockedDisplay: lockedValue.toFixed(token.decimals),
+            amountValue,
+            lockedValue,
+          };
         }),
 
       setOrders: (orders) =>
         set((state) => {
-          state.userOrders = orders;
+          // Convert array to Record keyed by order id
+          state.userOrders = orders.reduce(
+            (acc, order) => {
+              acc[order.id] = order;
+              return acc;
+            },
+            {} as Record<string, Order>
+          );
         }),
 
       updateOrder: (orderId, status, filledSize) =>
         set((state) => {
-          const existingIndex = state.userOrders.findIndex((o) => o.id === orderId);
-
-          if (existingIndex >= 0) {
-            const existing = state.userOrders[existingIndex];
-            if (!existing) return;
-
-            const market = state.markets.find((m) => m.id === existing.market_id);
-            if (!market) return;
-
-            const baseToken = state.tokens.find((t) => t.ticker === market.base_ticker);
-            if (!baseToken) return;
-
-            const divisor = Math.pow(10, baseToken.decimals);
-            const filledValue = Number(BigInt(filledSize)) / divisor;
-
-            state.userOrders = state.userOrders.map((order, index) =>
-              index === existingIndex
-                ? {
-                    ...existing,
-                    status,
-                    filled_size: filledSize,
-                    filledDisplay: filledValue.toFixed(baseToken.decimals),
-                    filledValue,
-                  }
-                : order
-            );
+          const existing = state.userOrders[orderId];
+          if (!existing) {
+            // Order not in store yet - it will be fetched on next refetch
+            console.warn(`Order ${orderId} not found in store for update`);
+            return;
           }
+
+          const market = state.markets[existing.market_id];
+          if (!market) return;
+
+          const baseToken = state.tokens[market.base_ticker];
+          if (!baseToken) return;
+
+          const divisor = Math.pow(10, baseToken.decimals);
+          const filledValue = Number(BigInt(filledSize)) / divisor;
+
+          // O(1) update - directly update the order in the Record
+          state.userOrders[orderId] = {
+            ...existing,
+            status,
+            filled_size: filledSize,
+            filledDisplay: filledValue.toFixed(baseToken.decimals),
+            filledValue,
+          };
         }),
 
       setUserTrades: (trades) =>
@@ -260,7 +278,7 @@ export const useExchangeStore = create<ExchangeState>()(
 const EMPTY_ARRAY: OrderbookLevel[] = [];
 
 export const selectSelectedMarket = (state: ExchangeState) =>
-  state.markets.find((m) => m.id === state.selectedMarketId);
+  state.selectedMarketId ? state.markets[state.selectedMarketId] : undefined;
 
 export const selectOrderbookBids = (state: ExchangeState) => state.orderbook?.bids ?? EMPTY_ARRAY;
 
