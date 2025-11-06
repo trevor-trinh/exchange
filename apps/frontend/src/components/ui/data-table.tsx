@@ -8,7 +8,7 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface DataTableProps<TData, TValue> {
@@ -38,6 +38,7 @@ export function DataTable<TData, TValue>({
   };
 
   const [sorting, setSorting] = useState<SortingState>([{ id: getDefaultSortColumn(), desc: true }]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -53,8 +54,39 @@ export function DataTable<TData, TValue>({
     },
   });
 
+  // Prevent scroll propagation to parent containers
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      const isScrollingUp = e.deltaY < 0;
+      const isScrollingDown = e.deltaY > 0;
+
+      // At the top and scrolling up - allow propagation
+      if (isScrollingUp && scrollTop === 0) {
+        return;
+      }
+
+      // At the bottom and scrolling down - allow propagation
+      if (isScrollingDown && scrollTop + clientHeight >= scrollHeight) {
+        return;
+      }
+
+      // Otherwise, stop propagation to keep scroll contained
+      e.stopPropagation();
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
+
   return (
-    <div className="h-full overflow-auto relative">
+    <div ref={scrollContainerRef} className="h-full overflow-auto relative">
       <table className="w-full caption-bottom text-sm">
         <TableHeader
           className="sticky top-0 z-10 border-b border-border/50 bg-neutral-800"

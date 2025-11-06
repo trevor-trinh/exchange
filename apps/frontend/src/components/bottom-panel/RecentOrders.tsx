@@ -94,6 +94,7 @@ export function RecentOrders() {
       },
       {
         id: "usdValue",
+        accessorFn: (row) => row.priceValue * row.sizeValue,
         header: () => <div className="text-right">USD Value</div>,
         cell: ({ row }) => {
           const order = row.original;
@@ -105,9 +106,11 @@ export function RecentOrders() {
           );
         },
         size: 120,
+        enableSorting: true,
       },
       {
         id: "filled",
+        accessorFn: (row) => (row.sizeValue > 0 ? (row.filledValue / row.sizeValue) * 100 : 0),
         header: () => <div className="text-right">Filled</div>,
         cell: ({ row }) => {
           const order = row.original;
@@ -115,6 +118,7 @@ export function RecentOrders() {
           return <div className="text-right text-muted-foreground/80">{filledPercent.toFixed(1)}%</div>;
         },
         size: 80,
+        enableSorting: true,
       },
       {
         accessorKey: "status",

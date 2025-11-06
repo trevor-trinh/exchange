@@ -39,7 +39,8 @@ export function Balances() {
         size: 150,
       },
       {
-        accessorKey: "available",
+        id: "available",
+        accessorFn: (row) => row.amountValue - row.lockedValue,
         header: () => <div className="text-right">Available Balance</div>,
         cell: ({ row }) => {
           const balance = row.original;
@@ -47,9 +48,14 @@ export function Balances() {
           return <div className="text-right text-muted-foreground/80">{available.toFixed(2)}</div>;
         },
         size: 150,
+        enableSorting: true,
       },
       {
-        accessorKey: "usdValue",
+        id: "usdValue",
+        accessorFn: (row) => {
+          const price = USD_PRICES[row.token_ticker] ?? 0;
+          return row.amountValue * price;
+        },
         header: () => <div className="text-right">USD Value</div>,
         cell: ({ row }) => {
           const balance = row.original;
@@ -62,6 +68,7 @@ export function Balances() {
           );
         },
         size: 150,
+        enableSorting: true,
       },
     ],
     []

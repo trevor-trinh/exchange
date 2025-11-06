@@ -86,6 +86,7 @@ export function RecentTrades() {
       },
       {
         id: "usdValue",
+        accessorFn: (row) => row.priceValue * row.sizeValue,
         header: () => <div className="text-right">USD Value</div>,
         cell: ({ row }) => {
           const trade = row.original;
@@ -97,6 +98,7 @@ export function RecentTrades() {
           );
         },
         size: 120,
+        enableSorting: true,
       },
     ],
     []
