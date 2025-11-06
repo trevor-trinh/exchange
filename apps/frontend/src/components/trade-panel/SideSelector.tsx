@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import type { OrderSide } from "./types";
+
+type OrderSide = "buy" | "sell";
 
 interface SideSelectorProps {
   value: OrderSide;
@@ -10,6 +11,7 @@ export function SideSelector({ value, onChange }: SideSelectorProps) {
   return (
     <div className="grid grid-cols-2 gap-2">
       <Button
+        type="button"
         onClick={() => onChange("buy")}
         variant={value === "buy" ? "default" : "outline"}
         className={
@@ -22,6 +24,7 @@ export function SideSelector({ value, onChange }: SideSelectorProps) {
         Buy
       </Button>
       <Button
+        type="button"
         onClick={() => onChange("sell")}
         variant={value === "sell" ? "default" : "outline"}
         className={

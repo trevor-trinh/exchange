@@ -275,8 +275,12 @@
 
   /* Wave animation for torn receipt edge */
   @keyframes wave-slide {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(12px); }
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(12px);
+    }
   }
 
   .animate-wave {

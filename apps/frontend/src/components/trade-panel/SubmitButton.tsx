@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import type { Token } from "@/lib/types/exchange";
-import type { OrderSide } from "./types";
+
+type OrderSide = "buy" | "sell";
 
 interface SubmitButtonProps {
   side: OrderSide;
@@ -22,9 +23,7 @@ export function SubmitButton({ side, baseToken, isAuthenticated, loading }: Subm
       disabled={loading || !isAuthenticated}
       size="default"
       className={`w-full font-semibold text-sm h-10 transition-all ${
-        side === "buy"
-          ? "bg-green-600 hover:bg-green-700 text-white"
-          : "bg-red-600 hover:bg-red-700 text-white"
+        side === "buy" ? "bg-green-600 hover:bg-green-700 text-white" : "bg-red-600 hover:bg-red-700 text-white"
       }`}
     >
       {getButtonText()}

@@ -156,6 +156,7 @@ missing production
 - refactor ws types with userfills
 - try tradingview order lines
 - polish: fix bugs, adjust styling, refactor code
+- use react hook form
 
 - add trading signatures
 - add admin page

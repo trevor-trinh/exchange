@@ -50,6 +50,15 @@ export { SdkError, ApiError, WebSocketError, ValidationError } from "./errors";
 // Export format utilities
 export { toDisplayValue, toRawValue, formatNumber, formatPrice, formatSize } from "./format";
 
+// Export calculator utilities
+export {
+  calculateMaxSize,
+  calculatePercentageSize,
+  roundToLotSize,
+  roundToTickSize,
+  getDecimalPlaces,
+} from "./calculator";
+
 // Export types
 export type {
   Market,

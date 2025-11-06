@@ -79,18 +79,35 @@ export function useUserOrders() {
 
       // Show toast notification for new order placements
       if (!isInitialLoadRef.current && orderUpdate.status === "pending" && orderUpdate.filled_size === "0") {
-        toast.info("Order placed successfully", {
-          description: `Order ID: ${orderUpdate.order_id.slice(0, 8)}...`,
-          duration: 3000,
-        });
+        // Get the full order details for a better toast message
+        const currentOrders = useExchangeStore.getState().userOrders;
+        const order = currentOrders[orderUpdate.order_id];
+
+        if (order) {
+          const side = order.side === "buy" ? "BUY" : "SELL";
+          const market = order.market_id.split("/")[0];
+          toast.success(`${side} ${order.sizeDisplay} ${market} @ ${order.priceDisplay}`, {
+            description: order.order_type === "limit" ? "Limit order placed" : "Market order placed",
+            duration: 3000,
+          });
+        }
       }
 
       // Show toast for cancelled orders
       if (!isInitialLoadRef.current && orderUpdate.status === "cancelled") {
-        toast.info("Order cancelled", {
-          description: `Order ID: ${orderUpdate.order_id.slice(0, 8)}...`,
-          duration: 3000,
-        });
+        const currentOrders = useExchangeStore.getState().userOrders;
+        const order = currentOrders[orderUpdate.order_id];
+
+        if (order) {
+          const side = order.side === "buy" ? "BUY" : "SELL";
+          const market = order.market_id.split("/")[0];
+          toast.info(`Cancelled ${side} ${order.sizeDisplay} ${market}`, {
+            description: order.priceDisplay ? `@ ${order.priceDisplay}` : "Market order",
+            duration: 2500,
+          });
+        } else {
+          toast.info("Order cancelled");
+        }
       }
     });
 

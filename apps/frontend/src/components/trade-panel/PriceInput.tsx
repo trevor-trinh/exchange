@@ -1,17 +1,16 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toDisplayValue, roundToTickSize, getDecimalPlaces } from "@/lib/format";
-import type { Token, Market } from "@/lib/types/openapi";
+import { toDisplayValue, roundToTickSize, getDecimalPlaces } from "@exchange/sdk";
+import type { Token, Market } from "@/lib/types/exchange";
 
 interface PriceInputProps {
   value: string;
   onChange: (value: string) => void;
   market: Market;
   quoteToken: Token;
-  error?: string;
 }
 
-export function PriceInput({ value, onChange, market, quoteToken, error }: PriceInputProps) {
+export function PriceInput({ value, onChange, market, quoteToken }: PriceInputProps) {
   const priceDecimals = getDecimalPlaces(market.tick_size, quoteToken.decimals);
 
   const handleBlur = () => {
@@ -32,13 +31,15 @@ export function PriceInput({ value, onChange, market, quoteToken, error }: Price
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={handleBlur}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+          }
+        }}
         placeholder="0.00"
         step={toDisplayValue(market.tick_size, quoteToken.decimals)}
-        className={`font-mono h-9 text-sm border-border/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 bg-muted/20 ${
-          error ? "border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20" : ""
-        }`}
+        className="font-mono h-9 text-sm border-border/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 bg-muted/20"
       />
-      {error && <p className="text-xs text-red-600 font-medium">{error}</p>}
     </div>
   );
 }

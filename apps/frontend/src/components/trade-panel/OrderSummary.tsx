@@ -27,7 +27,7 @@ export function OrderSummary({ estimate, side, quoteToken, priceDecimals, feeBps
   const displayDecimals = Math.min(priceDecimals, 4);
 
   return (
-    <div className="relative bg-card border-x border-b border-border/60 rounded-none p-2 pt-3 font-mono text-[10px] leading-tight group">
+    <div className="relative bg-card border-x border-b border-border/60 rounded-none p-2 pt-3 font-mono text-[10px] leading-tight group cursor-pointer">
       {/* Wavy torn edge at top */}
       <svg
         className="absolute top-0 left-0 w-full h-[10px] overflow-hidden"

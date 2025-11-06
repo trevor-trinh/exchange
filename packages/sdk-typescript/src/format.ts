@@ -35,12 +35,12 @@ export function toRawValue(displayValue: number | string, decimals: number): str
 /**
  * Format a number with commas and appropriate decimals
  */
-export function formatNumber(value: number, maxDecimals: number = 8): string {
+export function formatNumber(value: number, maxDecimals: number = 8, keepTrailingZeros: boolean = false): string {
   // Format with max decimals
   const fixed = value.toFixed(maxDecimals);
 
-  // Remove trailing zeros
-  const trimmed = fixed.replace(/\.?0+$/, "");
+  // Remove trailing zeros (unless keepTrailingZeros is true)
+  const trimmed = keepTrailingZeros ? fixed : fixed.replace(/\.?0+$/, "");
 
   // Split into integer and decimal parts
   const parts = trimmed.split(".");
