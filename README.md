@@ -1,5 +1,7 @@
 # exchange
 
+![Exchange Banner](./.github/assets/banner.jpeg)
+
 - for learning purposes
 - to backend/infra learning.
 - for clob, mm and ai understanding.
