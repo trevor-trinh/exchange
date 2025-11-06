@@ -6,7 +6,7 @@ import { useExchangeStore, selectSelectedMarket, selectOrderbookBids, selectOrde
 import { useUserBalances } from "@/lib/hooks";
 import { useExchangeClient } from "@/lib/hooks/useExchangeClient";
 import { Card, CardContent } from "@/components/ui/card";
-import { toDisplayValue, formatNumber, roundToTickSize, getDecimalPlaces } from "@exchange/sdk";
+import { formatNumber, roundToTickSize, getDecimalPlaces } from "@exchange/sdk";
 import { OrderTypeSelector } from "./OrderTypeSelector";
 import { SideSelector } from "./SideSelector";
 import { PriceInput } from "./PriceInput";
@@ -86,7 +86,6 @@ export function TradePanel() {
   // Calculate decimal places
   const priceDecimals =
     selectedMarket && quoteToken ? getDecimalPlaces(selectedMarket.tick_size, quoteToken.decimals) : 2;
-  const sizeDecimals = selectedMarket && baseToken ? getDecimalPlaces(selectedMarket.lot_size, baseToken.decimals) : 2;
 
   // Calculate order estimate inline
   const estimate = useMemo(() => {

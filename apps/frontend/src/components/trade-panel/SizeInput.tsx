@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { toDisplayValue, formatNumber, calculatePercentageSize, roundToLotSize, getDecimalPlaces } from "@exchange/sdk";
+import { toDisplayValue, calculatePercentageSize, roundToLotSize, getDecimalPlaces } from "@exchange/sdk";
 import type { Token, Market } from "@/lib/types/exchange";
 
 type OrderSide = "buy" | "sell";
@@ -24,7 +24,7 @@ export function SizeInput({
   onChange,
   market,
   baseToken,
-  quoteToken,
+  quoteToken: _quoteToken,
   side,
   availableBase,
   availableQuote,

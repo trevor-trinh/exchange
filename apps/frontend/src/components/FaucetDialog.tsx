@@ -50,7 +50,10 @@ export function FaucetDialog({
 
   // Use controlled or internal state
   const open = controlled ? (externalOpen ?? false) : internalOpen;
-  const setOpen = controlled ? (externalOnOpenChange ?? (() => {})) : setInternalOpen;
+  const setOpen = useMemo(
+    () => (controlled ? (externalOnOpenChange ?? (() => {})) : setInternalOpen),
+    [controlled, externalOnOpenChange, setInternalOpen]
+  );
 
   // Reopen faucet after successful wallet connection
   useEffect(() => {
@@ -58,7 +61,7 @@ export function FaucetDialog({
       waitingForAuthRef.current = false;
       setOpen(true);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, setOpen]);
 
   const handleFaucet = async () => {
     if (!userAddress || !selectedToken) {
