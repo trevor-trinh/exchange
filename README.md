@@ -1,6 +1,4 @@
-# exchange
-
-![Exchange Banner](./.github/assets/banner.jpeg)
+![Exchange Banner](./.github/assets/banner.png)
 
 - for learning purposes
 - to backend/infra learning.
