@@ -528,6 +528,20 @@ impl MatchingEngine {
         order: &crate::models::domain::Order,
         market: &crate::models::domain::Market,
     ) -> Result<(), ExchangeError> {
+        // Validate that size is greater than 0
+        if order.size == 0 {
+            return Err(ExchangeError::InvalidParameter {
+                message: "Order size must be greater than 0".to_string(),
+            });
+        }
+
+        // Validate that price is greater than 0 for limit orders
+        if order.order_type == crate::models::domain::OrderType::Limit && order.price == 0 {
+            return Err(ExchangeError::InvalidParameter {
+                message: "Limit order price must be greater than 0".to_string(),
+            });
+        }
+
         // Validate tick size for limit orders only (price matters for limit orders)
         if order.order_type == crate::models::domain::OrderType::Limit
             && !order.price.is_multiple_of(market.tick_size)
