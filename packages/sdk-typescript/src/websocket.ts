@@ -457,11 +457,11 @@ export class WebSocketClient {
    * Stream trade updates for a user (enhanced with display values)
    * @returns Unsubscribe function
    */
-  onUserTrades(userAddress: string, handler: (trade: EnhancedTrade) => void): () => void {
+  onUserFills(userAddress: string, handler: (trade: EnhancedTrade) => void): () => void {
     this.logger.debug(`Setting up user fills subscription for ${userAddress}`);
 
-    const removeHandler = this.on("trade", (msg) => {
-      if (msg.type !== "trade") return;
+    const removeHandler = this.on("user_fill", (msg) => {
+      if (msg.type !== "user_fill") return;
 
       if (!this.cache.isReady()) {
         this.logger.warn("Trade received before cache initialized, skipping");

@@ -339,8 +339,8 @@ export class ExchangeClient {
   /**
    * Stream trade updates for a user
    */
-  onUserTrades(userAddress: string, handler: (trade: EnhancedTrade) => void) {
-    return this.ws.onUserTrades(userAddress, handler);
+  onUserFills(userAddress: string, handler: (trade: EnhancedTrade) => void) {
+    return this.ws.onUserFills(userAddress, handler);
   }
 
   /**

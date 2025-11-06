@@ -40,7 +40,7 @@ export function useUserTrades() {
     fetchInitialTrades();
 
     // Subscribe to WebSocket trade updates
-    const unsubscribe = client.onUserTrades(userAddress, (trade) => {
+    const unsubscribe = client.onUserFills(userAddress, (trade) => {
       addUserTrade(trade);
     });
 
