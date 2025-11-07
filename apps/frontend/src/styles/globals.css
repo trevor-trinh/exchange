@@ -316,6 +316,6 @@
   }
 
   .loading-exit {
-    animation: pixel-dissolve 700ms ease-out forwards;
+    animation: pixel-dissolve 400ms ease-out forwards;
   }
 }

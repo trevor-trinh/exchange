@@ -18,7 +18,7 @@ export function LoadingScreen({ isLoading }: LoadingScreenProps) {
       setIsFadingOut(true);
       const timer = setTimeout(() => {
         setIsVisible(false);
-      }, 800); // Match the animation duration
+      }, 400); // Match the animation duration
       return () => clearTimeout(timer);
     }
   }, [isLoading, isVisible]);
@@ -34,8 +34,11 @@ export function LoadingScreen({ isLoading }: LoadingScreenProps) {
         imageRendering: "pixelated",
       }}
     >
+      {/* Blurred background layer */}
+      <div className="absolute inset-0 backdrop-blur-2xl bg-background/90" />
+
       {/* Animated canvas background */}
-      <CanvasBackground dotSize={2} spacing={25} animationSpeed={0.001} dotColor="rgba(168, 139, 250, 0.4)" />
+      <CanvasBackground dotSize={1.5} spacing={12} animationSpeed={0.003} dotColor="rgba(150, 150, 150, 0.3)" />
 
       {/* Logo and star */}
       <div className="relative z-10">
@@ -61,12 +64,8 @@ export function LoadingScreen({ isLoading }: LoadingScreenProps) {
           {/* Star with multiple effects */}
           <div className="relative">
             {/* Glowing blurred copies behind */}
-            <span className="absolute inset-0 text-8xl font-bold text-primary blur-xl animate-pulse opacity-60">
-              *
-            </span>
-            <span className="absolute inset-0 text-8xl font-bold text-white blur-lg animate-pulse opacity-40">
-              *
-            </span>
+            <span className="absolute inset-0 text-8xl font-bold text-primary blur-xl animate-pulse opacity-60">*</span>
+            <span className="absolute inset-0 text-8xl font-bold text-white blur-lg animate-pulse opacity-40">*</span>
             {/* Main star with dither */}
             <span className="relative text-8xl font-bold text-white animate-pulse inline-block origin-center dither">
               *
