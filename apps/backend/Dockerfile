@@ -28,7 +28,7 @@ ENV PG_URL=$PG_URL
 ENV CH_URL=$CH_URL
 
 # Build from workspace root
-RUN cargo build --release --bin backend
+RUN cargo build --release --bin backend --bin init_exchange
 
 # Stage 2: Runtime
 FROM debian:bookworm-slim AS runtime

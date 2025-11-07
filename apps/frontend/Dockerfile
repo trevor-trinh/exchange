@@ -43,14 +43,15 @@ FROM oven/bun:1-slim
 
 WORKDIR /app
 
-# Copy built application from builder
+# Copy built application from builder (monorepo structure)
 COPY --from=builder /app/apps/frontend/.next/standalone ./
-COPY --from=builder /app/apps/frontend/.next/static ./.next/static
-COPY --from=builder /app/apps/frontend/public ./public
+COPY --from=builder /app/apps/frontend/.next/static ./apps/frontend/.next/static
+COPY --from=builder /app/apps/frontend/public ./apps/frontend/public
 
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
 EXPOSE 3000
 
-CMD ["bun", "server.js"]
+# In monorepo, server.js is at apps/frontend/server.js within standalone output
+CMD ["bun", "apps/frontend/server.js"]
