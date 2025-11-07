@@ -28,10 +28,20 @@ export function MarketHeader() {
       <div className="mb-4 md:mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           {/* Logo */}
-          <div className="flex items-center gap-3 group select-none">
-            <Image src="/logo3.png" alt="Exchange Logo" width={48} height={48} className="h-12 w-12" priority />
+          <div
+            className="flex items-center gap-3 group select-none cursor-pointer"
+            onClick={() => window.open("https://github.com/trevor-trinh/exchange", "_blank")}
+          >
+            <Image
+              src="/logo3.png"
+              alt="Exchange Logo"
+              width={48}
+              height={48}
+              className="h-12 w-12 transition-all duration-200 group-hover:brightness-120"
+              priority
+            />
 
-            <span className="text-2xl font-bold text-primary animate-pulse inline-block origin-center hover:scale-125 transition-transform duration-200 cursor-pointer relative">
+            <span className="text-2xl font-bold text-primary animate-pulse inline-block origin-center group-hover:scale-125 transition-transform duration-200 relative">
               *<span className="absolute inset-0 text-primary blur-sm animate-pulse">*</span>
             </span>
           </div>
