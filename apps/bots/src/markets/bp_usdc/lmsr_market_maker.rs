@@ -118,17 +118,36 @@ impl LmsrMarketMakerBot {
 
     /// Update quotes based on current LMSR state
     async fn update_quotes(&mut self) -> Result<()> {
+        info!("→ update_quotes() called");
         // Calculate current LMSR price
         let lmsr_price = self.calculate_lmsr_price();
+        info!("→ Calculated LMSR price: {:.4}", lmsr_price);
 
         // Add spread
         let spread = self.config.spread_bps as f64 / 10000.0; // Convert bps to decimal
-        let bid_price = lmsr_price * (1.0 - spread);
-        let ask_price = lmsr_price * (1.0 + spread);
+        let mut bid_price = lmsr_price * (1.0 - spread);
+        let mut ask_price = lmsr_price * (1.0 + spread);
+
+        // Round to tick size (0.001 for BP/USDC prediction market)
+        // This ensures prices are valid multiples of the tick size
+        let tick_size = 0.001;
+        bid_price = (bid_price / tick_size).floor() * tick_size;
+        ask_price = (ask_price / tick_size).ceil() * tick_size;
 
         // Clamp prices to [0.001, 0.999] range (prediction market bounds)
-        let bid_price = bid_price.max(0.001).min(0.999);
-        let ask_price = ask_price.max(0.001).min(0.999);
+        // Bid should be lower, ask should be higher
+        bid_price = bid_price.max(0.001).min(0.998);
+        ask_price = ask_price.max(0.002).min(0.999);
+
+        // Ensure bid < ask (prevent crossed market)
+        if bid_price >= ask_price {
+            warn!("Crossed market detected! bid={:.4}, ask={:.4}, adjusting...", bid_price, ask_price);
+            // Center around mid-point with minimum spread
+            let mid = (bid_price + ask_price) / 2.0;
+            let min_spread = 0.001; // Minimum 0.1% spread
+            bid_price = (mid - min_spread).max(0.001);
+            ask_price = (mid + min_spread).min(0.999);
+        }
 
         info!(
             "LMSR price: {:.4}, Bid: {:.4}, Ask: {:.4}",
@@ -136,12 +155,15 @@ impl LmsrMarketMakerBot {
         );
 
         // Cancel existing orders
+        info!("→ Cancelling existing orders...");
         self.cancel_all_orders().await?;
+        info!("→ Orders cancelled");
 
         // Place new bid order (buying BP)
         let bid_size = 100.0; // Fixed size for now
+        info!("→ Placing bid order at {:.4} for size {:.2}", bid_price, bid_size);
         if let Err(e) = self.place_order(Side::Buy, bid_price, bid_size).await {
-            warn!("Failed to place bid: {}", e);
+            warn!("❌ Failed to place bid: {}", e);
             bot_helpers::auto_faucet_on_error(
                 &self.exchange_client,
                 &self.config.user_address,
@@ -153,8 +175,9 @@ impl LmsrMarketMakerBot {
 
         // Place new ask order (selling BP)
         let ask_size = 100.0; // Fixed size for now
+        info!("→ Placing ask order at {:.4} for size {:.2}", ask_price, ask_size);
         if let Err(e) = self.place_order(Side::Sell, ask_price, ask_size).await {
-            warn!("Failed to place ask: {}", e);
+            warn!("❌ Failed to place ask: {}", e);
             bot_helpers::auto_faucet_on_error(
                 &self.exchange_client,
                 &self.config.user_address,

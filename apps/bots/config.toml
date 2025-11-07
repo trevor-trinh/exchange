@@ -42,8 +42,8 @@ spread_bps = 50                 # 0.5% spread around LMSR price
 [markets.bp_usdc.synthetic_trader]
 enabled = true
 user_address = "synthetic_trader"
-min_interval_ms = 10000         # Min 10 seconds between trades
-max_interval_ms = 30000         # Max 30 seconds between trades
+min_interval_ms = 2000          # Min 2 seconds between trades
+max_interval_ms = 5000          # Max 5 seconds between trades
 min_size = 10.0                 # Min 10 BP per trade
 max_size = 100.0                # Max 100 BP per trade
 buy_probability = 0.5           # 50% chance of buy vs sell

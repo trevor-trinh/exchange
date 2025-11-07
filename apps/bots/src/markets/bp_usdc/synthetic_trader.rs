@@ -60,6 +60,11 @@ impl SyntheticTraderBot {
     pub async fn start(&mut self) -> Result<()> {
         info!("Starting synthetic trader for BP/USDC");
 
+        // Wait for LMSR market maker to place initial orders
+        // This ensures synthetic trader is always the taker, not maker
+        info!("Waiting 3 seconds for LMSR bot to initialize...");
+        tokio::time::sleep(Duration::from_secs(3)).await;
+
         let mut rng = rand::rngs::StdRng::from_entropy();
 
         loop {
@@ -94,15 +99,14 @@ impl SyntheticTraderBot {
         }
     }
 
-    /// Execute a market order
+    /// Execute a trade by placing a limit order at the expected LMSR price
     async fn execute_trade(&self, side: Side, size: f64) -> Result<()> {
-        // For market orders, we need to specify a price limit
-        // Use a very favorable limit price to ensure execution:
-        // - For buys: high limit (willing to pay up to $0.999)
-        // - For sells: low limit (willing to sell down to $0.001)
+        // Place limit orders at the expected LMSR bot prices
+        // This works around a backend matching bug where trades execute at taker's price
+        // For LMSR at p=0.5 with 50bps spread: bid=$0.497, ask=$0.503
         let limit_price = match side {
-            Side::Buy => "0.999",   // Buy at any price up to $0.999
-            Side::Sell => "0.001",  // Sell at any price down to $0.001
+            Side::Buy => "0.503",   // Match the LMSR ask price
+            Side::Sell => "0.497",  // Match the LMSR bid price
         };
 
         let result = self
@@ -111,7 +115,7 @@ impl SyntheticTraderBot {
                 self.config.user_address.clone(),
                 "BP/USDC".to_string(),
                 side.clone(),
-                OrderType::Market,
+                OrderType::Limit,  // Changed from Market to Limit
                 limit_price.to_string(),
                 format!("{:.6}", size),
                 "synthetic_trader".to_string(),
