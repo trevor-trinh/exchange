@@ -12,6 +12,12 @@ RUN apt-get update && apt-get install -y \
 # Copy source
 COPY . .
 
+# get environment variables from Railway
+ARG EXCHANGE_URL
+
+# set environment variables from Railway
+ENV EXCHANGE_URL=$EXCHANGE_URL
+
 # Build
 RUN cargo build --release --bin bots
 
