@@ -11,10 +11,10 @@ use uuid::Uuid;
 #[derive(Clone, Debug)]
 pub struct LmsrConfig {
     pub user_address: String,
-    pub liquidity_param: f64,      // b parameter in LMSR
-    pub initial_probability: f64,  // Starting probability [0, 1]
-    pub update_interval_ms: u64,   // Quote update frequency
-    pub spread_bps: u64,            // Spread in basis points (1 bps = 0.01%)
+    pub liquidity_param: f64,     // b parameter in LMSR
+    pub initial_probability: f64, // Starting probability [0, 1]
+    pub update_interval_ms: u64,  // Quote update frequency
+    pub spread_bps: u64,          // Spread in basis points (1 bps = 0.01%)
 }
 
 /// LMSR Market Maker bot - provides liquidity for prediction markets
@@ -29,8 +29,8 @@ pub struct LmsrMarketMakerBot {
     market: Market,
 
     // LMSR state
-    cumulative_shares_yes: f64,  // Total shares sold for YES outcome
-    cumulative_shares_no: f64,   // Total shares sold for NO outcome
+    cumulative_shares_yes: f64, // Total shares sold for YES outcome
+    cumulative_shares_no: f64,  // Total shares sold for NO outcome
 
     // Order tracking
     active_orders: HashMap<String, Uuid>, // side -> order_id ("bid" or "ask")
@@ -38,19 +38,13 @@ pub struct LmsrMarketMakerBot {
 }
 
 impl LmsrMarketMakerBot {
-    pub async fn new(
-        config: LmsrConfig,
-        exchange_client: ExchangeClient,
-    ) -> Result<Self> {
+    pub async fn new(config: LmsrConfig, exchange_client: ExchangeClient) -> Result<Self> {
         info!("LMSR Market Maker bot initialized for BP/USDC");
 
         // Fetch market configuration and auto-faucet initial funds
-        let market = bot_helpers::fetch_market_and_faucet(
-            &exchange_client,
-            "BP/USDC",
-            &config.user_address,
-        )
-        .await?;
+        let market =
+            bot_helpers::fetch_market_and_faucet(&exchange_client, "BP/USDC", &config.user_address)
+                .await?;
 
         // Initialize cumulative shares based on initial probability
         // For p = 0.5, we want q_yes = q_no = 0
@@ -141,7 +135,10 @@ impl LmsrMarketMakerBot {
 
         // Ensure bid < ask (prevent crossed market)
         if bid_price >= ask_price {
-            warn!("Crossed market detected! bid={:.4}, ask={:.4}, adjusting...", bid_price, ask_price);
+            warn!(
+                "Crossed market detected! bid={:.4}, ask={:.4}, adjusting...",
+                bid_price, ask_price
+            );
             // Center around mid-point with minimum spread
             let mid = (bid_price + ask_price) / 2.0;
             let min_spread = 0.001; // Minimum 0.1% spread
@@ -161,7 +158,10 @@ impl LmsrMarketMakerBot {
 
         // Place new bid order (buying BP)
         let bid_size = 100.0; // Fixed size for now
-        info!("→ Placing bid order at {:.4} for size {:.2}", bid_price, bid_size);
+        info!(
+            "→ Placing bid order at {:.4} for size {:.2}",
+            bid_price, bid_size
+        );
         if let Err(e) = self.place_order(Side::Buy, bid_price, bid_size).await {
             warn!("❌ Failed to place bid: {}", e);
             bot_helpers::auto_faucet_on_error(
@@ -175,7 +175,10 @@ impl LmsrMarketMakerBot {
 
         // Place new ask order (selling BP)
         let ask_size = 100.0; // Fixed size for now
-        info!("→ Placing ask order at {:.4} for size {:.2}", ask_price, ask_size);
+        info!(
+            "→ Placing ask order at {:.4} for size {:.2}",
+            ask_price, ask_size
+        );
         if let Err(e) = self.place_order(Side::Sell, ask_price, ask_size).await {
             warn!("❌ Failed to place ask: {}", e);
             bot_helpers::auto_faucet_on_error(

@@ -6,7 +6,9 @@ use anyhow::{Context, Result};
 use config::Config;
 use exchange_sdk::ExchangeClient;
 use markets::bp_usdc::{LmsrConfig, LmsrMarketMakerBot, SyntheticTraderBot, SyntheticTraderConfig};
-use markets::btc_usdc::{OrderbookMirrorBot, OrderbookMirrorConfig, TradeMirrorBot, TradeMirrorConfig};
+use markets::btc_usdc::{
+    OrderbookMirrorBot, OrderbookMirrorConfig, TradeMirrorBot, TradeMirrorConfig,
+};
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 

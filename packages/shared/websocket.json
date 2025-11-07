@@ -4,75 +4,49 @@
   "oneOf": [
     {
       "type": "object",
-      "required": [
-        "channel",
-        "type"
-      ],
+      "required": ["channel", "type"],
       "properties": {
         "channel": {
           "$ref": "#/definitions/SubscriptionChannel"
         },
         "market_id": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "type": {
           "type": "string",
-          "enum": [
-            "subscribe"
-          ]
+          "enum": ["subscribe"]
         },
         "user_address": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         }
       }
     },
     {
       "type": "object",
-      "required": [
-        "channel",
-        "type"
-      ],
+      "required": ["channel", "type"],
       "properties": {
         "channel": {
           "$ref": "#/definitions/SubscriptionChannel"
         },
         "market_id": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "type": {
           "type": "string",
-          "enum": [
-            "unsubscribe"
-          ]
+          "enum": ["unsubscribe"]
         },
         "user_address": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         }
       }
     },
     {
       "type": "object",
-      "required": [
-        "type"
-      ],
+      "required": ["type"],
       "properties": {
         "type": {
           "type": "string",
-          "enum": [
-            "ping"
-          ]
+          "enum": ["ping"]
         }
       }
     }
@@ -80,11 +54,7 @@
   "definitions": {
     "OrderbookData": {
       "type": "object",
-      "required": [
-        "asks",
-        "bids",
-        "market_id"
-      ],
+      "required": ["asks", "bids", "market_id"],
       "properties": {
         "asks": {
           "type": "array",
@@ -105,10 +75,7 @@
     },
     "PriceLevel": {
       "type": "object",
-      "required": [
-        "price",
-        "size"
-      ],
+      "required": ["price", "size"],
       "properties": {
         "price": {
           "type": "string"
@@ -123,112 +90,71 @@
       "oneOf": [
         {
           "type": "object",
-          "required": [
-            "channel",
-            "type"
-          ],
+          "required": ["channel", "type"],
           "properties": {
             "channel": {
               "$ref": "#/definitions/SubscriptionChannel"
             },
             "market_id": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "type": {
               "type": "string",
-              "enum": [
-                "subscribed"
-              ]
+              "enum": ["subscribed"]
             },
             "user_address": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             }
           }
         },
         {
           "type": "object",
-          "required": [
-            "channel",
-            "type"
-          ],
+          "required": ["channel", "type"],
           "properties": {
             "channel": {
               "$ref": "#/definitions/SubscriptionChannel"
             },
             "market_id": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "type": {
               "type": "string",
-              "enum": [
-                "unsubscribed"
-              ]
+              "enum": ["unsubscribed"]
             },
             "user_address": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             }
           }
         },
         {
           "type": "object",
-          "required": [
-            "trade",
-            "type"
-          ],
+          "required": ["trade", "type"],
           "properties": {
             "trade": {
               "$ref": "#/definitions/TradeData"
             },
             "type": {
               "type": "string",
-              "enum": [
-                "trade"
-              ]
+              "enum": ["trade"]
             }
           }
         },
         {
           "type": "object",
-          "required": [
-            "orderbook",
-            "type"
-          ],
+          "required": ["orderbook", "type"],
           "properties": {
             "orderbook": {
               "$ref": "#/definitions/OrderbookData"
             },
             "type": {
               "type": "string",
-              "enum": [
-                "orderbook"
-              ]
+              "enum": ["orderbook"]
             }
           }
         },
         {
           "type": "object",
-          "required": [
-            "close",
-            "high",
-            "low",
-            "market_id",
-            "open",
-            "timestamp",
-            "type",
-            "volume"
-          ],
+          "required": ["close", "high", "low", "market_id", "open", "timestamp", "type", "volume"],
           "properties": {
             "close": {
               "type": "string"
@@ -251,9 +177,7 @@
             },
             "type": {
               "type": "string",
-              "enum": [
-                "candle"
-              ]
+              "enum": ["candle"]
             },
             "volume": {
               "type": "string"
@@ -262,30 +186,20 @@
         },
         {
           "type": "object",
-          "required": [
-            "trade",
-            "type"
-          ],
+          "required": ["trade", "type"],
           "properties": {
             "trade": {
               "$ref": "#/definitions/TradeData"
             },
             "type": {
               "type": "string",
-              "enum": [
-                "user_fill"
-              ]
+              "enum": ["user_fill"]
             }
           }
         },
         {
           "type": "object",
-          "required": [
-            "filled_size",
-            "order_id",
-            "status",
-            "type"
-          ],
+          "required": ["filled_size", "order_id", "status", "type"],
           "properties": {
             "filled_size": {
               "type": "string"
@@ -298,22 +212,13 @@
             },
             "type": {
               "type": "string",
-              "enum": [
-                "user_order"
-              ]
+              "enum": ["user_order"]
             }
           }
         },
         {
           "type": "object",
-          "required": [
-            "available",
-            "locked",
-            "token_ticker",
-            "type",
-            "updated_at",
-            "user_address"
-          ],
+          "required": ["available", "locked", "token_ticker", "type", "updated_at", "user_address"],
           "properties": {
             "available": {
               "type": "string"
@@ -326,9 +231,7 @@
             },
             "type": {
               "type": "string",
-              "enum": [
-                "user_balance"
-              ]
+              "enum": ["user_balance"]
             },
             "updated_at": {
               "type": "integer",
@@ -341,33 +244,24 @@
         },
         {
           "type": "object",
-          "required": [
-            "message",
-            "type"
-          ],
+          "required": ["message", "type"],
           "properties": {
             "message": {
               "type": "string"
             },
             "type": {
               "type": "string",
-              "enum": [
-                "error"
-              ]
+              "enum": ["error"]
             }
           }
         },
         {
           "type": "object",
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "properties": {
             "type": {
               "type": "string",
-              "enum": [
-                "pong"
-              ]
+              "enum": ["pong"]
             }
           }
         }
@@ -375,21 +269,12 @@
     },
     "Side": {
       "type": "string",
-      "enum": [
-        "buy",
-        "sell"
-      ]
+      "enum": ["buy", "sell"]
     },
     "SubscriptionChannel": {
       "description": "Channel types for WebSocket subscriptions",
       "type": "string",
-      "enum": [
-        "trades",
-        "orderbook",
-        "user_fills",
-        "user_orders",
-        "user_balances"
-      ]
+      "enum": ["trades", "orderbook", "user_fills", "user_orders", "user_balances"]
     },
     "TradeData": {
       "description": "Trade data for WebSocket messages (API layer with String fields)",

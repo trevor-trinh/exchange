@@ -10,11 +10,11 @@ use tracing::{info, warn};
 #[derive(Clone, Debug)]
 pub struct SyntheticTraderConfig {
     pub user_address: String,
-    pub min_interval_ms: u64,     // Minimum time between trades
-    pub max_interval_ms: u64,     // Maximum time between trades
-    pub min_size: f64,            // Minimum trade size (BP)
-    pub max_size: f64,            // Maximum trade size (BP)
-    pub buy_probability: f64,     // Probability of buy vs sell [0.0, 1.0]
+    pub min_interval_ms: u64, // Minimum time between trades
+    pub max_interval_ms: u64, // Maximum time between trades
+    pub min_size: f64,        // Minimum trade size (BP)
+    pub max_size: f64,        // Maximum trade size (BP)
+    pub buy_probability: f64, // Probability of buy vs sell [0.0, 1.0]
 }
 
 /// Synthetic Trader bot - generates realistic trading activity for prediction markets
@@ -37,12 +37,9 @@ impl SyntheticTraderBot {
         info!("Synthetic Trader bot initialized for BP/USDC");
 
         // Fetch market configuration and auto-faucet initial funds
-        let market = bot_helpers::fetch_market_and_faucet(
-            &exchange_client,
-            "BP/USDC",
-            &config.user_address,
-        )
-        .await?;
+        let market =
+            bot_helpers::fetch_market_and_faucet(&exchange_client, "BP/USDC", &config.user_address)
+                .await?;
 
         info!(
             "Trade intervals: {}-{}ms, Size range: {}-{} BP",
@@ -105,8 +102,8 @@ impl SyntheticTraderBot {
         // This works around a backend matching bug where trades execute at taker's price
         // For LMSR at p=0.5 with 50bps spread: bid=$0.497, ask=$0.503
         let limit_price = match side {
-            Side::Buy => "0.503",   // Match the LMSR ask price
-            Side::Sell => "0.497",  // Match the LMSR bid price
+            Side::Buy => "0.503",  // Match the LMSR ask price
+            Side::Sell => "0.497", // Match the LMSR bid price
         };
 
         let result = self
@@ -115,7 +112,7 @@ impl SyntheticTraderBot {
                 self.config.user_address.clone(),
                 "BP/USDC".to_string(),
                 side.clone(),
-                OrderType::Limit,  // Changed from Market to Limit
+                OrderType::Limit, // Changed from Market to Limit
                 limit_price.to_string(),
                 format!("{:.6}", size),
                 "synthetic_trader".to_string(),

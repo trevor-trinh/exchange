@@ -1,7 +1,9 @@
 /// Integration tests for bot orders using testcontainers
 /// These tests verify end-to-end functionality including proper formatting for frontend display
 use backend::models::domain::{OrderStatus, OrderType, Side};
-use exchange_bots::markets::bp_usdc::{LmsrConfig, LmsrMarketMakerBot, SyntheticTraderBot, SyntheticTraderConfig};
+use exchange_bots::markets::bp_usdc::{
+    LmsrConfig, LmsrMarketMakerBot, SyntheticTraderBot, SyntheticTraderConfig,
+};
 use exchange_sdk::ExchangeClient;
 use exchange_test_utils::TestServer;
 use rust_decimal::prelude::ToPrimitive;
@@ -569,11 +571,11 @@ async fn setup_bp_market(server: &TestServer) -> anyhow::Result<()> {
         .admin_create_market(
             "BP".to_string(),
             "USDC".to_string(),
-            1000,     // tick_size: 0.001 USDC (6 decimals) - $0.001 increments
-            1000000,  // lot_size: 1 BP (6 decimals)
-            1000000,  // min_size: 1 BP minimum
-            5,        // maker_fee_bps: 0.05%
-            10,       // taker_fee_bps: 0.10%
+            1000,    // tick_size: 0.001 USDC (6 decimals) - $0.001 increments
+            1000000, // lot_size: 1 BP (6 decimals)
+            1000000, // min_size: 1 BP minimum
+            5,       // maker_fee_bps: 0.05%
+            10,      // taker_fee_bps: 0.10%
         )
         .await?;
 
@@ -598,7 +600,7 @@ async fn test_lmsr_bot_places_orders() {
         liquidity_param: 1000.0,
         initial_probability: 0.5,
         update_interval_ms: 60000, // Don't auto-update during test
-        spread_bps: 50, // 0.5% spread
+        spread_bps: 50,            // 0.5% spread
     };
 
     let _bot = LmsrMarketMakerBot::new(config.clone(), client.clone())
@@ -638,7 +640,10 @@ async fn test_lmsr_pricing_formula() {
     let exp_yes = (q_yes / b).exp();
     let exp_no = (q_no / b).exp();
     let price = exp_yes / (exp_yes + exp_no);
-    assert!((price - 0.5).abs() < 0.001, "Equal shares should give p=0.5");
+    assert!(
+        (price - 0.5).abs() < 0.001,
+        "Equal shares should give p=0.5"
+    );
 
     // Test case 2: More yes shares sold → higher price
     let q_yes: f64 = 100.0;
@@ -691,11 +696,18 @@ async fn test_synthetic_trader_initialization() {
         .await
         .expect("Failed to get trader balances");
 
-    assert!(trader_balances.len() >= 2, "Trader should have BP and USDC balances");
+    assert!(
+        trader_balances.len() >= 2,
+        "Trader should have BP and USDC balances"
+    );
 
     // Verify balances are sufficient
     for balance in trader_balances {
-        assert!(balance.amount > 0, "Balance for {} should be > 0", balance.token_ticker);
+        assert!(
+            balance.amount > 0,
+            "Balance for {} should be > 0",
+            balance.token_ticker
+        );
     }
 }
 
@@ -743,20 +755,34 @@ async fn test_bp_market_bots_initialization() {
         .get_balances(&lmsr_config.user_address)
         .await
         .expect("Failed to get LMSR balances");
-    assert!(lmsr_balances.len() >= 2, "LMSR bot should have BP and USDC balances");
+    assert!(
+        lmsr_balances.len() >= 2,
+        "LMSR bot should have BP and USDC balances"
+    );
 
     let trader_balances = client
         .get_balances(&trader_config.user_address)
         .await
         .expect("Failed to get trader balances");
-    assert!(trader_balances.len() >= 2, "Trader should have BP and USDC balances");
+    assert!(
+        trader_balances.len() >= 2,
+        "Trader should have BP and USDC balances"
+    );
 
     // Verify balances are sufficient
     for balance in lmsr_balances {
-        assert!(balance.amount > 0, "LMSR {} balance should be > 0", balance.token_ticker);
+        assert!(
+            balance.amount > 0,
+            "LMSR {} balance should be > 0",
+            balance.token_ticker
+        );
     }
 
     for balance in trader_balances {
-        assert!(balance.amount > 0, "Trader {} balance should be > 0", balance.token_ticker);
+        assert!(
+            balance.amount > 0,
+            "Trader {} balance should be > 0",
+            balance.token_ticker
+        );
     }
 }

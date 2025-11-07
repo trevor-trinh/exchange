@@ -28,7 +28,7 @@ export function getChartConfig(
       "header_symbol_search",
       "symbol_search_hot_key",
     ],
-    enabled_features: ["study_templates", "side_toolbar_in_fullscreen_mode"],
+    enabled_features: ["side_toolbar_in_fullscreen_mode"],
     fullscreen: false,
     autosize: true,
     theme: "dark",

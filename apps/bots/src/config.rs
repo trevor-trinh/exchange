@@ -70,21 +70,21 @@ pub struct BpUsdcMarketConfig {
 pub struct LmsrConfig {
     pub enabled: bool,
     pub user_address: String,
-    pub liquidity_param: f64,      // b parameter in LMSR (controls market depth)
-    pub initial_probability: f64,  // Starting probability (0.0 - 1.0)
-    pub update_interval_ms: u64,   // How often to update quotes
-    pub spread_bps: u64,            // Spread in basis points
+    pub liquidity_param: f64, // b parameter in LMSR (controls market depth)
+    pub initial_probability: f64, // Starting probability (0.0 - 1.0)
+    pub update_interval_ms: u64, // How often to update quotes
+    pub spread_bps: u64,      // Spread in basis points
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyntheticTraderConfig {
     pub enabled: bool,
     pub user_address: String,
-    pub min_interval_ms: u64,      // Min time between trades
-    pub max_interval_ms: u64,      // Max time between trades
-    pub min_size: f64,             // Min trade size
-    pub max_size: f64,             // Max trade size
-    pub buy_probability: f64,      // Probability of buy vs sell (0.0-1.0)
+    pub min_interval_ms: u64, // Min time between trades
+    pub max_interval_ms: u64, // Max time between trades
+    pub min_size: f64,        // Min trade size
+    pub max_size: f64,        // Max trade size
+    pub buy_probability: f64, // Probability of buy vs sell (0.0-1.0)
 }
 
 impl Config {
