@@ -14,6 +14,7 @@ COPY Cargo.toml Cargo.lock ./
 
 # Copy all workspace members (needed for workspace dependencies)
 COPY apps/backend ./apps/backend
+COPY apps/bots ./apps/bots
 COPY packages/sdk-rust ./packages/sdk-rust
 COPY packages/test-utils ./packages/test-utils
 COPY packages/schema-generator ./packages/schema-generator
