@@ -72,7 +72,7 @@ cd /workspace/apps/frontend && bun install
 # Run database migrations
 echo "🗄️  Running database migrations..."
 cd /workspace
-just db-setup || echo "⚠️  Database setup failed. You may need to run 'just db-setup' manually."
+just db || echo "⚠️  Database setup failed. You may need to run 'just db' manually."
 
 # Build backend to check everything works
 echo "🔨 Building backend..."
@@ -84,8 +84,8 @@ echo ""
 echo "📚 Available commands:"
 echo "  just backend   - Run the backend server"
 echo "  just frontend  - Run the frontend dev server"
-echo "  just db-setup  - Set up databases"
-echo "  just db-reset  - Reset databases"
+echo "  just bots      - Run the bots"
+echo "  just db        - Set up databases"
 echo "  just test      - Run tests"
 echo "  just types     - Generate TypeScript types (OpenAPI + WebSocket)"
 echo ""

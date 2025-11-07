@@ -7,6 +7,7 @@ import { FaucetDialog } from "@/components/FaucetDialog";
 import { toDisplayValue } from "@exchange/sdk";
 import { formatWithoutTrailingZeros } from "@/lib/format";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Image from "next/image";
 
 export function MarketHeader() {
   const { markets, isLoading } = useMarkets();
@@ -27,7 +28,13 @@ export function MarketHeader() {
       <div className="mb-4 md:mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           {/* Logo */}
-          <h1 className="text-2xl font-bold tracking-tight">Exchange</h1>
+          <div className="flex items-center gap-3 group select-none">
+            <Image src="/logo3.png" alt="Exchange Logo" width={48} height={48} className="h-12 w-12" priority />
+
+            <span className="text-2xl font-bold text-primary animate-pulse inline-block origin-center hover:scale-125 transition-transform duration-200 cursor-pointer relative">
+              *<span className="absolute inset-0 text-primary blur-sm animate-pulse">*</span>
+            </span>
+          </div>
 
           {/* Actions */}
           <div className="flex items-center gap-2">
