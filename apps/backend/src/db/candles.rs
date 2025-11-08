@@ -2,62 +2,77 @@ use crate::db::Db;
 use crate::errors::{ExchangeError, Result};
 use crate::models::{
     api::ApiCandle,
-    db::{CandleInsertRow, CandleRow, ClickHouseTradeRow},
+    db::{CandleInsertRow, CandleRow},
     domain::{Candle, Trade},
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Timelike, Utc};
+use std::collections::HashMap;
 
 impl Db {
-    /// Insert a trade into ClickHouse for tick data
-    /// This will automatically trigger the materialized view to create 1m candles
-    pub async fn insert_trade_to_clickhouse(&self, trade: &Trade) -> Result<()> {
-        let trade_row = ClickHouseTradeRow {
-            id: trade.id.to_string(),
-            market_id: trade.market_id.clone(),
-            buyer_address: trade.buyer_address.clone(),
-            seller_address: trade.seller_address.clone(),
-            buyer_order_id: trade.buyer_order_id.to_string(),
-            seller_order_id: trade.seller_order_id.to_string(),
-            price: trade.price,
-            size: trade.size,
-            side: match trade.side {
-                crate::models::domain::Side::Buy => "buy".to_string(),
-                crate::models::domain::Side::Sell => "sell".to_string(),
-            },
-            timestamp: trade.timestamp.timestamp() as u32,
-        };
+    /// Insert trades as 1-minute candles into ClickHouse
+    /// ClickHouse materialized views automatically aggregate to larger intervals (5m, 15m, 1h, 1d)
+    /// Uses buffered batch inserts for better performance
+    pub async fn insert_trades_as_candles(&self, trades: &[Trade]) -> Result<()> {
+        if trades.is_empty() {
+            return Ok(());
+        }
 
-        let mut insert = self
-            .clickhouse
-            .insert::<ClickHouseTradeRow>("trades")
-            .await?;
-        insert.write(&trade_row).await?;
-        insert.end().await?;
+        // Aggregate trades into 1-minute candle buckets only
+        // Key: (market_id, bucket_timestamp)
+        let mut candle_buckets: HashMap<(String, u32), CandleAggregator> = HashMap::new();
+
+        for trade in trades {
+            let timestamp_secs = trade.timestamp.timestamp() as u32;
+            let bucket_time = Self::round_to_minute(trade.timestamp);
+            let bucket_timestamp = bucket_time.timestamp() as u32;
+            let key = (trade.market_id.clone(), bucket_timestamp);
+
+            candle_buckets
+                .entry(key)
+                .or_insert_with(|| CandleAggregator::new(trade.market_id.clone(), bucket_timestamp))
+                .add_trade(trade.price, trade.size, timestamp_secs);
+        }
+
+        // Batch insert all 1m candles (materialized views handle the rest)
+        if !candle_buckets.is_empty() {
+            let mut insert = self
+                .clickhouse
+                .insert::<CandleInsertRow>("candles_1m")
+                .await?;
+
+            for candle in candle_buckets.values() {
+                insert.write(&candle.to_insert_row()).await?;
+            }
+
+            insert.end().await?;
+        }
 
         Ok(())
     }
 
-    /// Insert a candle directly (for backfilling or manual inserts)
+    /// Insert a single 1-minute candle directly (for backfilling or manual inserts)
     pub async fn insert_candle(
         &self,
         market_id: String,
         timestamp: DateTime<Utc>,
-        interval: String,
         ohlcv: (u128, u128, u128, u128, u128), // (open, high, low, close, volume)
     ) -> Result<()> {
+        let timestamp_secs = timestamp.timestamp() as u32;
         let candle_row = CandleInsertRow {
             market_id,
-            timestamp: timestamp.timestamp() as u32,
-            trade_time: timestamp.timestamp() as u32, // Use same timestamp for manual inserts
-            interval,
+            timestamp: timestamp_secs,
             open: ohlcv.0,
             high: ohlcv.1,
             low: ohlcv.2,
             close: ohlcv.3,
             volume: ohlcv.4,
+            trade_count: 1,
         };
 
-        let mut insert = self.clickhouse.insert::<CandleInsertRow>("candles").await?;
+        let mut insert = self
+            .clickhouse
+            .insert::<CandleInsertRow>("candles_1m")
+            .await?;
         insert.write(&candle_row).await?;
         insert.end().await?;
 
@@ -65,34 +80,50 @@ impl Db {
     }
 
     /// Get candles for a market at a specific interval
+    /// Queries from the appropriate table/view based on interval
     pub async fn get_candles(
         &self,
         market_id: &str,
-        interval: &str, // '1m', '5m', '15m', '1h', '1d'
+        interval: &str,
         start: DateTime<Utc>,
         end: DateTime<Utc>,
     ) -> Result<Vec<Candle>> {
-        // Aggregate candles from multiple trade rows
-        // Use trade_time to determine first (open) and last (close) trades
-        let candles = self
-            .clickhouse
-            .query(
-                "SELECT
+        // Determine which table to query based on interval
+        let (table_name, use_final) = match interval {
+            "1m" => ("candles_1m", true),     // ReplacingMergeTree needs FINAL
+            "5m" => ("candles_5m_mv", false), // Materialized views don't support FINAL
+            "15m" => ("candles_15m_mv", false),
+            "1h" => ("candles_1h_mv", false),
+            "1d" => ("candles_1d_mv", false),
+            _ => {
+                return Err(ExchangeError::InvalidParameter {
+                    message: format!("Invalid interval: {}", interval),
+                })
+            }
+        };
+
+        // Use FINAL only for ReplacingMergeTree (candles_1m)
+        let final_modifier = if use_final { "FINAL" } else { "" };
+        let query = format!(
+            "SELECT
                 market_id,
                 timestamp,
-                interval,
-                argMin(open, trade_time) as open,
-                max(high) as high,
-                min(low) as low,
-                argMax(close, trade_time) as close,
-                sum(volume) as volume
-            FROM candles
-            WHERE market_id = ? AND interval = ? AND timestamp >= ? AND timestamp < ?
-            GROUP BY market_id, timestamp, interval
+                open,
+                high,
+                low,
+                close,
+                volume,
+                trade_count
+            FROM exchange.{} {}
+            WHERE market_id = ? AND timestamp >= ? AND timestamp < ?
             ORDER BY timestamp ASC",
-            )
+            table_name, final_modifier
+        );
+
+        let candles = self
+            .clickhouse
+            .query(&query)
             .bind(market_id)
-            .bind(interval)
             .bind(start.timestamp() as u32)
             .bind(end.timestamp() as u32)
             .fetch_all::<CandleRow>()
@@ -114,7 +145,6 @@ impl Db {
     }
 
     /// Get candles for API with support for countBack parameter
-    /// Returns candles as ApiCandle with timestamp aggregation and optional limit
     pub async fn get_candles_for_api(
         &self,
         market_id: &str,
@@ -123,23 +153,37 @@ impl Db {
         to: i64,
         count_back: Option<usize>,
     ) -> Result<Vec<ApiCandle>> {
-        // Build the base query with aggregation
+        // Determine which table to query based on interval
+        let (table_name, use_final) = match interval {
+            "1m" => ("candles_1m", true),     // ReplacingMergeTree needs FINAL
+            "5m" => ("candles_5m_mv", false), // Materialized views don't support FINAL
+            "15m" => ("candles_15m_mv", false),
+            "1h" => ("candles_1h_mv", false),
+            "1d" => ("candles_1d_mv", false),
+            _ => {
+                return Err(ExchangeError::InvalidParameter {
+                    message: format!("Invalid interval: {}", interval),
+                })
+            }
+        };
+
+        // Build the base query - data is pre-aggregated in materialized views
+        // Use FINAL only for ReplacingMergeTree (candles_1m)
+        let final_modifier = if use_final { "FINAL" } else { "" };
         let mut query = format!(
             "SELECT
                 toUnixTimestamp(timestamp) as timestamp,
-                argMin(open, trade_time) as open,
-                max(high) as high,
-                min(low) as low,
-                argMax(close, trade_time) as close,
-                sum(volume) as volume
-            FROM exchange.candles
+                open,
+                high,
+                low,
+                close,
+                volume
+            FROM exchange.{} {}
             WHERE market_id = '{}'
-              AND interval = '{}'
               AND timestamp >= toDateTime({})
               AND timestamp <= toDateTime({})
-            GROUP BY timestamp
             ORDER BY timestamp",
-            market_id, interval, from, to
+            table_name, final_modifier, market_id, from, to
         );
 
         // Handle countBack: limit to N most recent bars
@@ -169,39 +213,83 @@ impl Db {
         Ok(candles)
     }
 
-    /// Get recent trades for a market (tick data)
-    pub async fn get_recent_trades(&self, market_id: &str, limit: u32) -> Result<Vec<Trade>> {
-        let limit = std::cmp::min(limit, 1000);
+    /// Get recent trades is no longer supported since we don't store tick data
+    /// Returns empty vec for backwards compatibility
+    pub async fn get_recent_trades(&self, _market_id: &str, _limit: u32) -> Result<Vec<Trade>> {
+        // Tick data is no longer stored - return empty
+        Ok(Vec::new())
+    }
 
-        let trades = self
-            .clickhouse
-            .query("SELECT id, market_id, buyer_address, seller_address, buyer_order_id, seller_order_id, price, size, timestamp FROM trades WHERE market_id = ? ORDER BY timestamp DESC LIMIT ?")
-            .bind(market_id)
-            .bind(limit)
-            .fetch_all::<ClickHouseTradeRow>()
-            .await?;
+    // Helper function to round timestamps to 1-minute boundary
+    fn round_to_minute(dt: DateTime<Utc>) -> DateTime<Utc> {
+        dt.with_second(0).unwrap().with_nanosecond(0).unwrap()
+    }
+}
 
-        Ok(trades
-            .into_iter()
-            .filter_map(|row| {
-                Some(Trade {
-                    id: uuid::Uuid::parse_str(&row.id).ok()?,
-                    market_id: row.market_id,
-                    buyer_address: row.buyer_address,
-                    seller_address: row.seller_address,
-                    buyer_order_id: uuid::Uuid::parse_str(&row.buyer_order_id).ok()?,
-                    seller_order_id: uuid::Uuid::parse_str(&row.seller_order_id).ok()?,
-                    price: row.price,
-                    size: row.size,
-                    side: if row.side == "buy" {
-                        crate::models::domain::Side::Buy
-                    } else {
-                        crate::models::domain::Side::Sell
-                    },
-                    timestamp: DateTime::from_timestamp(row.timestamp as i64, 0)
-                        .unwrap_or(DateTime::UNIX_EPOCH),
-                })
-            })
-            .collect())
+/// Helper struct to aggregate trades into OHLCV candles (1-minute only)
+#[derive(Debug)]
+struct CandleAggregator {
+    market_id: String,
+    timestamp: u32,
+    open: u128,
+    high: u128,
+    low: u128,
+    close: u128,
+    volume: u128,
+    trade_count: u32,
+    last_trade_time: u32,
+}
+
+impl CandleAggregator {
+    fn new(market_id: String, timestamp: u32) -> Self {
+        Self {
+            market_id,
+            timestamp,
+            open: 0,
+            high: 0,
+            low: u128::MAX,
+            close: 0,
+            volume: 0,
+            trade_count: 0,
+            last_trade_time: 0,
+        }
+    }
+
+    fn add_trade(&mut self, price: u128, size: u128, trade_time: u32) {
+        // First trade sets the open price
+        if self.trade_count == 0 {
+            self.open = price;
+        }
+
+        // Update high and low
+        if price > self.high {
+            self.high = price;
+        }
+        if price < self.low {
+            self.low = price;
+        }
+
+        // Last trade in time order sets the close
+        if trade_time >= self.last_trade_time {
+            self.close = price;
+            self.last_trade_time = trade_time;
+        }
+
+        // Accumulate volume
+        self.volume += size;
+        self.trade_count += 1;
+    }
+
+    fn to_insert_row(&self) -> CandleInsertRow {
+        CandleInsertRow {
+            market_id: self.market_id.clone(),
+            timestamp: self.timestamp,
+            open: self.open,
+            high: self.high,
+            low: self.low,
+            close: self.close,
+            volume: self.volume,
+            trade_count: self.trade_count,
+        }
     }
 }

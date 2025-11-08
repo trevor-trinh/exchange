@@ -1,105 +1,107 @@
 -- Create database if it doesn't exist
 CREATE DATABASE IF NOT EXISTS exchange;
 
--- Trades table for tick data (raw trades from the matching engine)
-CREATE TABLE IF NOT EXISTS exchange.trades (
-    id String,
-    market_id String,
-    buyer_address String,
-    seller_address String,
-    buyer_order_id String,
-    seller_order_id String,
-    price UInt128,
-    size UInt128,
-    side String,
-    timestamp DateTime
-) ENGINE = MergeTree()
+-- OPTIMIZED CANDLE ARCHITECTURE
+-- Store only 1-minute candles, ClickHouse materialized views auto-aggregate to larger intervals
+-- Simplest and cleanest: Rust does 1 aggregation, ClickHouse handles the rest
+
+-- 1. Base table: Store ONLY 1-minute candles (single source of truth)
+CREATE TABLE IF NOT EXISTS exchange.candles_1m (
+    market_id LowCardinality(String),
+    timestamp DateTime CODEC(DoubleDelta, ZSTD(3)),
+    open UInt128 CODEC(ZSTD(3)),
+    high UInt128 CODEC(ZSTD(3)),
+    low UInt128 CODEC(ZSTD(3)),
+    close UInt128 CODEC(ZSTD(3)),
+    volume UInt128 CODEC(ZSTD(3)),
+    trade_count UInt32 CODEC(ZSTD(3))
+) ENGINE = ReplacingMergeTree()
+PARTITION BY toYYYYMM(timestamp)
 ORDER BY (market_id, timestamp)
-PRIMARY KEY (market_id, timestamp);
+PRIMARY KEY (market_id, timestamp)
+TTL timestamp + INTERVAL 90 DAY
+SETTINGS index_granularity = 8192;
 
--- Candles table for aggregated OHLCV data
--- interval values: '1m', '5m', '15m', '1h', '1d'
--- Materialized views insert one row per trade, queries must GROUP BY to aggregate
-CREATE TABLE IF NOT EXISTS exchange.candles (
-    market_id String,
-    timestamp DateTime,      -- Bucket timestamp (start of interval)
-    trade_time DateTime,     -- Original trade timestamp (for ordering)
-    interval String,
-    open UInt128,
-    high UInt128,
-    low UInt128,
-    close UInt128,
-    volume UInt128
-) ENGINE = MergeTree()
-ORDER BY (market_id, interval, timestamp, trade_time)
-PRIMARY KEY (market_id, interval, timestamp);
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS exchange.candles_1m_mv
-TO exchange.candles
-AS SELECT
-    market_id,
-    toStartOfMinute(t.timestamp) as timestamp,
-    t.timestamp as trade_time,
-    '1m' as interval,
-    t.price as open,
-    t.price as high,
-    t.price as low,
-    t.price as close,
-    t.size as volume
-FROM exchange.trades AS t;
-
+-- 2. Materialized view: 5-minute candles (auto-aggregated from 1m)
 CREATE MATERIALIZED VIEW IF NOT EXISTS exchange.candles_5m_mv
-TO exchange.candles
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (market_id, timestamp)
+PRIMARY KEY (market_id, timestamp)
+TTL timestamp + INTERVAL 180 DAY
 AS SELECT
     market_id,
-    toStartOfInterval(t.timestamp, INTERVAL 5 MINUTE) as timestamp,
-    t.timestamp as trade_time,
-    '5m' as interval,
-    t.price as open,
-    t.price as high,
-    t.price as low,
-    t.price as close,
-    t.size as volume
-FROM exchange.trades AS t;
+    toStartOfInterval(candles_1m.timestamp, INTERVAL 5 MINUTE) as timestamp,
+    argMin(candles_1m.open, candles_1m.timestamp) as open,
+    max(candles_1m.high) as high,
+    min(candles_1m.low) as low,
+    argMax(candles_1m.close, candles_1m.timestamp) as close,
+    sum(candles_1m.volume) as volume,
+    sum(candles_1m.trade_count) as trade_count
+FROM exchange.candles_1m
+GROUP BY
+    market_id,
+    toStartOfInterval(candles_1m.timestamp, INTERVAL 5 MINUTE);
 
+-- 3. Materialized view: 15-minute candles
 CREATE MATERIALIZED VIEW IF NOT EXISTS exchange.candles_15m_mv
-TO exchange.candles
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (market_id, timestamp)
+PRIMARY KEY (market_id, timestamp)
+TTL timestamp + INTERVAL 365 DAY
 AS SELECT
     market_id,
-    toStartOfInterval(t.timestamp, INTERVAL 15 MINUTE) as timestamp,
-    t.timestamp as trade_time,
-    '15m' as interval,
-    t.price as open,
-    t.price as high,
-    t.price as low,
-    t.price as close,
-    t.size as volume
-FROM exchange.trades AS t;
+    toStartOfInterval(candles_1m.timestamp, INTERVAL 15 MINUTE) as timestamp,
+    argMin(candles_1m.open, candles_1m.timestamp) as open,
+    max(candles_1m.high) as high,
+    min(candles_1m.low) as low,
+    argMax(candles_1m.close, candles_1m.timestamp) as close,
+    sum(candles_1m.volume) as volume,
+    sum(candles_1m.trade_count) as trade_count
+FROM exchange.candles_1m
+GROUP BY
+    market_id,
+    toStartOfInterval(candles_1m.timestamp, INTERVAL 15 MINUTE);
 
+-- 4. Materialized view: 1-hour candles
 CREATE MATERIALIZED VIEW IF NOT EXISTS exchange.candles_1h_mv
-TO exchange.candles
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (market_id, timestamp)
+PRIMARY KEY (market_id, timestamp)
+TTL timestamp + INTERVAL 730 DAY
 AS SELECT
     market_id,
-    toStartOfHour(t.timestamp) as timestamp,
-    t.timestamp as trade_time,
-    '1h' as interval,
-    t.price as open,
-    t.price as high,
-    t.price as low,
-    t.price as close,
-    t.size as volume
-FROM exchange.trades AS t;
+    toStartOfInterval(candles_1m.timestamp, INTERVAL 1 HOUR) as timestamp,
+    argMin(candles_1m.open, candles_1m.timestamp) as open,
+    max(candles_1m.high) as high,
+    min(candles_1m.low) as low,
+    argMax(candles_1m.close, candles_1m.timestamp) as close,
+    sum(candles_1m.volume) as volume,
+    sum(candles_1m.trade_count) as trade_count
+FROM exchange.candles_1m
+GROUP BY
+    market_id,
+    toStartOfInterval(candles_1m.timestamp, INTERVAL 1 HOUR);
 
+-- 5. Materialized view: 1-day candles
 CREATE MATERIALIZED VIEW IF NOT EXISTS exchange.candles_1d_mv
-TO exchange.candles
+ENGINE = MergeTree()
+PARTITION BY toYear(timestamp)
+ORDER BY (market_id, timestamp)
+PRIMARY KEY (market_id, timestamp)
+TTL timestamp + INTERVAL 3650 DAY
 AS SELECT
     market_id,
-    toStartOfDay(t.timestamp) as timestamp,
-    t.timestamp as trade_time,
-    '1d' as interval,
-    t.price as open,
-    t.price as high,
-    t.price as low,
-    t.price as close,
-    t.size as volume
-FROM exchange.trades AS t;
+    toStartOfDay(candles_1m.timestamp) as timestamp,
+    argMin(candles_1m.open, candles_1m.timestamp) as open,
+    max(candles_1m.high) as high,
+    min(candles_1m.low) as low,
+    argMax(candles_1m.close, candles_1m.timestamp) as close,
+    sum(candles_1m.volume) as volume,
+    sum(candles_1m.trade_count) as trade_count
+FROM exchange.candles_1m
+GROUP BY
+    market_id,
+    toStartOfDay(candles_1m.timestamp);

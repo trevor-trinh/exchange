@@ -14,7 +14,7 @@
     "build:sdk": "bun --filter @exchange/sdk build",
     "format": "prettier --write .",
     "lint": "bun --filter exchange lint",
-    "typecheck": "bun --filter '@exchange/*' typecheck && bun --filter exchange typecheck",
+    "typecheck": "bun run build:sdk && bun --filter '@exchange/*' typecheck && bun --filter exchange typecheck",
     "clean": "rm -rf apps/frontend/.next apps/frontend/node_modules packages/sdk-typescript/dist packages/sdk-typescript/node_modules node_modules",
     "openapi": "bun --filter @exchange/sdk generate"
   },

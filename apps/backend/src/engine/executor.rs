@@ -210,13 +210,14 @@ impl Executor {
             affected_balances.insert(("system".to_string(), market.quote_ticker.clone()));
         }
 
-        // Insert trades into ClickHouse asynchronously (after commit)
+        // Insert trades as pre-aggregated candles into ClickHouse asynchronously
         // This is non-critical, so failures won't affect the core trade execution
-        for trade in &trades {
+        // Batch insert all trades at once for better performance
+        if !trades.is_empty() {
             let db_clone = db.clone();
-            let trade_clone = trade.clone();
+            let trades_clone = trades.clone();
             tokio::spawn(async move {
-                let _ = db_clone.insert_trade_to_clickhouse(&trade_clone).await;
+                let _ = db_clone.insert_trades_as_candles(&trades_clone).await;
             });
         }
 
