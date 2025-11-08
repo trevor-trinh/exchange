@@ -49,8 +49,11 @@ db-prepare:
 
 install:
   bun install
-  cargo build --workspace
   cd packages/sdk-python && uv sync
+
+build:
+  just build:sdk
+  cargo build --workspace
 
 test:
   cargo test --workspace
@@ -65,7 +68,6 @@ types:
   cd apps/backend && cargo run --bin generate_openapi
   cargo run -p schema-generator
   bun --filter @exchange/sdk generate
-  cd packages/sdk-typescript && bunx tsc
   just types-python
   just fmt
 

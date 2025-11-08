@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: just install
 
+      - name: Build
+        run: just build
+
       - name: Check generated types are up-to-date
         run: |
           just types
