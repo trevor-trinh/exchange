@@ -52,7 +52,7 @@ install:
   cd packages/sdk-python && uv sync
 
 build:
-  just build:sdk
+  bun run build:sdk
   cargo build --workspace
 
 test:
