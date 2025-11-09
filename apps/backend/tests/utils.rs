@@ -240,7 +240,7 @@ impl TestDb {
         use backend::models::domain::Trade;
         use uuid::Uuid;
 
-        let trades = vec![
+        let trades = [
             (open, timestamp.timestamp() as u32),      // Open
             (high, timestamp.timestamp() as u32 + 1),  // High
             (low, timestamp.timestamp() as u32 + 2),   // Low

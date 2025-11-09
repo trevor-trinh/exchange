@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-#[cfg(feature = "schema")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -253,8 +252,7 @@ pub struct CandlesResponse {
 // WEBSOCKET MESSAGE TYPES (Client → Server)
 // ============================================================================
 
-#[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(JsonSchema))]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ClientMessage {
     Subscribe {
@@ -275,8 +273,7 @@ pub enum ClientMessage {
 }
 
 /// Channel types for WebSocket subscriptions
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "schema", derive(JsonSchema))]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SubscriptionChannel {
     Trades,
@@ -290,8 +287,7 @@ pub enum SubscriptionChannel {
 // WEBSOCKET MESSAGE TYPES (Server → Client)
 // ============================================================================
 
-#[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(JsonSchema))]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ServerMessage {
     // Subscription acknowledgments
@@ -351,15 +347,13 @@ pub enum ServerMessage {
     Pong,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(JsonSchema))]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PriceLevel {
     pub price: String,
     pub size: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(JsonSchema))]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct OrderbookData {
     pub market_id: String,
     pub bids: Vec<PriceLevel>,
@@ -367,8 +361,7 @@ pub struct OrderbookData {
 }
 
 /// Trade data for WebSocket messages (API layer with String fields)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(JsonSchema))]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct TradeData {
     pub id: String, // UUID as string
     pub market_id: String,

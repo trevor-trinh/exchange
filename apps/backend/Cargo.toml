@@ -9,10 +9,6 @@ default-run = "backend"
 name = "backend"
 path = "src/main.rs"
 
-[features]
-# Enable JSON schema generation for WebSocket types
-schema = ["dep:schemars"]
-
 [dependencies]
 anyhow.workspace = true
 axum.workspace = true
@@ -23,7 +19,7 @@ dotenvy.workspace = true
 env_logger.workspace = true
 futures.workspace = true
 log.workspace = true
-schemars = { workspace = true, optional = true }
+schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sqlx.workspace = true

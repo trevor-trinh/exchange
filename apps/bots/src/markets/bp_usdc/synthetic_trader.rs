@@ -81,7 +81,7 @@ impl SyntheticTraderBot {
             let size = rng.gen_range(self.config.min_size..=self.config.max_size);
 
             // Execute trade
-            if let Err(e) = self.execute_trade(side.clone(), size).await {
+            if let Err(e) = self.execute_trade(side, size).await {
                 warn!("Failed to execute {:?} trade: {}", side, e);
 
                 // Try to auto-faucet if balance issue
@@ -111,7 +111,7 @@ impl SyntheticTraderBot {
             .place_order_decimal(
                 self.config.user_address.clone(),
                 "BP/USDC".to_string(),
-                side.clone(),
+                side,
                 OrderType::Limit, // Changed from Market to Limit
                 limit_price.to_string(),
                 format!("{:.6}", size),

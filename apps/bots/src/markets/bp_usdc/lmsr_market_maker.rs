@@ -130,8 +130,8 @@ impl LmsrMarketMakerBot {
 
         // Clamp prices to [0.001, 0.999] range (prediction market bounds)
         // Bid should be lower, ask should be higher
-        bid_price = bid_price.max(0.001).min(0.998);
-        ask_price = ask_price.max(0.002).min(0.999);
+        bid_price = bid_price.clamp(0.001, 0.998);
+        ask_price = ask_price.clamp(0.002, 0.999);
 
         // Ensure bid < ask (prevent crossed market)
         if bid_price >= ask_price {
@@ -210,7 +210,7 @@ impl LmsrMarketMakerBot {
             .place_order_decimal(
                 self.config.user_address.clone(),
                 "BP/USDC".to_string(),
-                side.clone(),
+                side,
                 OrderType::Limit,
                 format!("{:.6}", price),
                 format!("{:.6}", size),

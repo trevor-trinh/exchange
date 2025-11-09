@@ -143,7 +143,7 @@ impl Db {
         }
 
         // Debug: Log last few candles to diagnose flat candle issue
-        if candles.len() > 0 {
+        if !candles.is_empty() {
             let last_candles: Vec<_> = candles
                 .iter()
                 .rev()
