@@ -14,9 +14,9 @@ use axum::{extract::State, Json};
         (status = 400, description = "Invalid parameters"),
         (status = 500, description = "Internal server error")
     ),
-    tag = "market-data"
+    tag = "candles"
 )]
-pub async fn get_candles(
+pub async fn candles(
     State(state): State<AppState>,
     Json(params): Json<CandlesRequest>,
 ) -> Result<Json<CandlesResponse>, String> {
