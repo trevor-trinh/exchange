@@ -3,7 +3,7 @@
  */
 
 // API
-export { exchange, getExchangeClient } from "./api";
+export { getExchangeClient } from "./api";
 
 // Store
 export { useExchangeStore } from "./store";

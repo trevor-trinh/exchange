@@ -16,12 +16,12 @@ import type {
   SubscribeBarsCallback,
   SearchSymbolsCallback,
 } from "../../../public/vendor/trading-view/charting_library";
-import { toDisplayValue } from "@exchange/sdk";
+import { toDisplayValue, type Candle } from "@exchange/sdk";
 
 // ErrorCallback is not exported from TradingView types, so we define it here
 type ErrorCallback = (reason: string) => void;
 
-import { exchange, getExchangeClient } from "@/lib/api";
+import { getExchangeClient } from "@/lib/api";
 
 // Resolution mapping from TradingView to our backend
 const resolutionMap: Record<string, string> = {
@@ -175,20 +175,20 @@ export class ExchangeDatafeed implements IBasicDataFeed {
     }
 
     // Fetch candles using the SDK
-    exchange
+    this.client
       .getCandles({
         marketId: symbolInfo.name,
         interval,
         from,
         to,
       })
-      .then((candles) => {
+      .then((candles: Candle[]) => {
         if (!candles || candles.length === 0) {
           onResult([], { noData: true });
           return;
         }
 
-        const bars: Bar[] = candles.map((candle) => ({
+        const bars: Bar[] = candles.map((candle: Candle) => ({
           time: candle.timestamp * 1000, // TradingView expects milliseconds
           open: toDisplayValue(String(candle.open), quoteToken.decimals),
           high: toDisplayValue(String(candle.high), quoteToken.decimals),
@@ -199,7 +199,7 @@ export class ExchangeDatafeed implements IBasicDataFeed {
 
         onResult(bars, { noData: false });
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         console.error("Error fetching candles:", error);
         onError("Error fetching candles");
       });
