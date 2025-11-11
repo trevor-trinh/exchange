@@ -1,4 +1,4 @@
-![Exchange Banner](./.github/assets/banner.png)
+![banner](https://github.com/user-attachments/assets/414597d1-6bf6-4c25-af38-0d3cea2b7c01)
 
 # exchange
 
