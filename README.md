@@ -8,20 +8,11 @@ A full-stack crypto exchange. CLOB + frontend + market-making bots.
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/exchange?referralCode=trevor)
 
-
-https://github.com/user-attachments/assets/1b8da093-f3c9-462c-bcf5-1397157188b1
-
-
 ---
 
 ## Demo
 
-<iframe src="https://www.canva.com/design/DAG4WhyBWvs/2TuZXMP6e83qIevIj64gWQ/watch?embed" width="100%" height="600" allowfullscreen></iframe>
-
-
-Uploading Untitled design.mp4…
-
-https://github.com/user-attachments/assets/1b8da093-f3c9-462c-bcf5-1397157188b1
+<video autoplay loop muted playsinline src="https://github.com/user-attachments/assets/1b8da093-f3c9-462c-bcf5-1397157188b1"></video>
 
 ---
 
