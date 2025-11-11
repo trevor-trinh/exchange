@@ -11,6 +11,9 @@ A full-stack crypto exchange. CLOB + frontend + market-making bots.
 ---
 
 ## Demo
+
+One-click Railway deployment with live trading: authentication via Turnkey embedded wallet, real-time candle data after a few hours of market activity, and executing both market and limit orders.
+
 https://github.com/user-attachments/assets/cd2c3132-4aea-4137-b724-6d2ecf1a536b
 
 ---
