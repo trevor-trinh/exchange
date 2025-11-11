@@ -8,11 +8,7 @@ A full-stack crypto exchange. CLOB + frontend + market-making bots.
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/exchange?referralCode=trevor)
 
-## Demo
-
-One-click Railway deployment with live trading: authentication via Turnkey embedded wallet, real-time candle data after a few hours of market activity, and executing both market and limit orders.
-
-https://github.com/user-attachments/assets/cd2c3132-4aea-4137-b724-6d2ecf1a536b
+---
 
 ## Project Structure
 
@@ -28,6 +24,12 @@ exchange/
 │   └── sdk/                  # Multi-language SDKs (TypeScript, Python, Rust)
 └── docker-compose.yaml       # Infra
 ```
+
+## Demo
+
+One-click Railway deployment with live trading: authentication via Turnkey embedded wallet, real-time candle data after a few hours of market activity, and executing both market and limit orders.
+
+https://github.com/user-attachments/assets/cd2c3132-4aea-4137-b724-6d2ecf1a536b
 
 ## Table of Contents
 
