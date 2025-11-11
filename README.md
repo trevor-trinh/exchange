@@ -103,7 +103,7 @@ Access the app at:
 
 ![Architecture](./.github/assets/architecture.png)
 
-This exchange is built as a high-performance trading system with the following components:
+This exchange is built as a clean trading system with the following components:
 
 - **Backend**
   - **API**: REST and WebSocket APIs with multi-language SDK support
