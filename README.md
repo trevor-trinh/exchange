@@ -48,6 +48,7 @@ https://github.com/user-attachments/assets/cd2c3132-4aea-4137-b724-6d2ecf1a536b
   - [Frontend](#frontend)
   - [Bots](#bots)
   - [Testing & Deployment](#testing--deployment)
+- [Improvements](#improvements)
 - [License](#license)
 
 ## 🚀 Getting Started
@@ -103,7 +104,7 @@ Access the app at:
 
 ![Architecture](./.github/assets/architecture.png)
 
-This exchange is built as a clean trading system with the following components:
+This exchange is built as a modern, full-featured trading system with the following components:
 
 - **Backend**
   - **API**: REST and WebSocket APIs with multi-language SDK support
@@ -121,7 +122,7 @@ This exchange is built as a clean trading system with the following components:
 
 #### Matching Engine
 
-The matching engine is the core of the exchange, handling order placement, matching, and execution with microsecond latency.
+The matching engine is the core of the exchange, handling order placement, matching, and execution.
 
 - **Orderbook**: In-memory B-tree implementation with price-time priority, O(log n) complexity
 - **Matcher**: Price-time priority algorithm with continuous matching and partial fills
@@ -172,3 +173,23 @@ Automated market-making bots to provide liquidity:
 - **Testcontainers**: Integration testing with isolated database instances and automated cleanup
 - **GitHub Actions**: Automated CI/CD pipeline for testing and deployment
 - **Railway**: Super-duper easy deployment. [Try it out!](https://railway.com/deploy/exchange?referralCode=trevor)
+
+## Improvements
+
+Features and improvements to consider for production:
+
+- perps
+- pnl
+- deposits / withdrawals
+- helllaaa latency
+- write ahead log lmao
+- design for concurrency across multiple markets
+- metrics & alerting
+- backups & disaster recovery
+- scaling / k8s
+- mm channel prioritization
+- cancel prioritization
+
+## License
+
+MIT
