@@ -4,49 +4,18 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Literal
 
-from pydantic import BaseModel, Field, RootModel
-
-
-class Type(Enum):
-    subscribe = 'subscribe'
-
-
-class Type1(Enum):
-    unsubscribe = 'unsubscribe'
-
-
-class Type2(Enum):
-    ping = 'ping'
+from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 
 class ClientMessage3(BaseModel):
-    type: Type2
+    type: Literal['ping']
 
 
 class PriceLevel(BaseModel):
     price: str
     size: str
-
-
-class Type3(Enum):
-    subscribed = 'subscribed'
-
-
-class Type4(Enum):
-    unsubscribed = 'unsubscribed'
-
-
-class Type5(Enum):
-    trade = 'trade'
-
-
-class Type6(Enum):
-    orderbook = 'orderbook'
-
-
-class Type7(Enum):
-    candle = 'candle'
 
 
 class ServerMessage5(BaseModel):
@@ -56,53 +25,33 @@ class ServerMessage5(BaseModel):
     market_id: str
     open: str
     timestamp: int
-    type: Type7
+    type: Literal['candle']
     volume: str
-
-
-class Type8(Enum):
-    user_fill = 'user_fill'
-
-
-class Type9(Enum):
-    user_order = 'user_order'
 
 
 class ServerMessage7(BaseModel):
     filled_size: str
     order_id: str
     status: str
-    type: Type9
-
-
-class Type10(Enum):
-    user_balance = 'user_balance'
+    type: Literal['user_order']
 
 
 class ServerMessage8(BaseModel):
     available: str
     locked: str
     token_ticker: str
-    type: Type10
+    type: Literal['user_balance']
     updated_at: int
     user_address: str
 
 
-class Type11(Enum):
-    error = 'error'
-
-
 class ServerMessage9(BaseModel):
     message: str
-    type: Type11
-
-
-class Type12(Enum):
-    pong = 'pong'
+    type: Literal['error']
 
 
 class ServerMessage10(BaseModel):
-    type: Type12
+    type: Literal['pong']
 
 
 class Side(Enum):
@@ -134,19 +83,19 @@ class TradeData(BaseModel):
 class ClientMessage1(BaseModel):
     channel: SubscriptionChannel
     market_id: str | None = None
-    type: Type
+    type: Literal['subscribe']
     user_address: str | None = None
 
 
 class ClientMessage2(BaseModel):
     channel: SubscriptionChannel
     market_id: str | None = None
-    type: Type1
+    type: Literal['unsubscribe']
     user_address: str | None = None
 
 
 class ClientMessage(RootModel[ClientMessage1 | ClientMessage2 | ClientMessage3]):
-    root: ClientMessage1 | ClientMessage2 | ClientMessage3 = Field(..., title='ClientMessage')
+    root: ClientMessage1 | ClientMessage2 | ClientMessage3
 
 
 class OrderbookData(BaseModel):
@@ -158,30 +107,30 @@ class OrderbookData(BaseModel):
 class ServerMessage1(BaseModel):
     channel: SubscriptionChannel
     market_id: str | None = None
-    type: Type3
+    type: Literal['subscribed']
     user_address: str | None = None
 
 
 class ServerMessage2(BaseModel):
     channel: SubscriptionChannel
     market_id: str | None = None
-    type: Type4
+    type: Literal['unsubscribed']
     user_address: str | None = None
 
 
 class ServerMessage3(BaseModel):
     trade: TradeData
-    type: Type5
+    type: Literal['trade']
 
 
 class ServerMessage4(BaseModel):
     orderbook: OrderbookData
-    type: Type6
+    type: Literal['orderbook']
 
 
 class ServerMessage6(BaseModel):
     trade: TradeData
-    type: Type8
+    type: Literal['user_fill']
 
 
 class ServerMessage(
@@ -209,4 +158,22 @@ class ServerMessage(
         | ServerMessage8
         | ServerMessage9
         | ServerMessage10
-    ) = Field(..., title='ServerMessage')
+    )
+
+
+class WebSocketMessages1(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    Client: ClientMessage
+
+
+class WebSocketMessages2(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    Server: ServerMessage
+
+
+class WebSocketMessages(RootModel[WebSocketMessages1 | WebSocketMessages2]):
+    root: WebSocketMessages1 | WebSocketMessages2 = Field(..., title='WebSocketMessages')

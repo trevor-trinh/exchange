@@ -1,3 +1,11 @@
+export type WebSocketMessages =
+  | {
+      Client: ClientMessage;
+    }
+  | {
+      Server: ServerMessage;
+    };
+
 export type ClientMessage =
   | {
       channel: SubscriptionChannel;
@@ -19,17 +27,6 @@ export type ClientMessage =
  */
 
 export type SubscriptionChannel = "trades" | "orderbook" | "user_fills" | "user_orders" | "user_balances";
-
-export interface OrderbookData {
-  asks: PriceLevel[];
-  bids: PriceLevel[];
-  market_id: string;
-}
-
-export interface PriceLevel {
-  price: string;
-  size: string;
-}
 
 export type ServerMessage =
   | {
@@ -87,9 +84,6 @@ export type ServerMessage =
   | {
       type: "pong";
     };
-/**
- * Channel types for WebSocket subscriptions
- */
 
 export type Side = "buy" | "sell";
 
@@ -108,4 +102,15 @@ export interface TradeData {
   side: Side;
   size: string;
   timestamp: number;
+}
+
+export interface OrderbookData {
+  asks: PriceLevel[];
+  bids: PriceLevel[];
+  market_id: string;
+}
+
+export interface PriceLevel {
+  price: string;
+  size: string;
 }

@@ -1,6 +1,14 @@
 use backend::models::api::{ClientMessage, ServerMessage};
-use schemars::schema_for;
+use schemars::{JsonSchema, SchemaGenerator};
 use std::{fs, path::Path};
+
+// Wrapper type to include both message types in the schema
+#[derive(JsonSchema)]
+#[allow(dead_code)]
+enum WebSocketMessages {
+    Client(ClientMessage),
+    Server(ServerMessage),
+}
 
 fn main() {
     // Get the workspace root (3 levels up from this binary: bin -> src -> backend -> apps -> workspace)
@@ -10,28 +18,21 @@ fn main() {
 
     fs::create_dir_all(&output_dir).expect("Failed to create output directory");
 
-    // Generate schemas for WebSocket types
-    let client_schema = schema_for!(ClientMessage);
-    let server_schema = schema_for!(ServerMessage);
+    // Create a schema generator and generate schemas for both types
+    let mut generator = SchemaGenerator::default();
 
-    // Combine both schemas into a single file with all definitions
-    let mut combined = client_schema.clone();
+    // Generate subschemas for both message types to populate definitions
+    generator.subschema_for::<ClientMessage>();
+    generator.subschema_for::<ServerMessage>();
 
-    // Merge all definitions from server schema
-    for (key, value) in server_schema.definitions {
-        combined.definitions.insert(key, value);
-    }
-
-    // Add ServerMessage as a top-level definition
-    combined
-        .definitions
-        .insert("ServerMessage".to_string(), server_schema.schema.into());
+    // Create root schema with all definitions
+    let root_schema = generator.into_root_schema_for::<WebSocketMessages>();
 
     // Write combined schema to websocket.json
     let file_path = output_dir.join("websocket.json");
     fs::write(
         &file_path,
-        serde_json::to_string_pretty(&combined).expect("Failed to serialize schema"),
+        serde_json::to_string_pretty(&root_schema).expect("Failed to serialize schema"),
     )
     .expect("Failed to write schema file");
 
