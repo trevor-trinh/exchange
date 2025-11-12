@@ -4,9 +4,17 @@
 
 A full-stack crypto exchange. CLOB + frontend + market-making bots.
 
-**[Blog]()**
+<div align="center">
+
+### **[Building a Crypto Exchange](https://trevortrinh.substack.com/p/building-a-crypto-exchange)**
+
+</div>
+
+<div align="center">
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/exchange?referralCode=trevor)
+
+</div>
 
 ---
 
